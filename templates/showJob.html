@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <div class="breadcrumbs">
+        <div class="breadcrumbs-inner">
+            <div class="row m-0">
+                <div class="col-sm-4">
+                    <div class="page-header float-left">
+                        <div class="page-title">
+                            <h1>Dashboard</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="page-header float-right">
+                        <div class="page-title">
+                            <ol class="breadcrumb text-right">
+                                <li><a href="#">Dashboard</a></li>
+                                <li><a href="#">生产环境发布</a></li>
+                                <li class="active">任务栏</li>
+                                <li class="active">创建任务</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content -->
+    <div class="content">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">创建任务</strong>
+                        </div>
+                        <div class="card-body">
+                            <form class="form-horizontal group-border hover-stripped" role="form" id="validate"
+                                  method="post" action="/createTask">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <div class="col-lg-6">
+                                        <!-- col-lg-6 start here -->
+                                        <button type="button" class="layui-btn layui-btn-primary" id="add-btn"
+                                                onclick="add_div()">添加项目
+                                        </button>
+                                        <button type="button" class="layui-btn layui-btn-primary" id="add-btn"
+                                                onclick="del_div()">删除项目
+                                        </button>
+                                        <button type="submit" class="layui-btn layui-btn-primary">完成</button>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <label class="col-lg-2 control-label">任务标题</label>
+                                    <div class="col-lg-10">
+                                            <textarea class="form-control" name="title" id="textarea"
+                                                      rows="4"></textarea>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <div class="sufee-alert alert with-close alert-danger alert-dismissible fade show">
+                                        <span class="badge badge-pill badge-danger">提示</span>
+                                        项目的执行顺序为从上到下，依次执行，请按项目执行顺序添加项目！！！
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group" id="details">
+                                    <label class="col-lg-2 col-md-2 col-sm-12 control-label">项目</label>
+                                    <div class="col-lg-10 col-md-10">
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6">
+                                                <select class="form-control" id="jenkinsJob" name="jenkinsJob"
+                                                        onchange="change(this,this[selectedIndex].value)">
+                                                    <optgroup label="jenkins job">
+                                                        {% for jenkins_job in jenkins_jobs %}
+                                                            <option>{{ jenkins_job.name }}</option>
+                                                        {% endfor %}
+                                                    </optgroup>
+                                                </select>
+                                                <span class="help-block">Jenkins job</span>
+                                            </div>
+                                            <div class="col-lg-3 col-md-6">
+                                                <select class="form-control" id="buildId" name="buildId">
+                                                    <optgroup label="buildID">
+                                                        <option id="default">请输入</option>
+                                                    </optgroup>
+                                                </select>
+                                                <span class="help-block">Build ID</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- .animated -->
+        </div><!-- .content -->
+    </div>
+{% endblock %}

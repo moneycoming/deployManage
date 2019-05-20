@@ -1,0 +1,15 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+*.pyc
+./__pycache__
+../__pycache__
+db.sqlite3
+mysite/migrations
+mysite_nginx.conf
+uwsgi.ini
+uwsgi.log
+uwsgi.pid
+static/admin
+/staticfiles
+logs
+venv

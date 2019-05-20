@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <!-- Start #content -->
+    <div id="content">
+        <!-- Start .content-wrapper -->
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        <div class="jumbotron">
+            <div class="container">
+                <h1>欢迎登陆接力棒内部管理系统！</h1>
+                <p>该系统用于提供一些内部使用小便利</p>
+            </div>
+        </div>
+        <!-- End .content-wrapper -->
+        <div class="clearfix"></div>
+    </div>
+    <!-- End #content -->
+{% endblock %}
