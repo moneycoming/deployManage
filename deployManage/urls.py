@@ -28,7 +28,7 @@ urlpatterns = [
     # url(r'^admin/', include(admin.site.urls)),
     # url(r'^xadmin/', include(xadmin.site.urls)),
     url(r'^accounts/', include('allauth.urls')),
-    url(r'^$', views.index),
+    url(r'^$', views.index, name='index'),
     url(r'^iosKey$', views.fileKeySearch, name='ios'),
     url(r'^showTask$', views.showTask, name='showTask'),
     url(r'^taskDetail', views.taskDetail, name='taskDetail'),

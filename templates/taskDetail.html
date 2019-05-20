@@ -15,9 +15,8 @@
                     <div class="page-header float-right">
                         <div class="page-title">
                             <ol class="breadcrumb text-right">
-                                <li><a href="#">Dashboard</a></li>
-                                <li><a href="#">生产环境发布</a></li>
-                                <li class="active">任务栏</li>
+                                <li><a href="{% url 'index' %}">首页</a></li>
+                                <li><a href="{% url 'showTask' %}">任务栏</a></li>
                                 <li class="active">任务详情</li>
                             </ol>
                         </div>
@@ -43,7 +42,7 @@
                                     <li>任务回滚</li>
                                     <li>执行记录</li>
                                 </ul>
-                                <div class="layui-tab-content" style="height: 100px;">
+                                <div class="layui-tab-content">
                                     <div class="layui-tab-item layui-show">
                                         <p>【标题】{{ taskBar_obj.name }}</p>
                                         <br>【执行顺序】
@@ -57,7 +56,6 @@
                                             <div class="layui-progress-bar layui-bg-green" lay-percent="0%"></div>
                                         </div>
                                         <div class="site-demo-button" style="margin-top: 20px; margin-bottom: 0;">
-                                            {#  <button class="layui-btn site-demo-active" data-type="setPercent">设置50%</button>#}
                                             <button class="layui-btn layui-btn-primary runTask" data-type="loading">
                                                 立即执行
                                             </button>
@@ -76,42 +74,24 @@
                                         </div>
                                     </div>
                                     <div class="layui-tab-item">
-                                        <div class="form-group">
-                                            <ul class="layui-timeline">
-                                                {% for task in taskHistory_obj %}
-                                                    <li class="layui-timeline-item">
-                                                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-                                                        <div class="layui-timeline-content layui-text">
-                                                            <h3 class="layui-timeline-title">{{ task.operateTime }}</h3>
-                                                            <p>{% if task.type == 1 %}
-                                                                操作：发布
-                                                            {% else %}
-                                                                操作：回滚
-                                                            {% endif %}
-                                                                <br>执行人：{{ task.operateUser.last_name }}{{ task.operateUser.first_name }}
-                                                                <br><a href="/console_opt/{{ task.suuid }}">查看控制台信息</a>
-                                                            </p>
-                                                        </div>
-                                                    </li>
-                                                {% endfor %}
-                                            </ul>
-                                            {#                                                <li class="layui-timeline-item">#}
-                                            {#                                                    <i class="layui-icon layui-timeline-axis">&#xe63f;</i>#}
-                                            {#                                                    <div class="layui-timeline-content layui-text">#}
-                                            {#                                                        <h3 class="layui-timeline-title">{{ task.operateTime }}</h3>#}
-                                            {#                                                        <p>{% if task.type == 1 %}#}
-                                            {#                                                            操作：发布#}
-                                            {#                                                        {% else %}#}
-                                            {#                                                            操作：回滚#}
-                                            {#                                                        {% endif %}#}
-                                            {#                                                            <br>执行人：{{ task.operateUser.last_name }}{{ task.operateUser.first_name }}#}
-                                            {#                                                            <br><a href="/console_opt/{{ task.suuid }}">查看控制台信息</a>#}
-                                            {#                                                        </p>#}
-                                            {#                                                    </div>#}
-                                            {#                                                </li>#}
-
-
-                                        </div>
+                                        <ul class="layui-timeline">
+                                            {% for task in taskHistory_obj %}
+                                                <li class="layui-timeline-item">
+                                                    <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                                                    <div class="layui-timeline-content layui-text">
+                                                        <h3 class="layui-timeline-title">{{ task.operateTime }}</h3>
+                                                        <p>{% if task.type == 1 %}
+                                                            操作：发布
+                                                        {% else %}
+                                                            操作：回滚
+                                                        {% endif %}
+                                                            <br>执行人：{{ task.operateUser.last_name }}{{ task.operateUser.first_name }}
+                                                            <br><a href="/console_opt/{{ task.suuid }}">查看控制台信息</a>
+                                                        </p>
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
@@ -120,4 +100,5 @@
                 </div>
             </div><!-- .animated -->
         </div><!-- .content -->
+    </div>
 {% endblock %}

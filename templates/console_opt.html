@@ -15,10 +15,9 @@
                     <div class="page-header float-right">
                         <div class="page-title">
                             <ol class="breadcrumb text-right">
-                                <li><a href="#">Dashboard</a></li>
-                                <li><a href="#">生产环境发布</a></li>
-                                <li class="active">任务栏</li>
-                                <li class="active">任务详情</li>
+                                <li><a href="{% url 'index' %}">首页</a></li>
+                                <li><a href="{% url 'showTask' %}">任务栏</a></li>
+                                <li><a href="{% url 'taskDetail' %}">任务详情</a></li>
                                 <li class="active">构建信息</li>
                             </ol>
                         </div>
