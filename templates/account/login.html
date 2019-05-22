@@ -1,0 +1,26 @@
+{% extends "account/base.html" %}
+
+{% load i18n %}
+{% load account socialaccount %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}{% trans "Sign In" %}{% endblock %}
+
+{% block content %}
+    <form class="login" method="POST" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        {{ form | crispy }}
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+        {% endif %}
+        <div class="checkbox">
+            <label>
+                <input type="checkbox"> 记住我
+            </label>
+            <label class="pull-right">
+                <a class="secondaryAction" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
+            </label>
+        </div>
+        <button type="submit" class="btn btn-success btn-flat m-b-30 m-t-30">{% trans "Sign In" %}</button>
+    </form>
+{% endblock %}

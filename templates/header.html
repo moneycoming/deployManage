@@ -52,7 +52,8 @@
                     <div class="dropdown-menu" aria-labelledby="message">
                         <p class="red">You have 4 Mails</p>
                         <a class="dropdown-item media" href="#">
-                            <span class="photo media-left"><img alt="avatar" src="{% static "images/avatar/1.jpg" %}"></span>
+                            <span class="photo media-left"><img alt="avatar"
+                                                                src="{% static "images/avatar/1.jpg" %}"></span>
                             <div class="message media-body">
                                 <span class="name float-left">Jonathan Smith</span>
                                 <span class="time float-right">Just now</span>
@@ -60,7 +61,8 @@
                             </div>
                         </a>
                         <a class="dropdown-item media" href="#">
-                            <span class="photo media-left"><img alt="avatar" src="{% static "images/avatar/2.jpg" %}"></span>
+                            <span class="photo media-left"><img alt="avatar"
+                                                                src="{% static "images/avatar/2.jpg" %}"></span>
                             <div class="message media-body">
                                 <span class="name float-left">Jack Sanders</span>
                                 <span class="time float-right">5 minutes ago</span>
@@ -68,7 +70,8 @@
                             </div>
                         </a>
                         <a class="dropdown-item media" href="#">
-                            <span class="photo media-left"><img alt="avatar" src="{% static "images/avatar/3.jpg" %}"></span>
+                            <span class="photo media-left"><img alt="avatar"
+                                                                src="{% static "images/avatar/3.jpg" %}"></span>
                             <div class="message media-body">
                                 <span class="name float-left">Cheryl Wheeler</span>
                                 <span class="time float-right">10 minutes ago</span>
@@ -76,7 +79,8 @@
                             </div>
                         </a>
                         <a class="dropdown-item media" href="#">
-                            <span class="photo media-left"><img alt="avatar" src="{% static "images/avatar/4.jpg" %}"></span>
+                            <span class="photo media-left"><img alt="avatar"
+                                                                src="{% static "images/avatar/4.jpg" %}"></span>
                             <div class="message media-body">
                                 <span class="name float-left">Rachel Santos</span>
                                 <span class="time float-right">15 minutes ago</span>
@@ -94,14 +98,13 @@
                 </a>
 
                 <div class="user-menu dropdown-menu">
-                    <a class="nav-link" href="#"><i class="fa fa- user"></i>My Profile</a>
-
-                    <a class="nav-link" href="#"><i class="fa fa- user"></i>Notifications <span
-                            class="count">13</span></a>
-
-                    <a class="nav-link" href="#"><i class="fa fa -cog"></i>Settings</a>
-
-                    <a class="nav-link" href="#"><i class="fa fa-power -off"></i>Logout</a>
+                    {% if user.is_authenticated %}
+                        <a class="nav-link" href="/admin"><i class="fa fa- user"></i>后台管理</a>
+                        <a class="nav-link" href="{% url 'account_logout' %}"><i class="fa fa-power -off"></i>登出</a>
+                        <a class="nav-link" href="{% url 'account_change_password' %}"><i class="fa fa-power -off"></i>修改密码</a>
+                    {% else %}
+                        <a class="nav-link" href="{% url 'account_login' %}"><i class="fa fa-power -off"></i>登录</a>
+                    {% endif %}
                 </div>
             </div>
 

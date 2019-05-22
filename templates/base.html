@@ -75,7 +75,9 @@
 </head>
 <body>
 <!-- Left Panel -->
-{% include "left-pannl.html" %}
+{% if user.is_authenticated %}
+    {% include "left-pannl.html" %}
+{% endif %}
 <!-- /#left-panel -->
 <!-- Right Panel -->
 <div id="right-panel" class="right-panel">
@@ -153,7 +155,7 @@
 </script>
 {# buildId 二级联动#}
 <script>
-    function change(e,v){
+    function change(e, v) {
         var id = e.parentNode.parentNode.parentNode.parentNode.id;
         $.ajax({
             url: '/ajax_load_buildIds',

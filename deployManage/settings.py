@@ -49,9 +49,43 @@ INSTALLED_APPS = (
     'crispy_forms',
     'django_apscheduler',
 )
+# form美化
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 SITE_ID = 1
+
+# allauth 设置 BACKENDS
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+# 设置登录和注册成功后重定向的页面
 LOGIN_REDIRECT_URL = '/'
+
+# 设置退出后跳转的页面
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+ACCOUNT_CHANGE_REDIRECT_URL = '/accounts/login'
+# 用户退出是否需要确认
+ACCOUNT_LOGOUT_ON_GET = False
+
+# 指定登录方式
+ACCOUNT_AUTHENTICATION_METHOD = "username"
+
+# 登录尝试失败的次数
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+
+# 失败后禁止登录的时间
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+
+# 更改或设置密码后自动退出
+ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True
+
+# 控制会话的生命周期
+ACCOUNT_SESSION_REMEMBER = True
+
+# 用户名允许的最小长度的整数
+ACCOUNT_USERNAME_MIN_LENGTH = 6
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

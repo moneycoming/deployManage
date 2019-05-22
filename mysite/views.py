@@ -80,6 +80,7 @@ def showTask(request):
 
 
 # 控制任务启用开关
+@login_required
 @csrf_exempt
 def ajax_showTask(request):
     onOff = request.POST.get('onOff')
@@ -132,6 +133,7 @@ def CreateTask(request):
 
 
 # 获取uat_buildId
+@login_required
 def ajax_load_buildIds(request):
     if request.method == 'GET':
         jenkins_job_name = request.GET.get('jenkins_job_name')
@@ -181,6 +183,7 @@ def fileKeySearch(request):
 
 # 任务执行
 @csrf_exempt
+@login_required
 def ajax_runBuild(request):
     if request.method == 'POST':
         taskId = request.POST.get('id')

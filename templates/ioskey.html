@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <div class="breadcrumbs">
+        <div class="breadcrumbs-inner">
+            <div class="row m-0">
+                <div class="col-sm-4">
+                    <div class="page-header float-left">
+                        <div class="page-title">
+                            <h1>Dashboard</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="page-header float-right">
+                        <div class="page-title">
+                            <ol class="breadcrumb text-right">
+                                <li><a href="{% url 'index' %}">首页</a></li>
+                                <li class="active">fileKey 查询</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content -->
+    <div class="content">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">fileKey 查询</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="panel panel-default plain toggle panelClose panelRefresh">
+                                <!-- Start .panel -->
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                                {% endfor %}
+                                <div class="panel-body">
+                                    <form action="" method="post">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <label for="cc-payment" class="control-label mb-1">account</label>
+                                            <input id="cc-payment" name="account" type="text" class="form-control"
+                                                   aria-required="true" aria-invalid="false" placeholder="编号">
+                                        </div>
+                                        <button type="submit" class="btn btn-secondary">查询</button>
+                                    </form>
+                                    <hr size = "5" color= "blue"/>
+                                    <div class="form-group">
+                                        <table class="table table-striped">
+                                            <thead>
+                                            <tr>
+                                                <th>fileKey</th>
+                                                <th>createTime</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for data in obj %}
+                                                <tr>
+                                                    <td>{{ data.0 }}</td>
+                                                    <td>{{ data.1 }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- .animated -->
+        </div><!-- .content -->
+    </div>
+{% endblock %}
