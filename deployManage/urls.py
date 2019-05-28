@@ -16,17 +16,18 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from mysite import views
+import xadmin
 from django.contrib import admin
 
-# xadmin.autodiscover()
+xadmin.autodiscover()
 # version模块自动注册需要版本控制的 Model
-# from xadmin.plugins import xversion
-#
-# xversion.register_models()
+from xadmin.plugins import xversion
+
+xversion.register_models()
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    # url(r'^xadmin/', include(xadmin.site.urls)),
+    url(r'^xadmin/', include(xadmin.site.urls)),
     url(r'^accounts/', include('allauth.urls')),
     url(r'^$', views.index, name='index'),
     url(r'^iosKey$', views.fileKeySearch, name='ios'),

@@ -16,8 +16,10 @@ import logging
 import django.utils.log
 import logging.handlers
 import time
+import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(1, os.path.join(BASE_DIR, 'extra_apps'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -45,7 +47,8 @@ INSTALLED_APPS = (
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.weixin',
-    # 'xadmin',
+    'xadmin',
+    'reversion',
     'crispy_forms',
     'django_apscheduler',
 )
@@ -65,7 +68,6 @@ LOGIN_REDIRECT_URL = '/'
 # 设置退出后跳转的页面
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
-ACCOUNT_CHANGE_REDIRECT_URL = '/accounts/login'
 # 用户退出是否需要确认
 ACCOUNT_LOGOUT_ON_GET = False
 

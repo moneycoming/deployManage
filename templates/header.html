@@ -3,7 +3,7 @@
 <header id="header" class="header">
     <div class="top-left">
         <div class="navbar-header">
-            <a class="navbar-brand" href="./"><img src="{% static "images/logo.png" %}" alt="Logo"></a>
+            <a class="navbar-brand" href="./">接力棒</a>
             <a class="navbar-brand hidden" href="./"><img src="{% static "images/logo2.png" %}" alt="Logo"></a>
             <a id="menuToggle" class="menutoggle"><i class="fa fa-bars"></i></a>
         </div>
@@ -99,7 +99,7 @@
 
                 <div class="user-menu dropdown-menu">
                     {% if user.is_authenticated %}
-                        <a class="nav-link" href="/admin"><i class="fa fa- user"></i>后台管理</a>
+                        <a class="nav-link" href="/xadmin"><i class="fa fa- user"></i>后台管理</a>
                         <a class="nav-link" href="{% url 'account_logout' %}"><i class="fa fa-power -off"></i>登出</a>
                         <a class="nav-link" href="{% url 'account_change_password' %}"><i class="fa fa-power -off"></i>修改密码</a>
                     {% else %}
