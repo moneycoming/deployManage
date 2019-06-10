@@ -17,6 +17,7 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 from apscheduler.jobstores.base import ConflictingIdError
+from mysite.dataAnalysis import dataAnalysis
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -62,7 +63,26 @@ except ConflictingIdError as e:
     scheduler.start()
 
 
+# 首页及任务信息展示
 def index(request):
+    tasks = models.TaskBar.objects.all()
+    productions = models.production.objects.all()
+    monthAllTask = []
+    for i in range(len(productions)):
+        dataAnalysis_obj = dataAnalysis(productions[i])
+        taskCounts = dataAnalysis_obj.totalCounts()
+        productions.filter(id=productions[i].id).update(taskCounts=taskCounts)
+        monthPerTask = []
+        productionName = [productions[i].name]
+        monthMixTask = []
+        for j in range(1, datetime.datetime.now().month + 1):
+            monthCounts = dataAnalysis_obj.monthCounts(j)
+            monthPerTask.append(monthCounts)
+        monthMixTask.append(productionName)
+        monthMixTask.append(monthPerTask)
+        monthAllTask.append(monthMixTask)
+        productionName = []
+
     template = get_template('index.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
@@ -110,13 +130,17 @@ def taskDetail(request):
 @login_required
 def CreateTask(request):
     jenkins_jobs = models.jenkins_job.objects.all()
+    productions = models.production.objects.all()
     if request.method == 'POST':
         title = request.POST.get('title')
         jenkinsJobs = request.POST.getlist('jenkinsJob')
+        production = request.POST.get('production')
+        production_obj = models.production.objects.get(name=production)
         buildId = request.POST.getlist('buildId')
         createDate = datetime.datetime.now()
         createUser = request.user
-        taskBar_obj = models.TaskBar(name=title, createUser=createUser, createDate=createDate, onOff=1)
+        taskBar_obj = models.TaskBar(name=title, production=production_obj, createUser=createUser,
+                                     createDate=createDate, onOff=1)
         taskBar_obj.save()
 
         for i in range(len(jenkinsJobs)):

@@ -60,10 +60,29 @@
                                 </div>
                                 <!-- End .form-group  -->
                                 <div class="form-group">
+                                    <label class="col-lg-2 control-label">产品列表</label>
+                                    <div class="col-lg-10">
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6">
+                                                <select class="form-control" id="production" name="production">
+                                                    <optgroup label="production list">
+                                                        {% for production in productions %}
+                                                            <option>{{ production.name }}</option>
+                                                        {% endfor %}
+                                                    </optgroup>
+                                                </select>
+{#                                                <span class="help-block">产品列表</span>#}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
                                     <div class="sufee-alert alert with-close alert-danger alert-dismissible fade show">
                                         <span class="badge badge-pill badge-danger">提示</span>
                                         项目的执行顺序为从上到下，依次执行，请按项目执行顺序添加项目！！！
-                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <button type="button" class="close" data-dismiss="alert"
+                                                aria-label="Close">
                                             <span aria-hidden="true">&times;</span>
                                         </button>
                                     </div>

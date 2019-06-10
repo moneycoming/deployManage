@@ -71,10 +71,29 @@ class uat_jenkins_job(models.Model):
         verbose_name_plural = verbose_name
 
 
+# 产品分类表
+class production(models.Model):
+    name = models.CharField(max_length=20, verbose_name="产品名称")
+    taskCounts = models.IntegerField(verbose_name="任务总数")
+    createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
+    createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者")
+
+    def user_name(self):
+        name = self.createUser.last_name + self.createUser.first_name
+        return name
+
+    user_name.short_description = "创建者"
+
+    class Meta:
+        verbose_name = u'产品信息'
+        verbose_name_plural= verbose_name
+
+
 # 发布任务表
 class TaskBar(models.Model):
     name = models.CharField(max_length=200, verbose_name="任务名称")
     jenkinsJob = models.ManyToManyField(jenkins_job, through='TaskDetail')
+    production = models.ForeignKey(production, on_delete=models.CASCADE, verbose_name="所属产品")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者")
     onOff = models.IntegerField(verbose_name="关闭/重启")
@@ -82,8 +101,12 @@ class TaskBar(models.Model):
     def user_name(self):
         name = self.createUser.last_name + self.createUser.first_name
         return name
-
     user_name.short_description = "创建者"
+
+    def production_name(self):
+        name = self.production.name
+        return name
+    production_name.short_description = "所属产品"
 
     class Meta:
         verbose_name = u'任务信息'

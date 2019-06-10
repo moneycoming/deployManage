@@ -131,6 +131,10 @@
 <script src="{% static "assets/js/lib/data-table/buttons.colVis.min.js" %}"></script>
 <script src="{% static "assets/js/init/datatables-init.js" %}"></script>
 <script src="{% static "myjs/show.js" %}"></script>
+<script src="https://code.highcharts.com.cn/highcharts/highcharts.js"></script>
+<script src="https://code.highcharts.com.cn/highcharts/modules/exporting.js"></script>
+<script src="https://img.hcharts.cn/highcharts-plugins/highcharts-zh_CN.js"></script>
+<script src="https://code.highcharts.com.cn/highcharts/modules/oldie.js"></script>
 
 {# 新增div节点#}
 <script type="text/javascript">
@@ -175,11 +179,6 @@
             }
         })
     };
-</script>
-<script>
-    function taskRefresh() {
-
-    }
 </script>
 <script type="text/javascript">
     $(document).ready(function () {
@@ -376,6 +375,88 @@
             }
         });
         // Bar Chart #flotBarChart End
+    });
+</script>
+<!--柱状图 -->
+<script>
+    var chart = Highcharts.chart('taskCountsPerMonth', {
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: '任务执行数'
+        },
+        subtitle: {
+            text: '数据来源: deploymanage.bestjlb.cn'
+        },
+        xAxis: {
+            categories: [
+                '一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'
+            ],
+            crosshair: true
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: '任务数 (个)'
+            }
+        },
+        tooltip: {
+            // head + 每个 point + footer 拼接成完整的 table
+            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y:.1f} mm</b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        },
+        plotOptions: {
+            column: {
+                borderWidth: 0
+            }
+        },
+        series: [
+                {% for monthTask in monthAllTask %}{
+                    name: '{{ monthTask.0.0 }}',
+                    data: {{ monthTask.1 }}
+                    },{% endfor %}]
+    });
+</script>
+<!--折线图 -->
+<script>
+    var chart = Highcharts.chart('taskCountsPerMonth1', {
+        chart: {
+            type: 'line'
+        },
+        title: {
+            text: '任务执行数'
+        },
+        subtitle: {
+            text: '数据来源: deploymanage.bestjlb.cn'
+        },
+        xAxis: {
+            categories: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
+        },
+        yAxis: {
+            title: {
+                text: '任务数 (个)'
+            }
+        },
+        plotOptions: {
+            line: {
+                dataLabels: {
+                    // 开启数据标签
+                    enabled: true
+                },
+                // 关闭鼠标跟踪，对应的提示框、点击事件会失效
+                enableMouseTracking: false
+            }
+        },
+        series: [
+                {% for monthTask in monthAllTask %}{
+                    name: '{{ monthTask.0.0 }}',
+                    data: {{ monthTask.1 }}
+                    },{% endfor %}]
     });
 </script>
 </body>

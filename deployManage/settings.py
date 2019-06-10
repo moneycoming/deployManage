@@ -131,16 +131,20 @@ DATABASES = {
         'PASSWORD': 'abc_123456',
         'HOST': '192.168.65.10',
         'PORT': '43306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+        },
     },
 
-    'jlb-app': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'jlbapp',
-        'USER': 'jlb-test',
-        'PASSWORD': 'jlb#123#test',
-        'HOST': '120.132.8.41',
-        'PORT': '3306',
-    }
+    # 'jlb-app': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'jlbapp',
+    #     'USER': 'jlb-test',
+    #     'PASSWORD': 'jlb#123#test',
+    #     'HOST': '120.132.8.41',
+    #     'PORT': '3306',
+    # }
 }
 
 # log
