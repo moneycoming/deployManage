@@ -86,7 +86,7 @@ class production(models.Model):
 
     class Meta:
         verbose_name = u'产品信息'
-        verbose_name_plural= verbose_name
+        verbose_name_plural = verbose_name
 
 
 # 发布任务表
