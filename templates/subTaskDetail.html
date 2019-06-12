@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <div class="breadcrumbs">
+        <div class="breadcrumbs-inner">
+            <div class="row m-0">
+                <div class="col-sm-4">
+                    <div class="page-header float-left">
+                        <div class="page-title">
+                            <h1>Dashboard</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="page-header float-right">
+                        <div class="page-title">
+                            <ol class="breadcrumb text-right">
+                                <li><a href="{% url 'index' %}">首页</a></li>
+                                <li><a href="{% url 'showTask' %}">任务栏</a></li>
+                                <li class="active">任务详情</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content -->
+    <div class="content">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">任务详情</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+                                <ul class="layui-tab-title">
+                                    <li class="layui-this">任务信息</li>
+{#                                    <li>任务执行</li>#}
+{#                                    <li>任务回滚</li>#}
+{#                                    <li>执行记录</li>#}
+                                </ul>
+                                <div class="layui-tab-content">
+                                    <div class="layui-tab-item layui-show">
+                                        <button type="button" class="layui-btn layui-btn-primary" style="float: right" href="ddd">创建子任务</button>
+                                        <p>【标题】{{ taskBar_obj.title }}</p>
+                                        <br>【关联子任务】
+                                        {% for subTask in subTasks %}
+                                            <br><a href="/subTaskDetail?tid={{ subTask.id }}">{{ subTask.title }}</a>
+                                        {% endfor %}
+                                    </div>
+{#                                    <div class="layui-tab-item">#}
+{#                                        <div class="layui-progress layui-progress-big" lay-showpercent="true"#}
+{#                                             lay-filter="runtask">#}
+{#                                            <div class="layui-progress-bar layui-bg-green" lay-percent="0%"></div>#}
+{#                                        </div>#}
+{#                                        <div class="site-demo-button" style="margin-top: 20px; margin-bottom: 0;">#}
+{#                                            <button class="layui-btn layui-btn-primary runTask" data-type="loading">#}
+{#                                                立即执行#}
+{#                                            </button>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                    <div class="layui-tab-item">#}
+{#                                        <div class="layui-progress layui-progress-big" lay-showpercent="true"#}
+{#                                             lay-filter="rollback">#}
+{#                                            <div class="layui-progress-bar layui-bg-red" lay-percent="0%"></div>#}
+{#                                        </div>#}
+{#                                        <div class="site-demo-button" style="margin-top: 20px; margin-bottom: 0;">#}
+{#                                            <button class="layui-btn layui-btn-primary rollback"#}
+{#                                                    data-type="loading">#}
+{#                                                立即回滚#}
+{#                                            </button>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                    <div class="layui-tab-item">#}
+{#                                        <ul class="layui-timeline">#}
+{#                                            <button type="button" class="layui-btn layui-btn-primary" style="float: right" onclick="window.location.reload()">刷新</button>#}
+{#                                            <h5 class="page-header"></h5>#}
+{#                                            {% for task in taskHistory_obj %}#}
+{#                                                <li class="layui-timeline-item">#}
+{#                                                    <i class="layui-icon layui-timeline-axis">&#xe63f;</i>#}
+{#                                                    <div class="layui-timeline-content layui-text">#}
+{#                                                        <h3 class="layui-timeline-title">{{ task.operateTime }}</h3>#}
+{#                                                        <p>{% if task.type == 1 %}#}
+{#                                                            操作：发布#}
+{#                                                        {% else %}#}
+{#                                                            操作：回滚#}
+{#                                                        {% endif %}#}
+{#                                                            <br>执行人：{{ task.operateUser.last_name }}{{ task.operateUser.first_name }}#}
+{#                                                            <br><a href="/console_opt/{{ task.suuid }}">查看控制台信息</a>#}
+{#                                                        </p>#}
+{#                                                    </div>#}
+{#                                                </li>#}
+{#                                            {% endfor %}#}
+{#                                        </ul>#}
+{#                                    </div>#}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- .animated -->
+        </div><!-- .content -->
+    </div>
+{% endblock %}

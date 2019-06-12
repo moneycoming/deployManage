@@ -151,7 +151,7 @@ def CreateTask(request):
 
         return HttpResponseRedirect('/showTask')
 
-    template = get_template('showJob.html')
+    template = get_template('createTask.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
 

@@ -13,3 +13,4 @@ static/admin
 /staticfiles
 logs
 venv
+extra_apps/xadmin/migrations
