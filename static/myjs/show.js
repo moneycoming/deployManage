@@ -206,12 +206,12 @@ layui.use(['element', 'layer'], function () {
         layer.msg('展开状态：' + data.show);
     });
 });
-//任务关闭/重启
+//任务关闭/激活
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery;
 
     $("body").on("click", ".closeBtn", function () {
-        str = $(this).text() === "关闭" ? "重启" : "关闭";
+        str = $(this).text() === "关闭" ? "激活" : "关闭";
         $(this).text(str);
         var postData = {};
         var taskId = $(this).closest("tr").find("#taskId").text();

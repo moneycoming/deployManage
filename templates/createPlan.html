@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <div class="breadcrumbs">
+        <div class="breadcrumbs-inner">
+            <div class="row m-0">
+                <div class="col-sm-4">
+                    <div class="page-header float-left">
+                        <div class="page-title">
+                            <h1>Dashboard</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="page-header float-right">
+                        <div class="page-title">
+                            <ol class="breadcrumb text-right">
+                                <li><a href="{% url 'index' %}">首页</a></li>
+                                <li><a href="{% url 'showPlan' %}">计划栏</a></li>
+                                <li class="active">创建计划</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content -->
+    <div class="content">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">创建任务</strong>
+                        </div>
+                        <div class="card-body">
+                            <form class="form-horizontal group-border hover-stripped" role="form" id="validate"
+                                  method="post" action="/createPlan">
+                                {% csrf_token %}
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <label class="col-lg-2 control-label">计划标题</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" id="text-input" name="title" placeholder="请输入计划标题"
+                                               class="form-control">
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <label class="col-lg-2 control-label">说明</label>
+                                    <div class="col-lg-10">
+                                            <textarea class="form-control" name="desc" id="textarea" placeholder="请输入说明"
+                                                      rows="4"></textarea>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <label class="col-lg-2 control-label">产品列表</label>
+                                    <div class="col-lg-10">
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6">
+                                                <select class="form-control" id="production" name="production">
+                                                    <optgroup label="产品列表">
+                                                        {% for production in productions %}
+                                                            <option>{{ production.name }}</option>
+                                                        {% endfor %}
+                                                    </optgroup>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-lg-6">
+                                        <!-- col-lg-6 start here -->
+                                        <button type="submit" class="layui-btn layui-btn-primary">完成</button>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- .animated -->
+        </div><!-- .content -->
+    </div>
+{% endblock %}

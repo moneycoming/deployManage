@@ -54,24 +54,24 @@
                                 <div class="form-group">
                                     <label class="col-lg-2 control-label">任务标题</label>
                                     <div class="col-lg-10">
-                                            <textarea class="form-control" name="title" id="textarea"
-                                                      rows="4"></textarea>
+                                        <input type="text" id="text-input" name="title" placeholder="请输入任务标题"
+                                               class="form-control">
                                     </div>
                                 </div>
                                 <!-- End .form-group  -->
                                 <div class="form-group">
-                                    <label class="col-lg-2 control-label">产品列表</label>
+                                    <label class="col-lg-2 control-label">所属计划</label>
                                     <div class="col-lg-10">
                                         <div class="row">
                                             <div class="col-lg-6 col-md-6">
-                                                <select class="form-control" id="production" name="production">
-                                                    <optgroup label="production list">
-                                                        {% for production in productions %}
-                                                            <option>{{ production.name }}</option>
+                                                <select class="form-control" id="plan" name="plan">
+                                                    <optgroup label="计划列表">
+                                                        {% for plan in plans %}
+                                                            <option>{{ plan.title }}</option>
                                                         {% endfor %}
                                                     </optgroup>
                                                 </select>
-{#                                                <span class="help-block">产品列表</span>#}
+{#                                                                                                <span class="help-block">产品列表</span>#}
                                             </div>
                                         </div>
                                     </div>

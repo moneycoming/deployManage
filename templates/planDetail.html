@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <div class="breadcrumbs">
+        <div class="breadcrumbs-inner">
+            <div class="row m-0">
+                <div class="col-sm-4">
+                    <div class="page-header float-left">
+                        <div class="page-title">
+                            <h1>Dashboard</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="page-header float-right">
+                        <div class="page-title">
+                            <ol class="breadcrumb text-right">
+                                <li><a href="{% url 'index' %}">首页</a></li>
+                                <li><a href="{% url 'showPlan' %}">计划栏</a></li>
+                                <li class="active">计划详情</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content -->
+    <div class="content">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">计划详情</strong>
+                        </div>
+                        <div class="card-body">
+                            <h3>标题</h3>
+                            <p class="text-muted m-b-15">{{ plan_obj.title }}</p>
+                            <h5 class="page-header"></h5>
+                            <h3>说明</h3>
+                            <p>{{ plan_obj.description }}</p>
+                            <h5 class="page-header"></h5>
+                            <h3>关联任务</h3>
+                            {% for task in tasks %}
+                                <p><a href="/taskDetail?tid={{ task.id }}">编号：{{ task.id }} -- 标题：{{ task.name }}</a></p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div><!-- .animated -->
+        </div><!-- .content -->
+    </div>
+{% endblock %}

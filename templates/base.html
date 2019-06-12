@@ -416,9 +416,9 @@
             }
         },
         series: [
-                {% for monthTask in monthAllTask %}{
-                    name: '{{ monthTask.0.0 }}',
-                    data: {{ monthTask.1 }}
+                {% for monthPlan in monthAllPlan %}{
+                    name: '{{ monthPlan.0.0 }}',
+                    data: {{ monthPlan.1 }}
                     },{% endfor %}]
     });
 </script>
@@ -453,9 +453,9 @@
             }
         },
         series: [
-                {% for monthTask in monthAllTask %}{
-                    name: '{{ monthTask.0.0 }}',
-                    data: {{ monthTask.1 }}
+                {% for monthPlan in monthAllPlan %}{
+                    name: '{{ monthPlan.0.0 }}',
+                    data: {{ monthPlan.1 }}
                     },{% endfor %}]
     });
 </script>

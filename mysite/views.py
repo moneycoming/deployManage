@@ -65,25 +65,56 @@ except ConflictingIdError as e:
 
 # 首页及任务信息展示
 def index(request):
-    tasks = models.TaskBar.objects.all()
+    plans = models.deployPlan.objects.all()
     productions = models.production.objects.all()
-    monthAllTask = []
+    monthAllPlan = []
     for i in range(len(productions)):
         dataAnalysis_obj = dataAnalysis(productions[i])
-        taskCounts = dataAnalysis_obj.totalCounts()
-        productions.filter(id=productions[i].id).update(taskCounts=taskCounts)
-        monthPerTask = []
+        planCounts = dataAnalysis_obj.totalCounts()
+        productions.filter(id=productions[i].id).update(planCounts=planCounts)
+        monthPerPlan = []
         productionName = [productions[i].name]
         monthMixTask = []
         for j in range(1, datetime.datetime.now().month + 1):
             monthCounts = dataAnalysis_obj.monthCounts(j)
-            monthPerTask.append(monthCounts)
+            monthPerPlan.append(monthCounts)
         monthMixTask.append(productionName)
-        monthMixTask.append(monthPerTask)
-        monthAllTask.append(monthMixTask)
+        monthMixTask.append(monthPerPlan)
+        monthAllPlan.append(monthMixTask)
         productionName = []
 
     template = get_template('index.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+@login_required
+def showPlan(request):
+    plans = models.deployPlan.objects.all()
+
+    template = get_template('showPlan.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+@login_required
+def createPlan(request):
+    productions = models.production.objects.all()
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        desc = request.POST.get('desc')
+        production = request.POST.get('production')
+        createDate = datetime.datetime.now()
+        createUser = request.user
+        production_obj = models.production.objects.get(name=production)
+
+        plan_obj = models.deployPlan(title=title, description=desc, production=production_obj, createUser=createUser,
+                                     createDate=createDate)
+        plan_obj.save()
+
+        return HttpResponseRedirect('/showPlan')
+
+    template = get_template('createPlan.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
 
@@ -115,11 +146,23 @@ def ajax_showTask(request):
 
 
 @login_required
+def planDetail(request):
+    planId = request.GET.get('pid')
+    if planId:
+        plan_obj = models.deployPlan.objects.get(id=planId)
+        tasks = models.TaskBar.objects.filter(plan__id=planId)
+
+    template = get_template('planDetail.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+@login_required
 def taskDetail(request):
     taskId = request.GET.get('tid')
     if taskId:
         taskHistory_obj = models.TaskHistory.objects.filter(taskBar__id=taskId)
-        taskBar_obj = models.TaskBar.objects.filter(id=taskId)[0]
+        taskBar_obj = models.TaskBar.objects.get(id=taskId)
         taskDetail_obj = models.TaskDetail.objects.filter(taskBar=taskBar_obj).order_by('priority')
 
     template = get_template('taskDetail.html')
@@ -128,24 +171,23 @@ def taskDetail(request):
 
 
 @login_required
-def CreateTask(request):
+def createTask(request):
     jenkins_jobs = models.jenkins_job.objects.all()
-    productions = models.production.objects.all()
+    plans = models.deployPlan.objects.all()
     if request.method == 'POST':
         title = request.POST.get('title')
         jenkinsJobs = request.POST.getlist('jenkinsJob')
-        production = request.POST.get('production')
-        production_obj = models.production.objects.get(name=production)
+        planName = request.POST.get('plan')
+        plan_obj = models.deployPlan.objects.get(title=planName)
         buildId = request.POST.getlist('buildId')
         createDate = datetime.datetime.now()
         createUser = request.user
-        taskBar_obj = models.TaskBar(name=title, production=production_obj, createUser=createUser,
-                                     createDate=createDate, onOff=1)
-        taskBar_obj.save()
+        task_obj = models.TaskBar(name=title, plan=plan_obj, createUser=createUser, createDate=createDate, onOff=1)
+        task_obj.save()
 
         for i in range(len(jenkinsJobs)):
             jenkinsJob_obj = models.jenkins_job.objects.get(name=jenkinsJobs[i])
-            taskDetail_obj = models.TaskDetail(jenkinsJob=jenkinsJob_obj, taskBar=taskBar_obj, buildID=buildId[i],
+            taskDetail_obj = models.TaskDetail(jenkinsJob=jenkinsJob_obj, taskBar=task_obj, buildID=buildId[i],
                                                createDate=createDate, createUser=createUser, priority=i)
             taskDetail_obj.save()
 
