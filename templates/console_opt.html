@@ -17,7 +17,7 @@
                             <ol class="breadcrumb text-right">
                                 <li><a href="{% url 'index' %}">首页</a></li>
                                 <li><a href="{% url 'showTask' %}">任务栏</a></li>
-                                <li><a href="{% url 'taskDetail' %}">任务详情</a></li>
+                                <li><a href="/taskDetail?tid={{ taskHistory.taskBar.id }}">任务详情</a></li>
                                 <li class="active">构建信息</li>
                             </ol>
                         </div>
@@ -41,7 +41,7 @@
                                     <div class="layui-colla-item">
                                         <h2 class="layui-colla-title">{{ jenkins.taskDetail.jenkinsJob.name }}</h2>
                                         <div class="layui-colla-content layui-show">
-                                            <p>{{ jenkins.console_opt }}</p>
+                                            <p><pre>{{ jenkins.console_opt }}</pre></p>
                                         </div>
                                     </div>
                                 {% endfor %}

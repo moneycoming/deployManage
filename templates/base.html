@@ -102,6 +102,8 @@
 <script src="{% static "assets/js/init/datatables-init.js" %}"></script>
 <script src="{% static "myjs/show.js" %}"></script>
 <script src="{% static "assets/js/lib/chosen/chosen.jquery.min.js" %}"></script>
+<script src="{% static "jquery-validation-1.14.0/dist/localization/messages_zh.js" %}"></script>
+<script src="{% static "jquery-validation-1.14.0/dist/jquery.validate.min.js" %}"></script>
 <script src="https://code.highcharts.com.cn/highcharts/highcharts.js"></script>
 <script src="https://code.highcharts.com.cn/highcharts/modules/exporting.js"></script>
 <script src="https://img.hcharts.cn/highcharts-plugins/highcharts-zh_CN.js"></script>
@@ -247,6 +249,56 @@
             width: "100%"
         });
     });
+</script>
+<!--任务删除 -->
+<script>
+    function deleteTask(obj) {
+        var tr=$(obj).parent().parent();
+        var taskId = tr.children("td#taskId").text();
+        var postData = {};
+        postData['id'] = taskId;
+        console.log(taskId);
+
+        $.ajax({
+            url: '/ajax_deleteTask',
+            type: 'POST',
+            data: postData,
+
+            success: function (arg) {
+                if (arg.length > 0) {
+                    tr.remove();
+                }
+            },
+            error: function () {
+                console.log("error");
+            }
+        })
+    }
+</script>
+<!--计划删除 -->
+<script>
+    function deletePlan(obj) {
+        var tr=$(obj).parent().parent();
+        var planId = tr.children("td#planId").text();
+        var postData = {};
+        postData['id'] = planId;
+        console.log(planId);
+
+        $.ajax({
+            url: '/ajax_deletePlan',
+            type: 'POST',
+            data: postData,
+
+            success: function (arg) {
+                if (arg.length > 0) {
+                    tr.remove();
+                }
+            },
+            error: function () {
+                console.log("error");
+            }
+        })
+    }
 </script>
 </body>
 </html>

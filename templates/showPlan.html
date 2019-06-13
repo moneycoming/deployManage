@@ -51,13 +51,18 @@
                                 <tbody id="show_tbody">
                                 {% for plan in plans %}
                                     <tr>
-                                        <td>{{ plan.id }}</td>
+                                        <td id="planId">{{ plan.id }}</td>
                                         <td><a href="/planDetail?pid={{ plan.id }}">{{ plan.title }}</a></td>
                                         <td>{{ plan.production.name }}</td>
                                         <td>{{ plan.createDate }}</td>
                                         <td>
                                             {{ plan.createUser.last_name }}{{ plan.createUser.first_name }}</td>
-                                        <td>编辑/删除</td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                    onclick="deletePlan(this)" title="删除"><i class="fa fa-times"></i></button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" title="编辑"><i
+                                                    class="fa fa-edit"></i></button>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>

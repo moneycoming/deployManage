@@ -59,19 +59,24 @@
                                             <td>{{ task.name }}</td>
                                         {% endif %}
                                         <td>{{ task.plan.title }}</td>
-                                                         {% if task.onOff == 1 %}
+                                        {% if task.onOff == 1 %}
                                             <td>
-                                                <button class="btn btn-outline-secondary btn-sm closeBtn">关闭</button>
+                                                <button class="btn btn-secondary btn-sm closeBtn">关闭</button>
                                             </td>
                                         {% else %}
                                             <td>
-                                                <button class="btn-outline-success btn-sm closeBtn">激活</button>
+                                                <button class="btn btn-success btn-sm closeBtn">激活</button>
                                             </td>
                                         {% endif %}
                                         <td>{{ task.createDate }}</td>
                                         <td>
                                             {{ task.createUser.last_name }}{{ task.createUser.first_name }}</td>
-                                        <td>删除/编辑</td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" title="删除"
+                                                    onclick="deleteTask(this)"><i class="fa fa-times"></i></button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" title="编辑"><i
+                                                    class="fa fa-edit"></i></button>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>

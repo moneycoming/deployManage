@@ -40,6 +40,8 @@ urlpatterns = [
     url(r'^ajax_RunBuild$', views.ajax_runBuild, name='runBuild'),
     url(r'^ajax_RollBack$', views.ajax_rollBack, name='rollBack'),
     url(r'^ajax_showTask$', views.ajax_showTask),
+    url(r'^ajax_deleteTask$', views.ajax_deleteTask),
+    url(r'^ajax_deletePlan$', views.ajax_deletePlan),
     url(r'^console_opt/(\w+)', views.console_opt, name='console'),
     url(r'^ajax_load_buildIds$', views.ajax_load_buildIds, name='load_buildIds'),
 ]

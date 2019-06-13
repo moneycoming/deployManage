@@ -92,7 +92,7 @@ class production(models.Model):
 # 发布计划表
 class deployPlan(models.Model):
     title = models.CharField(max_length=200, verbose_name="标题")
-    description = models.CharField(max_length=2000, verbose_name="说明")
+    description = models.TextField(verbose_name="说明")
     production = models.ForeignKey(production, on_delete=models.CASCADE, verbose_name="所属产品")
     createUser = models.ForeignKey(User, verbose_name="创建者")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")

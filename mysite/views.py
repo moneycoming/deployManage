@@ -145,6 +145,30 @@ def ajax_showTask(request):
         return HttpResponse(task)
 
 
+# 任务删除
+@login_required
+@csrf_exempt
+def ajax_deleteTask(request):
+    taskId = request.POST.get('id')
+    if taskId:
+        task = models.TaskBar.objects.get(id=taskId)
+        task.delete()
+
+        return HttpResponse("success")
+
+
+# 计划删除
+@login_required
+@csrf_exempt
+def ajax_deletePlan(request):
+    planId = request.POST.get('id')
+    if planId:
+        plan = models.deployPlan.objects.get(id=planId)
+        plan.delete()
+
+        return HttpResponse("success")
+
+
 @login_required
 def planDetail(request):
     planId = request.GET.get('pid')
@@ -420,9 +444,9 @@ def ajax_rollBack(request):
 # 查看控制台信息
 @login_required
 def console_opt(request, uid):
-    print(uid)
     if uid:
         operateHistory_obj = models.OperationHistory.objects.filter(suuid=uid)
+        taskHistory = models.TaskHistory.objects.get(suuid=uid)
 
     template = get_template('console_opt.html')
     html = template.render(context=locals(), request=request)
