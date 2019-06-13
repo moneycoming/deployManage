@@ -64,7 +64,7 @@
                                     <div class="col-lg-10">
                                         <div class="row">
                                             <div class="col-lg-6 col-md-6">
-                                                <select data-placeholder="选择所属计划..." multiple class="standardSelect" id="plan" name="plan">
+                                                <select data-placeholder="选择所属计划..." class="standardSelect" name="plan">
                                                     <optgroup label="计划列表">
                                                         {% for plan in plans %}
                                                             <option>{{ plan.title }}</option>
@@ -92,7 +92,7 @@
                                     <div class="col-lg-10 col-md-10">
                                         <div class="row">
                                             <div class="col-lg-6 col-md-6">
-                                                <select class="form-control" id="jenkinsJob" name="jenkinsJob"
+                                                <select class="form-control" name="jenkinsJob"
                                                         onchange="change(this,this[selectedIndex].value)">
                                                     <optgroup label="jenkins job">
                                                         {% for jenkins_job in jenkins_jobs %}
@@ -100,7 +100,7 @@
                                                         {% endfor %}
                                                     </optgroup>
                                                 </select>
-                                                <span class="help-block">Jenkins job</span>
+                                                <span class="help-block">Jenkins项目</span>
                                             </div>
                                             <div class="col-lg-3 col-md-6">
                                                 <select class="form-control" id="buildId" name="buildId">
@@ -108,7 +108,7 @@
                                                         <option id="default">请输入</option>
                                                     </optgroup>
                                                 </select>
-                                                <span class="help-block">Build ID</span>
+                                                <span class="help-block">构建号</span>
                                             </div>
                                         </div>
                                     </div>
