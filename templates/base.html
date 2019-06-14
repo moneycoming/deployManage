@@ -253,7 +253,7 @@
 <!--任务删除 -->
 <script>
     function deleteTask(obj) {
-        var tr=$(obj).parent().parent();
+        var tr = $(obj).parent().parent();
         var taskId = tr.children("td#taskId").text();
         var postData = {};
         postData['id'] = taskId;
@@ -278,7 +278,7 @@
 <!--计划删除 -->
 <script>
     function deletePlan(obj) {
-        var tr=$(obj).parent().parent();
+        var tr = $(obj).parent().parent();
         var planId = tr.children("td#planId").text();
         var postData = {};
         postData['id'] = planId;
@@ -300,5 +300,62 @@
         })
     }
 </script>
+<!--表单验证-->
+<script>
+    $().ready(function () {
+        $("#validate").validate({
+            ignore: "",
+            rules: {
+                title: {
+                    required: true,
+                    minlength: 5
+                },
+                desc: {
+                    required: true,
+                    minlength: 5,
+                },
+                production: {
+                    required: true,
+                },
+                plan: {
+                    required: true,
+                },
+                jenkinsJob: {
+                    required: true,
+                },
+                buildId: {
+                    required: true,
+                }
+            },
+            messages: {
+                title: {
+                    required: "请输入标题",
+                    minlength: "标题必需由五个字母组成",
+                },
+                desc: {
+                    required: "请输入说明",
+                    minlength: "说明长度不能小于 5 个字母",
+                },
+                production: {
+                    required: "请选择所属产品",
+                },
+                plan: {
+                    required: "请选择所属计划",
+                },
+                jenkinsJob: {
+                    required: "请选择Jenkins项目",
+                },
+                buildId: {
+                    required: "请选择构建号",
+                }
+            }
+        });
+    });
+</script>
+<style>
+    .error {
+        color: red;
+    }
+</style>
 </body>
 </html>

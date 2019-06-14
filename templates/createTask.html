@@ -66,6 +66,7 @@
                                             <div class="col-lg-6 col-md-6">
                                                 <select data-placeholder="选择所属计划..." class="standardSelect" name="plan">
                                                     <optgroup label="计划列表">
+                                                        <option value="" label="default"></option>
                                                         {% for plan in plans %}
                                                             <option>{{ plan.title }}</option>
                                                         {% endfor %}
@@ -95,6 +96,7 @@
                                                 <select class="form-control" name="jenkinsJob"
                                                         onchange="change(this,this[selectedIndex].value)">
                                                     <optgroup label="jenkins job">
+{#                                                        <option value="" label="default"></option>#}
                                                         {% for jenkins_job in jenkins_jobs %}
                                                             <option>{{ jenkins_job.name }}</option>
                                                         {% endfor %}
