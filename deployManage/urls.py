@@ -26,7 +26,7 @@ from xadmin.plugins import xversion
 xversion.register_models()
 
 urlpatterns = [
-    url(r'^admin/', include(admin.site.urls)),
+    # url(r'^admin/', include(admin.site.urls)),
     url(r'^xadmin/', include(xadmin.site.urls)),
     url(r'^accounts/', include('allauth.urls')),
     url(r'^$', views.index, name='index'),

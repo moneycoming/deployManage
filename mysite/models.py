@@ -19,7 +19,7 @@ class jenkins_job(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="Jenkins项目名称")
     desc = models.CharField(max_length=50, blank=True, verbose_name="Jenkins项目描述")
     serverIp = models.ManyToManyField(ServerInfo, through='JenkinsJob_ServerInfo')
-    healthPort = models.CharField(max_length=5, default="1", verbose_name="监控端口")
+    param = models.CharField(max_length=200, blank=False, verbose_name="构建参数")
     applicationName = models.CharField(max_length=50, unique=True, verbose_name="项目名称")
     createBy = models.ForeignKey(User, on_delete=models.CASCADE)
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")

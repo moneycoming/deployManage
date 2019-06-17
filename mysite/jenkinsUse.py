@@ -54,7 +54,7 @@ class Transaction:
 
     # 任务发布
     def transRunBuild(self):
-        param = {}
+        params = {}
         taskDetail_obj = self.taskDetail_obj
         taskDetail_all_obj = self.taskDetail_all_obj
         priority = self.priority
@@ -63,24 +63,19 @@ class Transaction:
         for i in range(len(trans_taskDetail_obj)):
             buildId = trans_taskDetail_obj[i].buildID
             jenkinsJob_obj = trans_taskDetail_obj[i].jenkinsJob
-            healthPort = jenkinsJob_obj.healthPort
-            applicationName = jenkinsJob_obj.applicationName
+            param = eval(jenkinsJob_obj.param)
             try:
                 pre_build = \
                     taskDetail_all_obj.filter(jenkinsJob=jenkinsJob_obj, buildID__lt=buildId).order_by('-buildID')[
                         0].buildID
-                serverInfo_obj = models.jenkinsJob_serverInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+                serverInfo_obj = models.JenkinsJob_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
                 for j in range(len(serverInfo_obj)):
-                    if healthPort == '1':
-                        param.update(RELEASE="deploy", SERVER_IP=serverInfo_obj[j].serverInfo.serverIp,
-                                     REL_VERSION=pre_build, APPLICATION_NAME=applicationName)
-                    else:
-                        param.update(RELEASE="deploy", SERVER_IP=serverInfo_obj[j].serverInfo.serverIp,
-                                     REL_VERSION=pre_build,
-                                     APP_HEALTH_PORT=healthPort, APPLICATION_NAME=applicationName)
-                    logger.info(param)
-                    pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, param)
+                    params.update(param)
+                    params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
+                    logger.info(params)
+                    pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
                     console = pythonJenkins_obj.deploy()
+                    params = {}
                     # 判断Jenkins项目执行是否成功
                     isFinished = console.find("Finished")
                     while isFinished == -1:
@@ -102,7 +97,7 @@ class Transaction:
 
     # 任务回滚
     def transRollback(self):
-        param = {}
+        params = {}
         rollbackError = []
         taskDetail_obj = self.taskDetail_obj
         priority = self.priority
@@ -110,19 +105,15 @@ class Transaction:
         for i in range(len(trans_taskDetail_obj)):
             buildId = trans_taskDetail_obj[i].buildID
             jenkinsJob_obj = trans_taskDetail_obj[i].jenkinsJob
-            healthPort = jenkinsJob_obj.healthPort
-            applicationName = jenkinsJob_obj.applicationName
-            serverInfo_obj = models.jenkinsJob_serverInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+            param = eval(jenkinsJob_obj.param)
+            serverInfo_obj = models.JenkinsJob_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
             for s in range(len(serverInfo_obj)):
-                if healthPort == '1':
-                    param.update(RELEASE="deploy", SERVER_IP=serverInfo_obj[s].serverInfo.serverIp, REL_VERSION=buildId,
-                                 APPLICATION_NAME=applicationName)
-                else:
-                    param.update(RELEASE="deploy", SERVER_IP=serverInfo_obj[s].serverInfo.serverIp, REL_VERSION=buildId,
-                                 APP_HEALTH_PORT=healthPort, APPLICATION_NAME=applicationName)
-                logger.info(param)
-                pyJenkins_obj = PythonJenkins(jenkinsJob_obj.name, param)
+                params.update(param)
+                params.update(SERVER_IP=serverInfo_obj[s].serverInfo.serverIp, REL_VERSION=buildId)
+                logger.info(params)
+                pyJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
                 console = pyJenkins_obj.deploy()
+                params = {}
                 # 判断Jenkins项目执行是否成功
                 isFinished = console.find("Finished")
                 while isFinished == -1:

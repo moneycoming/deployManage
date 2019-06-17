@@ -310,30 +310,23 @@ def ajax_runBuild(request):
             taskDetail_all_obj = models.TaskDetail.objects.all()
             taskDetail_obj = models.TaskDetail.objects.filter(taskBar=taskId).order_by('priority')
             taskBar_obj = models.TaskBar.objects.get(id=taskId)
-            param = {}
             info = {'build': 'SUCCESS'}
+            params = {}
             rollbackError = []
             uid = str(uuid.uuid4())
             suid = ''.join(uid.split('-'))
             for i in range(len(taskDetail_obj)):
                 buildId = taskDetail_obj[i].buildID
                 jenkinsJob_obj = taskDetail_obj[i].jenkinsJob
-                healthPort = jenkinsJob_obj.healthPort
-                applicationName = jenkinsJob_obj.applicationName
+                param = eval(jenkinsJob_obj.param)
                 serverInfo_obj = models.JenkinsJob_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
                 if serverInfo_obj and info['build'] == 'SUCCESS':
-                    # if info['build'] == 'SUCCESS':
                     for j in range(len(serverInfo_obj)):
-                        if healthPort == '1':
-                            param.update(RELEASE="deploy", SERVER_IP=serverInfo_obj[j].serverInfo.serverIp,
-                                         REL_VERSION=buildId,
-                                         APPLICATION_NAME=applicationName)
-                        else:
-                            param.update(RELEASE="deploy", SERVER_IP=serverInfo_obj[j].serverInfo.serverIp,
-                                         REL_VERSION=buildId,
-                                         APP_HEALTH_PORT=healthPort, APPLICATION_NAME=applicationName)
-                        pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, param)
+                        params.update(param)
+                        params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=buildId)
+                        pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
                         console = pythonJenkins_obj.deploy()
+                        params = {}
                         isFinished = console.find("Finished")
                         while isFinished == -1:
                             time.sleep(15)
@@ -392,7 +385,7 @@ def ajax_rollBack(request):
             taskBar_obj = models.TaskBar.objects.get(id=taskId)
             taskDetail_obj = models.TaskDetail.objects.filter(taskBar=taskBar_obj).order_by('priority')
             taskDetail_all_obj = models.TaskDetail.objects.all()
-            param = {}
+            params = {}
             rollbackError = []
             info = {'build': 'SUCCESS'}
             uid = str(uuid.uuid4())
@@ -400,8 +393,7 @@ def ajax_rollBack(request):
             for i in range(len(taskDetail_obj)):
                 buildId = taskDetail_obj[i].buildID
                 jenkinsJob_obj = taskDetail_obj[i].jenkinsJob
-                applicationName = jenkinsJob_obj.applicationName
-                healthPort = jenkinsJob_obj.healthPort
+                param = eval(jenkinsJob_obj.param)
                 try:
                     pre_build = \
                         taskDetail_all_obj.filter(jenkinsJob=jenkinsJob_obj, buildID__lt=buildId).order_by('-buildID')[
@@ -409,15 +401,11 @@ def ajax_rollBack(request):
                     serverInfo_obj = models.JenkinsJob_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
                     if serverInfo_obj and info['build'] == 'SUCCESS':
                         for j in range(len(serverInfo_obj)):
-                            if healthPort == '1':
-                                param.update(RELEASE="deploy", SERVER_IP=serverInfo_obj[j].serverInfo.serverIp,
-                                             REL_VERSION=pre_build, APPLICATION_NAME=applicationName)
-                            else:
-                                param.update(RELEASE="deploy", SERVER_IP=serverInfo_obj[j].serverInfo.serverIp,
-                                             REL_VERSION=pre_build,
-                                             APP_HEALTH_PORT=healthPort, APPLICATION_NAME=applicationName)
-                            pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, param)
+                            params.update(param)
+                            params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
+                            pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
                             console = pythonJenkins_obj.deploy()
+                            params = {}
                             # 判断Jenkins项目执行是否成功
                             isFinished = console.find("Finished")
                             while isFinished == -1:

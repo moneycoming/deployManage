@@ -15,9 +15,9 @@ class uat_jenkins_job_Admin(admin.ModelAdmin):
 
 
 class jenkins_job_Admin(admin.ModelAdmin):
-    list_display = ('name', 'desc', 'healthPort', 'applicationName', 'user_name', 'createDate')
-    search_fields = ('name', 'desc', 'healthPort', 'applicationName', 'createBy', 'createDate')
-    list_filter = ('name', 'desc', 'healthPort', 'applicationName', 'createBy', 'createDate')
+    list_display = ('name', 'desc', 'param', 'applicationName', 'user_name', 'createDate')
+    search_fields = ('name', 'desc', 'param', 'applicationName', 'createBy', 'createDate')
+    list_filter = ('name', 'desc', 'param', 'applicationName', 'createBy', 'createDate')
 
 
 class TaskBar_Admin(admin.ModelAdmin):
