@@ -14,12 +14,12 @@
                                     <div class="stat-icon dib flat-color-1">
                                         <i class="pe-7s-chat"></i>
                                     </div>
-                                    <div class="stat-content">
+                                    <div class="stat-content"><a href="/productionKindChart?pid={{ production.id }}">
                                         <div class="text-left dib">
                                             <div class="stat-text">总计：<span
                                                     class="count">{{ production.planCounts }}</span></div>
                                             <div class="stat-heading">{{ production.name }}</div>
-                                        </div>
+                                        </div></a>
                                     </div>
                                 </div>
                             </div>
@@ -28,24 +28,13 @@
                 {% endfor %}
             </div>
             <!-- Widgets  -->
-{#            <div class="row">#}
-{#                <div class="col-lg-12">#}
-{#                    <div class="card">#}
-{#                        <div class="card-body">#}
-{#                            <h4 class="box-title">任务统计-柱状图 </h4>#}
-{#                        </div>#}
-{#                        <div id="taskCountsPerMonth" style="min-width:auto;height:400px"></div>#}
-{#                        <div class="card-body"></div>#}
-{#                    </div>#}
-{#                </div><!-- /# column -->#}
-{#            </div>#}
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
                             <h4 class="box-title">任务统计-折线图 </h4>
                         </div>
-                        <div id="taskCountsPerMonth1" style="min-width:auto;height:400px"></div>
+                        <div id="planCountsPerMonth1" style="min-width:auto;height:400px"></div>
                         <div class="card-body"></div>
                     </div>
                 </div><!-- /# column -->

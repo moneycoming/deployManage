@@ -89,9 +89,16 @@ class production(models.Model):
         verbose_name_plural = verbose_name
 
 
+# 发布类型表
+class kind(models.Model):
+    name = models.CharField(max_length=10, verbose_name="类型名")
+    description = models.CharField(max_length=200, verbose_name="描述")
+
+
 # 发布计划表
 class deployPlan(models.Model):
     title = models.CharField(max_length=200, verbose_name="标题")
+    kind = models.ForeignKey(kind, verbose_name="发布类型")
     description = models.TextField(verbose_name="说明")
     production = models.ForeignKey(production, on_delete=models.CASCADE, verbose_name="所属产品")
     createUser = models.ForeignKey(User, verbose_name="创建者")

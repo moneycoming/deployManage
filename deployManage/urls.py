@@ -33,6 +33,7 @@ urlpatterns = [
     url(r'^iosKey$', views.fileKeySearch, name='ios'),
     url(r'^showTask$', views.showTask, name='showTask'),
     url(r'^showPlan$', views.showPlan, name='showPlan'),
+    url(r'productionKindChart', views.productionKindChart, name='productionKindChart'),
     url(r'^taskDetail', views.taskDetail, name='taskDetail'),
     url(r'^planDetail', views.planDetail, name='planDetail'),
     url(r'^createTask$', views.createTask, name='createTask'),

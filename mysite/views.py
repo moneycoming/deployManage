@@ -17,7 +17,7 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 from apscheduler.jobstores.base import ConflictingIdError
-from mysite.dataAnalysis import dataAnalysis
+from mysite.dataAnalysis import DataAnalysis
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -69,21 +69,47 @@ def index(request):
     productions = models.production.objects.all()
     monthAllPlan = []
     for i in range(len(productions)):
-        dataAnalysis_obj = dataAnalysis(productions[i])
+        dataAnalysis_obj = DataAnalysis(productions[i])
         planCounts = dataAnalysis_obj.totalCounts()
         productions.filter(id=productions[i].id).update(planCounts=planCounts)
         monthPerPlan = []
         productionName = [productions[i].name]
-        monthMixTask = []
+        monthMixPlan = []
         for j in range(1, datetime.datetime.now().month + 1):
             monthCounts = dataAnalysis_obj.monthCounts(j)
             monthPerPlan.append(monthCounts)
-        monthMixTask.append(productionName)
-        monthMixTask.append(monthPerPlan)
-        monthAllPlan.append(monthMixTask)
+        monthMixPlan.append(productionName)
+        monthMixPlan.append(monthPerPlan)
+        monthAllPlan.append(monthMixPlan)
         productionName = []
 
     template = get_template('index.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+# 产品发布类型统计图
+@login_required
+def productionKindChart(request):
+    productionId = request.GET.get('pid')
+    if productionId:
+        kinds = models.kind.objects.all()
+        production = models.production.objects.get(id=productionId)
+        dataAnalysis_obj = DataAnalysis(production)
+        monthAllKind = []
+        productionName = production.name
+        for i in range(len(kinds)):
+            kindName = [kinds[i].name]
+            monthPerKind = []
+            monthMixKind = []
+            for k in range(1, datetime.datetime.now().month + 1):
+                monthCounts = dataAnalysis_obj.monthKindCounts(k, kinds[i])
+                monthPerKind.append(monthCounts)
+            monthMixKind.append(kindName)
+            monthMixKind.append(monthPerKind)
+            monthAllKind.append(monthMixKind)
+
+    template = get_template('productionKindChart.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
 
@@ -100,16 +126,19 @@ def showPlan(request):
 @login_required
 def createPlan(request):
     productions = models.production.objects.all()
+    kinds = models.kind.objects.all()
     if request.method == 'POST':
         title = request.POST.get('title')
         desc = request.POST.get('desc')
         production = request.POST.get('production')
+        kind = request.POST.get('kind')
         createDate = datetime.datetime.now()
         createUser = request.user
         production_obj = models.production.objects.get(name=production)
+        kind_obj = models.kind.objects.get(name=kind)
 
-        plan_obj = models.deployPlan(title=title, description=desc, production=production_obj, createUser=createUser,
-                                     createDate=createDate)
+        plan_obj = models.deployPlan(title=title, description=desc, kind=kind_obj, production=production_obj,
+                                     createUser=createUser, createDate=createDate)
         plan_obj.save()
 
         return HttpResponseRedirect('/showPlan')

@@ -1,7 +1,7 @@
 from mysite import models
 
 
-class dataAnalysis:
+class DataAnalysis:
     def __init__(self, production):
         self.production = production
 
@@ -21,3 +21,14 @@ class dataAnalysis:
                 monthCounts += 1
 
         return monthCounts
+
+    def monthKindCounts(self, month, kind):
+        production = self.production
+        deployPlans = models.deployPlan.objects.filter(production=production)
+        perKindPlans = deployPlans.filter(kind=kind)
+        monthKindCounts = 0
+        for i in range(len(perKindPlans)):
+            if month == perKindPlans[i].createDate.month:
+                monthKindCounts += 1
+
+        return monthKindCounts

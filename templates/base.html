@@ -160,7 +160,7 @@
 </script>
 <!--柱状图 -->
 <script>
-    var chart = Highcharts.chart('taskCountsPerMonth', {
+    var chart = Highcharts.chart('productionCountsPerMonth', {
         chart: {
             type: 'column'
         },
@@ -197,15 +197,15 @@
             }
         },
         series: [
-                {% for monthPlan in monthAllPlan %}{
-                    name: '{{ monthPlan.0.0 }}',
-                    data: {{ monthPlan.1 }}
+                {% for monthKind in monthAllKind %}{
+                    name: '{{ monthKind.0.0 }}',
+                    data: {{ monthKind.1 }}
                     },{% endfor %}]
     });
 </script>
 <!--折线图 -->
 <script>
-    var chart = Highcharts.chart('taskCountsPerMonth1', {
+    var chart = Highcharts.chart('planCountsPerMonth1', {
         chart: {
             type: 'line'
         },
