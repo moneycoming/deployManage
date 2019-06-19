@@ -72,10 +72,7 @@ layui.use(['element', 'layer'], function () {
                     othis.removeClass(DISABLED);
                 }
                 element.progress('runtask', n + '%');
-            }, 300 + Math.random() * 1000);
-
-            // 没完成前设置为50%
-            // element.progress('runtask', '40%');
+            }, 300 + Math.random() * 5000);
 
             othis.addClass(DISABLED);
         }
@@ -85,8 +82,7 @@ layui.use(['element', 'layer'], function () {
         var othis = $(this), type = $(this).data('type');
         active[type] ? active[type].call(this, othis) : '';
         var task = {};
-        var id = getQueryVariable("tid")
-        // console.log(id);
+        var id = getQueryVariable("tid");
         task['id'] = id;
 
         $.ajax({

@@ -455,7 +455,7 @@ def ajax_rollBack(request):
         else:
             res = "找不到对应的任务"
             logger.error(res)
-            return HttpResponse("找不到对应的任务")
+            return HttpResponse(res)
 
 
 # 查看控制台信息
