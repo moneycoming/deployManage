@@ -32,71 +32,195 @@
                 <div class="col-md-12">
                     <div class="card">
                         <div class="card-header">
-                            <strong class="card-title">任务详情</strong>
+                            <strong class="card-title">执行任务</strong>
                         </div>
                         <div class="card-body">
-                            <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
-                                <ul class="layui-tab-title">
-                                    <li class="layui-this">任务信息</li>
-                                    <li>任务执行</li>
-                                    <li>任务回滚</li>
-                                    <li>执行记录</li>
-                                </ul>
-                                <div class="layui-tab-content">
-                                    <div class="layui-tab-item layui-show">
-                                        <p>【标题】{{ taskBar_obj.name }}</p>
-                                        <br>【执行顺序】
-                                        {% for task in taskDetail_obj %}
-                                            <br>{{ task.jenkinsJob.name }}：{{ task.buildID }}
-                                        {% endfor %}
-                                    </div>
-                                    <div class="layui-tab-item">
-                                        <div class="layui-progress layui-progress-big" lay-showpercent="true"
-                                             lay-filter="runtask">
-                                            <div class="layui-progress-bar layui-bg-green" lay-percent="0%"></div>
-                                        </div>
-                                        <div class="site-demo-button" style="margin-top: 20px; margin-bottom: 0;">
-                                            <button class="layui-btn layui-btn-primary runTask" data-type="loading">
-                                                立即执行
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="layui-tab-item">
-                                        <div class="layui-progress layui-progress-big" lay-showpercent="true"
-                                             lay-filter="rollback">
-                                            <div class="layui-progress-bar layui-bg-red" lay-percent="0%"></div>
-                                        </div>
-                                        <div class="site-demo-button" style="margin-top: 20px; margin-bottom: 0;">
-                                            <button class="layui-btn layui-btn-primary rollback"
-                                                    data-type="loading">
-                                                立即回滚
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="layui-tab-item">
-                                        <ul class="layui-timeline">
-                                            <button type="button" class="layui-btn layui-btn-primary" style="float: right" onclick="window.location.reload()">刷新</button>
-                                            <h5 class="page-header"></h5>
-                                            {% for task in taskHistory_obj %}
-                                                <li class="layui-timeline-item">
-                                                    <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-                                                    <div class="layui-timeline-content layui-text">
-                                                        <h3 class="layui-timeline-title">{{ task.operateTime }}</h3>
-                                                        <p>{% if task.type == 1 %}
-                                                            操作：发布
-                                                        {% else %}
-                                                            操作：回滚
-                                                        {% endif %}
-                                                            <br>执行人：{{ task.operateUser.last_name }}{{ task.operateUser.first_name }}
-                                                            <br><a href="/console_opt/{{ task.suuid }}">查看控制台信息</a>
-                                                        </p>
-                                                    </div>
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
+                            <ul id="myTab" role="tablist">
+                                {% if sequence_1 %}
+                                    <li id="step1Li" class="active blue">
+                                        <a href="#" role="tab" data-toggle="tab">
+                                            1.{{ sequence_1.segment.name }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                {% if sequence_2 %}
+                                    <li id="step2Li" class="gray">
+                                        <img id="step2Img" src="{% static "images/blue_gray.png" %}"/>
+                                        <a href="#" role="tab" data-toggle="tab">
+                                            2.{{ sequence_2.segment.name }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                {% for sequence in sequence_others %}
+                                    <li id="step{{ sequence.priority }}Li" class="gray">
+                                        <img id="step{{ sequence.priority }}Img"
+                                             src="{% static "images/gray_gray.png" %}"/>
+                                        <a href="#" role="tab" data-toggle="tab">
+                                            {{ sequence.priority }}.{{ sequence.segment.name }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <div id="myTabContent" class="tab-content">
+                                <div id="step1" class="tab-pane active">
+                                    <h5 class="page-header"></h5>
+                                    {% if sequence_1.implemented == 0 %}
+                                        <button type="button" class="layui-btn layui-btn-primary segmentBtn"
+                                                id="{{ sequence_1.id }}">执行
+                                        </button>
+                                        <button type="button" id="nextBtn"
+                                                class="layui-btn layui-btn-primary nextBtn fade"
+                                                style="float: right">
+                                            <a href="#step2" onclick="eventFun.setStep(2)" role="tab"
+                                               data-toggle="tab">下一步</a></button>
+                                    {% else %}
+                                        <h5 class="page-header"></h5>
+                                        <button type="button" id="nextBtn" class="layui-btn layui-btn-primary"
+                                                style="float: right">
+                                            <a href="#step2" onclick="eventFun.setStep(2)" role="tab"
+                                               data-toggle="tab">下一步</a></button>
+                                    {% endif %}
                                 </div>
+                                <div id="step2" class="tab-pane fade">
+                                    <h5 class="page-header"></h5>
+                                    {% if sequence_2.implemented == 0 %}
+                                        <button type="button" class="layui-btn layui-btn-primary segmentBtn"
+                                                id="{{ sequence_2.id }}">执行
+                                        </button>
+                                        <button type="button" id="nextBtn" class="layui-btn layui-btn-primary fade"
+                                                style="float: right">
+                                            <a href="#step3" onclick="eventFun.setStep(3)" role="tab"
+                                               data-toggle="tab">下一步</a></button>
+                                    {% endif %}
+                                    <h5 class="page-header"></h5>
+                                    <button type="button" class="layui-btn layui-btn-primary"
+                                            style="float: right">
+                                        <a href="#step3" onclick="eventFun.setStep(3)" role="tab"
+                                           data-toggle="tab">下一步</a></button>
+                                </div>
+                                {% for sequence in sequence_others %}
+                                    <div id="step{{ sequence.priority }}" class="tab-pane fade">
+                                        {#                                        <h5 class="page-header"></h5>#}
+                                        {% if sequence.priority == 3 %}
+                                            {% if sequence.implemented == 0 %}
+                                                <button type="button" class="layui-btn layui-btn-primary segmentBtn"
+                                                        id="{{ sequence.id }}">执行
+                                                </button>
+                                                <h5 class="page-header"></h5>
+                                                <button type="button" id="nextBtn"
+                                                        class="layui-btn layui-btn-primary fade"
+                                                        style="float: right">
+                                                    <a href="#step4" onclick="eventFun.setStep(4)" role="tab"
+                                                       data-toggle="tab">下一步</a></button>
+                                            {% endif %}
+                                            <h5 class="page-header"></h5>
+                                            <button type="button" class="layui-btn layui-btn-primary"
+                                                    style="float: right">
+                                                <a href="#step4" onclick="eventFun.setStep(4)" role="tab"
+                                                   data-toggle="tab">下一步</a></button>
+                                        {% elif sequence.priority == 4 %}
+                                            {% if sequence.implemented == 0 %}
+                                                <button type="button" class="layui-btn layui-btn-primary segmentBtn"
+                                                        id="{{ sequence.id }}">执行
+                                                </button>
+                                                <h5 class="page-header"></h5>
+                                                <button type="button" id="nextBtn"
+                                                        class="layui-btn layui-btn-primary fade"
+                                                        style="float: right">
+                                                    <a href="#step5" onclick="eventFun.setStep(5)" role="tab"
+                                                       data-toggle="tab">下一步</a></button>
+                                            {% endif %}
+                                            <h5 class="page-header"></h5>
+                                            <button type="button" class="layui-btn layui-btn-primary"
+                                                    style="float: right">
+                                                <a href="#step5" onclick="eventFun.setStep(5)" role="tab"
+                                                   data-toggle="tab">下一步</a></button>
+                                        {% elif sequence.priority == 5 %}
+                                            <h5 class="page-header"></h5>
+                                            <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+                                                <ul class="layui-tab-title">
+                                                    <li class="layui-this">任务信息</li>
+                                                    <li>任务执行</li>
+                                                    <li>任务回滚</li>
+                                                    <li>执行记录</li>
+                                                </ul>
+                                                <div class="layui-tab-content">
+                                                    <div class="layui-tab-item layui-show">
+                                                        <p>【标题】{{ taskBar.name }}</p>
+                                                        <br>【执行顺序】
+                                                        {% for task in taskDetails %}
+                                                            <br>{{ task.jenkinsJob.name }}：{{ task.buildID }}
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="layui-tab-item">
+                                                        <div class="layui-progress layui-progress-big"
+                                                             lay-showpercent="true"
+                                                             lay-filter="runtask">
+                                                            <div class="layui-progress-bar layui-bg-green"
+                                                                 lay-percent="0%"></div>
+                                                        </div>
+                                                        <div class="site-demo-button"
+                                                             style="margin-top: 20px; margin-bottom: 0;">
+                                                            <button class="layui-btn layui-btn-primary runTask"
+                                                                    data-type="loading">
+                                                                立即执行
+                                                            </button>
+                                                            <button class="layui-btn layui-btn-primary showBuildResult"
+                                                                    data-type="loading" style="float: right">
+                                                                显示控制台信息
+                                                            </button>
+                                                            <h5 class="page-header"></h5>
+                                                            <div class="layui-collapse buildResult" lay-accordion="">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="layui-tab-item">
+                                                        <div class="layui-progress layui-progress-big"
+                                                             lay-showpercent="true"
+                                                             lay-filter="rollback">
+                                                            <div class="layui-progress-bar layui-bg-red"
+                                                                 lay-percent="0%"></div>
+                                                        </div>
+                                                        <div class="site-demo-button"
+                                                             style="margin-top: 20px; margin-bottom: 0;">
+                                                            <button class="layui-btn layui-btn-primary rollback"
+                                                                    data-type="loading">
+                                                                立即回滚
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="layui-tab-item">
+                                                        <ul class="layui-timeline">
+                                                            <button type="button" class="layui-btn layui-btn-primary"
+                                                                    style="float: right"
+                                                                    onclick="window.location.reload()">刷新
+                                                            </button>
+                                                            <h5 class="page-header"></h5>
+                                                            {% for task in taskHistory %}
+                                                                <li class="layui-timeline-item">
+                                                                    <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                                                                    <div class="layui-timeline-content layui-text">
+                                                                        <h3 class="layui-timeline-title">{{ task.operateTime }}</h3>
+                                                                        <p>{% if task.type == 1 %}
+                                                                            操作：发布
+                                                                        {% else %}
+                                                                            操作：回滚
+                                                                        {% endif %}
+                                                                            <br>执行人：{{ task.operateUser.last_name }}{{ task.operateUser.first_name }}
+                                                                            <br><a href="/console_opt/{{ task.suuid }}">查看控制台信息</a>
+                                                                        </p>
+                                                                    </div>
+                                                                </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
                             </div>
+
                         </div>
                     </div>
                 </div>

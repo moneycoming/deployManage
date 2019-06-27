@@ -72,13 +72,15 @@ layui.use(['element', 'layer'], function () {
                     othis.removeClass(DISABLED);
                 }
                 element.progress('runtask', n + '%');
-            }, 300 + Math.random() * 5000);
+            }, 300 + Math.random() * 1000);
 
             othis.addClass(DISABLED);
         }
     };
 
-    $("body").on("click", ".runTask", function () {
+    $("body").on("click", ".runTask", runBuild);
+
+    function runBuild() {
         var othis = $(this), type = $(this).data('type');
         active[type] ? active[type].call(this, othis) : '';
         var task = {};
@@ -94,7 +96,7 @@ layui.use(['element', 'layer'], function () {
                 // var flag = arg
                 if (arg === "done") {
                     element.progress('runtask', '100%');
-                    // console.log(arg);
+                    console.log(arg);
                 }
                 else {
                     element.progress('runtask', '0%');
@@ -118,7 +120,7 @@ layui.use(['element', 'layer'], function () {
                 console.log('error');
             }
         })
-    });
+    }
 });
 //任务回滚
 layui.use(['element', 'layer'], function () {
@@ -234,4 +236,91 @@ layui.use(['element', 'layer'], function () {
             }
         })
     });
+});
+//任务执行环节已执行/未执行
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery;
+
+    $("body").on("click", ".segmentBtn", function () {
+        var step = $(this).parent().attr('id');
+        str = $(this).text();
+        $(this).text(str);
+        var postData = {};
+        var sequenceId = $(this).attr("id");
+        console.log(step);
+        postData['id'] = sequenceId;
+        postData['implemented'] = 1;
+
+        $.ajax({
+            url: '/ajax_taskImplement',
+            type: 'POST',
+            data: postData,
+
+            success: function (arg) {
+                if (arg.length > 0) {
+                    $(`#${step} .segmentBtn`).hide();
+                    $(`#${step} .nextBtn`).removeClass("fade").show();
+                }
+            },
+            error: function () {
+                console.log("error");
+            }
+        })
+    });
+});
+//定时局部显示控制台信息
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery
+        , element = layui.element, layer = layui.layer;
+
+    //触发事件
+    var timer;
+    $("body").on("click", ".showBuildResult", resultTimer);
+
+    function resultTimer() {
+        if (timer) {
+            getBuildResult();
+        } else {
+            console.log('no timer');
+            timer = setInterval(() => {
+                getBuildResult()
+            }, 15000)
+        }
+    }
+
+    function getBuildResult() {
+        var task = {};
+        var id = getQueryVariable("tid");
+        task['id'] = id;
+
+        $.ajax({
+            url: '/getBuildResult',
+            type: 'GET',
+            data: task,
+
+            success: function (data) {
+                html = "";
+                if (data) {
+                    html += "<div class=\"layui-colla-item\">\n" +
+                        "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
+                        "                                        <div class=\"layui-colla-content layui-show\">\n" +
+                        "                                            <p><pre>" + data + "</pre></p>\n" +
+                        "                                        </div>\n" +
+                        "                                    </div>"
+                }
+                else {
+                    html += "<div class=\"layui-colla-item\">\n" +
+                        "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
+                        "                                        <div class=\"layui-colla-content layui-show\">\n" +
+                        "                                            <p><pre>项目正在构建中，请等待。。。</pre></p>\n" +
+                        "                                        </div>\n" +
+                        "                                    </div>"
+                }
+                $(`.buildResult`).html(html);
+            },
+            error: function () {
+                console.log('error');
+            }
+        })
+    }
 });

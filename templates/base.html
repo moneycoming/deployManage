@@ -141,11 +141,11 @@
             data: {'jenkins_job_name': v},
 
             success: function (data) {
-                console.log(data);
+                {#console.log(data);#}
                 var html = "";
                 for (var i = 0; i < data.length; i++) {
                     var item = data[i];
-
+                    console.log(item);
                     html += "<option>" + item.uat_buildId + "</option>";
                 }
                 $(`#${id} #buildId`).html(html);
@@ -357,5 +357,88 @@
         color: red;
     }
 </style>
+<!--任务创建步骤引导页-->
+<style>
+
+    ul {
+        margin: 0;
+        padding: 0;
+    }
+
+    li {
+        margin: 0;
+        padding: 0;
+    }
+
+    #myTab li {
+        width: 20%;
+        float: left;
+        height: 40px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    #myTab li img {
+        float: left;
+        height: 40px;
+    }
+
+    #myTab li a {
+        color: white;
+        text-align: center;
+        position: relative;
+        display: block;
+        padding: 10px 15px;
+    }
+
+    .blue {
+        background: #0f9af2;
+    }
+
+    .gray {
+        background: #dfdfdf;
+    }
+
+    .tabPaneUl {
+        width: 700px;
+        margin: 0 auto;
+        list-style: none;
+    }
+
+    .tabPaneUl li {
+        height: 40px;
+        line-height: 40px;
+    }
+
+    .tab-pane {
+        margin-top: 50px;
+    }
+</style>
+<!--任务创建步骤引导页-->
+<script>
+    $(document).ready(function () {
+
+    });
+
+    //dom操作
+    var domFun = {};
+
+    //事件操作
+    var eventFun = {
+        setStep: function (index) {
+            for (var i = 2; i <= index; i++) {
+                $("#step" + i + "Li").addClass("blue").removeClass("gray");
+                $("#step" + i + "Img").attr("src", "{% static "images/blue_blue.png" %}");
+                $("#step" + i).addClass("active").removeClass("fade");
+            }
+            for (var j = index + 1; j <= 4; j++) {
+                $("#step" + j + "Li").addClass("gray").removeClass("blue");
+                $("#step" + j + "Img").attr("src", "{% static "images/gray_gray.png" %}");
+            }
+            $("#step" + (index + 1) + "Img").attr("src", "{% static "images/blue_gray.png" %}");
+        }
+    };
+</script>
 </body>
 </html>

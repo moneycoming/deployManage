@@ -214,9 +214,14 @@ def planDetail(request):
 def taskDetail(request):
     taskId = request.GET.get('tid')
     if taskId:
-        taskHistory_obj = models.TaskHistory.objects.filter(taskBar__id=taskId)
-        taskBar_obj = models.TaskBar.objects.get(id=taskId)
-        taskDetail_obj = models.TaskDetail.objects.filter(taskBar=taskBar_obj).order_by('priority')
+        taskHistory = models.TaskHistory.objects.filter(taskBar__id=taskId)
+        taskBar = models.TaskBar.objects.get(id=taskId)
+        taskDetails = models.TaskDetail.objects.filter(taskBar=taskBar).order_by('priority')
+        sequences = models.sequence.objects.filter(taskBar=taskBar).order_by('priority')
+        sequence_1 = sequences[0]
+        sequence_2 = sequences[1]
+        if len(sequences) > 2:
+            sequence_others = sequences[2:]
 
     template = get_template('taskDetail.html')
     html = template.render(context=locals(), request=request)
@@ -224,14 +229,29 @@ def taskDetail(request):
 
 
 @login_required
+@csrf_exempt
+def ajax_taskImplement(request):
+    implement = request.POST.get('implemented')
+    sequenceId = request.POST.get('id')
+    if sequenceId:
+        sequence = models.sequence.objects.get(id=sequenceId)
+        sequence.implemented = implement
+        sequence.save()
+
+        return HttpResponse(sequence)
+
+
+@login_required
 def createTask(request):
     jenkins_jobs = models.jenkins_job.objects.all()
     plans = models.deployPlan.objects.all()
+    segments = models.segment.objects.all()
     if request.method == 'POST':
         title = request.POST.get('title')
         jenkinsJobs = request.POST.getlist('jenkinsJob')
         planName = request.POST.get('plan')
         plan_obj = models.deployPlan.objects.get(title=planName)
+        segment = request.POST.getlist('segment')
         buildId = request.POST.getlist('buildId')
         createDate = datetime.datetime.now()
         createUser = request.user
@@ -243,6 +263,12 @@ def createTask(request):
             taskDetail_obj = models.TaskDetail(jenkinsJob=jenkinsJob_obj, taskBar=task_obj, buildID=buildId[i],
                                                createDate=createDate, createUser=createUser, priority=i)
             taskDetail_obj.save()
+
+        for j in range(len(segment)):
+            segment_obj = models.segment.objects.get(name=segment[j])
+            sequence_obj = models.sequence(segment=segment_obj, taskBar=task_obj, createDate=createDate,
+                                           createUser=createUser, priority=j + 1)
+            sequence_obj.save()
 
         return HttpResponseRedirect('/showTask')
 
@@ -263,6 +289,23 @@ def ajax_load_buildIds(request):
             result = json.dumps(data)
             print(result)
     return HttpResponse(result, "application/json")
+
+
+@login_required
+@csrf_exempt
+def ajax_console_opt(request):
+    if request.method == 'GET':
+        taskId = request.GET.get('id')
+        if taskId:
+            taskDetails = models.TaskDetail.objects.filter(taskBar__id=taskId)
+            operateHistoryList = []
+            for i in range(len(taskDetails)):
+                operateHistory = models.OperationHistory.objects.filter(taskDetail=taskDetails[i]).order_by("-id")
+                if operateHistory:
+                    data = operateHistory[0].console_opt
+                    operateHistoryList.append(data)
+
+            return HttpResponse(operateHistoryList)
 
 
 @login_required

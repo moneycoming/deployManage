@@ -121,10 +121,17 @@ class deployPlan(models.Model):
         verbose_name_plural = verbose_name
 
 
-# 发布任务表
+# 任务执行环节
+class segment(models.Model):
+    name = models.CharField(max_length=20, verbose_name="任务执行环节")
+    description = models.CharField(max_length=200, verbose_name="描述")
+
+
+# Jenkins发布任务表
 class TaskBar(models.Model):
     name = models.CharField(max_length=200, verbose_name="任务名称")
     jenkinsJob = models.ManyToManyField(jenkins_job, through='TaskDetail')
+    segment = models.ManyToManyField(segment, through='sequence')
     plan = models.ForeignKey(deployPlan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者")
@@ -139,6 +146,17 @@ class TaskBar(models.Model):
     class Meta:
         verbose_name = u'任务信息'
         verbose_name_plural = verbose_name
+
+
+# 任务执行队列
+class sequence(models.Model):
+    segment = models.ForeignKey(segment, on_delete=models.CASCADE)
+    taskBar = models.ForeignKey(TaskBar, on_delete=models.CASCADE)
+    createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
+    createUser = models.ForeignKey(User, verbose_name="创建者")
+    priority = models.IntegerField(verbose_name="任务执行顺序")
+    implemented = models.BooleanField(default=False, verbose_name="是否执行")
+    Remarks = models.CharField(max_length=200, blank=True, verbose_name="备注")
 
 
 # 任务详情，用于任务回滚等
