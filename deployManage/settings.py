@@ -147,6 +147,16 @@ DATABASES = {
     # }
 }
 
+# email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+EMAIL_HOST = 'smtp.qiye.aliyun.com'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = 'zhumingjie@zhixuezhen.com'
+EMAIL_HOST_PASSWORD = 'Zhu8335466'
+
+
 # log
 cur_path = os.path.dirname(os.path.realpath(__file__))  # log_path是存放日志的路径
 log_path = os.path.join(os.path.dirname(cur_path), 'logs')

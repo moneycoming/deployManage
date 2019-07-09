@@ -18,6 +18,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 from apscheduler.jobstores.base import ConflictingIdError
 from mysite.dataAnalysis import DataAnalysis
+from django.core.mail import send_mail
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -277,6 +278,7 @@ def ajax_autoCodeMerge(request):
         else:
             res = "以下项目%s的分支合并冲突，请手动处理！" % info
 
+        send_mail(task.name, res, 'zhumingjie@zhixuezhen.com', ['hepengchong@zhixuezhen.com'], fail_silently=False)
         return HttpResponse(res)
 
 
@@ -301,7 +303,8 @@ def createTask(request):
         for i in range(len(jenkinsJobs)):
             jenkinsJob_obj = models.pro_jenkinsJob.objects.get(name=jenkinsJobs[i])
             taskDetail_obj = models.taskDetail(proJenkins=jenkinsJob_obj, task=task_obj, packageId=buildId[i],
-                                               branch=Branch[i], createDate=createDate, createUser=createUser, priority=i)
+                                               branch=Branch[i], createDate=createDate, createUser=createUser,
+                                               priority=i)
             taskDetail_obj.save()
 
         for j in range(len(segment)):
@@ -450,6 +453,8 @@ def ajax_runBuild(request):
                 taskHistory_obj.save()
                 res = "任务编号: %s,发布成功" % task_obj.id
                 logger.info(res)
+                send_mail(task_obj.name, res, 'zhumingjie@zhixuezhen.com', ['hepengchong@zhixuezhen.com'],
+                          fail_silently=False)
                 return HttpResponse("done")
             else:
                 if len(rollbackError) > 0:
@@ -457,6 +462,8 @@ def ajax_runBuild(request):
                 else:
                     res = "项目：%s,所在服务器：%s,发布失败,发布事务回退！--回退成功！" % (info['jenkinsName'], info['serverName'])
                 logger.info(res)
+                send_mail(task_obj.name, res, 'zhumingjie@zhixuezhen.com', ['hepengchong@zhixuezhen.com'],
+                          fail_silently=False)
                 return HttpResponse(res)
         else:
             res = "找不到对应的任务"
@@ -532,6 +539,8 @@ def ajax_rollBack(request):
                 taskHistory_obj.save()
                 res = "任务编号: %s, 回滚成功" % taskId
                 logger.info(res)
+                send_mail(task_obj.name, res, 'zhumingjie@zhixuezhen.com', ['hepengchong@zhixuezhen.com'],
+                          fail_silently=False)
                 return HttpResponse("done")
             else:
                 if len(rollbackError) > 0:
@@ -539,6 +548,8 @@ def ajax_rollBack(request):
                 else:
                     res = "项目：%s,所在服务器：%s,回滚失败，回滚事务回退！ --事务回退成功！" % (info['jenkinsName'], info['serverName'])
                 logger.info(res)
+                send_mail(task_obj.name, res, 'zhumingjie@zhixuezhen.com', ['hepengchong@zhixuezhen.com'],
+                          fail_silently=False)
                 return HttpResponse(res)
         else:
             res = "找不到对应的任务"
