@@ -73,12 +73,12 @@ class production_Admin(object):
     list_display = ['name', 'taskCounts', 'user_name', 'createDate']
 
 
-xadmin.site.register(uat_jenkins_job, uat_jenkins_job_Admin)
+xadmin.site.register(uat_jenkinsJob, uat_jenkins_job_Admin)
 xadmin.site.register(ServerInfo, ServerInfo_Admin)
-xadmin.site.register(jenkins_job, jenkins_job_Admin)
-xadmin.site.register(TaskBar, TaskBar_Admin)
-xadmin.site.register(TaskDetail, TaskDetail_Admin)
-xadmin.site.register(OperationHistory, OperationHistory_Admin)
-xadmin.site.register(TaskHistory, TaskHistory_Admin)
-xadmin.site.register(JenkinsJob_ServerInfo, JenkinsJob_ServerInfo_Admin)
+xadmin.site.register(project, jenkins_job_Admin)
+xadmin.site.register(task, TaskBar_Admin)
+xadmin.site.register(taskDetail, TaskDetail_Admin)
+xadmin.site.register(operationHistory, OperationHistory_Admin)
+xadmin.site.register(taskHistory, TaskHistory_Admin)
+xadmin.site.register(proJenkins_ServerInfo, JenkinsJob_ServerInfo_Admin)
 xadmin.site.register(production, production_Admin)

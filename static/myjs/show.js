@@ -259,7 +259,7 @@ layui.use(['element', 'layer'], function () {
             success: function (arg) {
                 if (arg.length > 0) {
                     $(`#${step} .segmentBtn`).hide();
-                    $(`#${step} .nextBtn`).removeClass("fade").show();
+                    $(`#${step} #nextBtn`).removeClass("fade").show();
                 }
             },
             error: function () {
@@ -284,7 +284,7 @@ layui.use(['element', 'layer'], function () {
             console.log('no timer');
             timer = setInterval(() => {
                 getBuildResult()
-            }, 15000)
+            }, 3000)
         }
     }
 
@@ -323,4 +323,41 @@ layui.use(['element', 'layer'], function () {
             }
         })
     }
+});
+//执行代码自动合并
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", ".autoCodeMerge", function () {
+        var step = $(this).parent().attr('id');
+        var postData = {};
+        postData['id'] = $(this).attr("id");
+        postData['implemented'] = 1;
+
+        $.ajax({
+            url: '/ajax_autoCodeMerge',
+            type: 'POST',
+            data: postData,
+
+            success: function (arg) {
+                layer.open({
+                    type: 1
+                    , title: '合并结果'
+                    , content: '<div style="padding: 20px 100px;">' + arg + '</div>'
+                    , btn: '关闭'
+                    , btnAlign: 'c' //按钮居中
+                    , area: '500px;'
+                    , shade: 0.5 //不显示遮罩
+                    , yes: function () {
+                        layer.closeAll();
+                    }
+                });
+                $(`#${step} .autoCodeMerge`).hide();
+                $(`#${step} #nextBtn`).removeClass("fade").show();
+            },
+            error: function () {
+                console.log("error");
+            }
+        })
+    });
 });

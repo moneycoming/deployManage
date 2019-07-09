@@ -2,6 +2,9 @@ import jenkins
 from mysite import models
 import time
 import logging
+import os
+import subprocess
+
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -45,6 +48,25 @@ class PythonJenkins:
         return last_build_number
 
 
+class projectBean:
+    def __init__(self, project):
+        self.project = project
+
+    def look_branch(self):
+        project = self.project
+        # jenkinsJob_obj = models.jenkins_job.objects.get(name=jenkinsJob)
+        project_dir = project.project_dir
+        os.chdir(project_dir)
+        branch_byte = subprocess.check_output(["git", "branch", "-r"])
+        branch_str = str(branch_byte, 'utf-8')
+        branches = branch_str.split('\n')
+        branch_list = []
+        for branch in branches[1: -1]:
+            branch_list.append(branch.lstrip('* origin/'))
+
+        return branch_list
+
+
 # 事务回滚
 class Transaction:
     def __init__(self, taskDetail_obj, taskDetail_all_obj, priority):
@@ -68,7 +90,7 @@ class Transaction:
                 pre_build = \
                     taskDetail_all_obj.filter(jenkinsJob=jenkinsJob_obj, buildID__lt=buildId).order_by('-buildID')[
                         0].buildID
-                serverInfo_obj = models.JenkinsJob_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+                serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
                 for j in range(len(serverInfo_obj)):
                     params.update(param)
                     params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
@@ -106,7 +128,7 @@ class Transaction:
             buildId = trans_taskDetail_obj[i].buildID
             jenkinsJob_obj = trans_taskDetail_obj[i].jenkinsJob
             param = eval(jenkinsJob_obj.param)
-            serverInfo_obj = models.JenkinsJob_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+            serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
             for s in range(len(serverInfo_obj)):
                 params.update(param)
                 params.update(SERVER_IP=serverInfo_obj[s].serverInfo.serverIp, REL_VERSION=buildId)

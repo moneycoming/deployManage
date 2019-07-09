@@ -14,3 +14,4 @@ static/admin
 logs
 venv
 extra_apps/xadmin/migrations
+mysite/gitMerge.py

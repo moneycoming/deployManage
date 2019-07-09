@@ -8,16 +8,22 @@ class ServerInfo_Admin(admin.ModelAdmin):
     list_filter = ('name', 'serverIp')
 
 
+class pro_jenkins_job_Admin(admin.ModelAdmin):
+    list_display = ('name', 'param')
+    search_fields = ('name', 'param')
+    list_filter = ('name', 'param')
+
+
 class uat_jenkins_job_Admin(admin.ModelAdmin):
-    list_display = ('name', 'jenkinsJob_name', 'uat_buildId')
-    search_fields = ('name', 'jenkins_job', 'uat_buildId')
-    list_filter = ('name', 'jenkins_job', 'uat_buildId')
+    list_display = ('name', 'buildId')
+    search_fields = ('name', 'buildId')
+    list_filter = ('name', 'buildId')
 
 
-class jenkins_job_Admin(admin.ModelAdmin):
-    list_display = ('name', 'desc', 'param', 'applicationName', 'user_name', 'createDate')
-    search_fields = ('name', 'desc', 'param', 'applicationName', 'createBy', 'createDate')
-    list_filter = ('name', 'desc', 'param', 'applicationName', 'createBy', 'createDate')
+class project_job_Admin(admin.ModelAdmin):
+    list_display = ('name', 'desc', 'applicationName', 'project_dir', 'createBy', 'createDate')
+    search_fields = ('name', 'desc', 'applicationName', 'project_dir', 'createBy', 'createDate')
+    list_filter = ('name', 'desc', 'applicationName', 'project_dir', 'createBy', 'createDate')
 
 
 class TaskBar_Admin(admin.ModelAdmin):
@@ -27,9 +33,9 @@ class TaskBar_Admin(admin.ModelAdmin):
 
 
 class TaskDetail_Admin(admin.ModelAdmin):
-    list_display = ('jenkinsJob_name', 'buildID', 'createDate', 'user_name', 'priority')
-    search_fields = ('buildID', 'createDate', 'createUser', 'priority')
-    list_filter = ('buildID', 'createDate', 'createUser', 'priority')
+    list_display = ('packageId', 'createDate', 'user_name', 'priority')
+    search_fields = ('packageId', 'createDate', 'createUser', 'priority')
+    list_filter = ('packageId', 'createDate', 'createUser', 'priority')
 
 
 class OperationHistory_Admin(admin.ModelAdmin):
@@ -39,21 +45,22 @@ class OperationHistory_Admin(admin.ModelAdmin):
 
 
 class TaskHistory_Admin(admin.ModelAdmin):
-    list_display = ('taskBar_name', 'user_name', 'operateTime', 'type', 'suuid')
+    list_display = ('task_name', 'user_name', 'operateTime', 'type', 'suuid')
     search_fields = ('operateTime', 'type', 'suuid')
     list_filter = ('operateTime', 'type', 'suuid')
 
 
 class JenkinsJob_ServerInfo_Admin(admin.ModelAdmin):
-    list_display = ('jenkinsJob_name', 'serverInfo_name')
+    list_display = ('proJenkins_name', 'serverInfo_name')
 
 
-admin.site.register(uat_jenkins_job, uat_jenkins_job_Admin)
+admin.site.register(uat_jenkinsJob, uat_jenkins_job_Admin)
 admin.site.register(ServerInfo, ServerInfo_Admin)
-admin.site.register(jenkins_job, jenkins_job_Admin)
-admin.site.register(TaskBar, TaskBar_Admin)
-admin.site.register(TaskDetail, TaskDetail_Admin)
-admin.site.register(OperationHistory, OperationHistory_Admin)
-admin.site.register(TaskHistory, TaskHistory_Admin)
-admin.site.register(JenkinsJob_ServerInfo, JenkinsJob_ServerInfo_Admin)
+admin.site.register(project, project_job_Admin)
+admin.site.register(pro_jenkinsJob, pro_jenkins_job_Admin)
+admin.site.register(task, TaskBar_Admin)
+admin.site.register(taskDetail, TaskDetail_Admin)
+admin.site.register(operationHistory, OperationHistory_Admin)
+admin.site.register(taskHistory, TaskHistory_Admin)
+admin.site.register(proJenkins_ServerInfo, JenkinsJob_ServerInfo_Admin)
 

@@ -6,10 +6,10 @@ from django.template.loader import get_template
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import connection, connections
-from mysite.functions import TimeChange, fileObj
+from mysite.functions import TimeChange, fileObj, branch
 from mysite import models
 import datetime
-from mysite.jenkinsUse import PythonJenkins, Transaction
+from mysite.jenkinsUse import PythonJenkins, Transaction, projectBean
 from django.views.decorators.csrf import csrf_exempt
 import uuid
 import time
@@ -28,37 +28,45 @@ scheduler.add_jobstore(DjangoJobStore(), "default")
 try:
     @register_job(scheduler, "interval", seconds=60)
     def get_uat_buildId():
-        jenkins_job_obj = models.jenkins_job.objects.all()
-        print('=======================================')
-        print(len(jenkins_job_obj))
-        for i in range(len(jenkins_job_obj)):
-            uat_job_name = "UAT-" + jenkins_job_obj[i].applicationName
+        projects = models.project.objects.all()
+        for i in range(len(projects)):
+            uat_job_name = "UAT-" + projects[i].applicationName
             param = {}
             python_jenkins_obj = PythonJenkins(uat_job_name, param)
             uat_buildId = python_jenkins_obj.look_uat_buildId()
-            print(jenkins_job_obj[i].name, uat_buildId)
             if uat_buildId:
-                uat_jenkins_job_obj = models.uat_jenkins_job.objects.filter(jenkins_job=jenkins_job_obj[i])
+                uat_jenkinsJobs = models.uat_jenkinsJob.objects.filter(project=projects[i])
                 repetition = "1"
-                for j in range(len(uat_jenkins_job_obj)):
-                    if uat_buildId == uat_jenkins_job_obj[j].uat_buildId:
+                for j in range(len(uat_jenkinsJobs)):
+                    if uat_buildId == uat_jenkinsJobs[j].buildId:
                         repetition = "0"
+                        logger.info(
+                            "uat_jenkins_job: %s, uat_buildId: %d, 已存在" % (uat_jenkinsJobs[j].name, uat_buildId))
                         break
                 if repetition == "1":
-                    uat_jenkins_job_obj_new = models.uat_jenkins_job(name=uat_job_name, jenkins_job=jenkins_job_obj[i],
-                                                                     uat_buildId=uat_buildId)
-                    uat_jenkins_job_obj_new.save()
+                    uat_jenkinsJob_Model = models.uat_jenkinsJob(name=uat_job_name, project=projects[i],
+                                                                 buildId=uat_buildId)
+                    uat_jenkinsJob_Model.save()
                     logger.info(
-                        "uat_jenkins_job: %s, uat_buildId: %d,已存储" % (uat_jenkins_job_obj[j].name, uat_buildId))
-                else:
-                    logger.info(
-                        "uat_jenkins_job: %s, uat_buildId: %d, 已存在" % (uat_jenkins_job_obj[j].name, uat_buildId))
+                        "uat_jenkins_job: %s, uat_buildId: %d,已存储" % (uat_job_name, uat_buildId))
+
+
+    @register_job(scheduler, "interval", seconds=3600)
+    def get_branch_info():
+        projects = models.project.objects.all()
+        for k in range(len(projects)):
+            models.branch.objects.filter(project=projects[k]).delete()
+            projectBean_obj = projectBean(projects[k])
+            branchList = projectBean_obj.look_branch()
+            for i in range(len(branchList)):
+                branchModel = models.branch(name=branchList[i], project=projects[k])
+                branchModel.save()
+                logger.info("jenkins_job: %s, 分支: %s" % (projects[k].name, branchList[i]))
 
 
     register_events(scheduler)
     scheduler.start()
 except ConflictingIdError as e:
-    print(e)
     scheduler.remove_all_jobs()
     scheduler.start()
 
@@ -151,8 +159,8 @@ def createPlan(request):
 @login_required
 def showTask(request):
     # 使用了js分页技术，无须做分页
-    jenkins_tasks = models.TaskDetail.objects.all()
-    taskBar_obj = models.TaskBar.objects.all()
+    jenkins_tasks = models.taskDetail.objects.all()
+    taskBar_obj = models.task.objects.all()
 
     template = get_template('showTask.html')
     html = template.render(context=locals(), request=request)
@@ -167,7 +175,7 @@ def ajax_showTask(request):
     taskId = request.POST.get('id')
     print(onOff, taskId)
     if taskId:
-        task = models.TaskBar.objects.get(id=taskId)
+        task = models.task.objects.get(id=taskId)
         task.onOff = onOff
         task.save()
 
@@ -180,7 +188,7 @@ def ajax_showTask(request):
 def ajax_deleteTask(request):
     taskId = request.POST.get('id')
     if taskId:
-        task = models.TaskBar.objects.get(id=taskId)
+        task = models.task.objects.get(id=taskId)
         task.delete()
 
         return HttpResponse("success")
@@ -203,7 +211,7 @@ def planDetail(request):
     planId = request.GET.get('pid')
     if planId:
         plan_obj = models.deployPlan.objects.get(id=planId)
-        tasks = models.TaskBar.objects.filter(plan__id=planId)
+        tasks = models.task.objects.filter(plan__id=planId)
 
     template = get_template('planDetail.html')
     html = template.render(context=locals(), request=request)
@@ -214,10 +222,10 @@ def planDetail(request):
 def taskDetail(request):
     taskId = request.GET.get('tid')
     if taskId:
-        taskHistory = models.TaskHistory.objects.filter(taskBar__id=taskId)
-        taskBar = models.TaskBar.objects.get(id=taskId)
-        taskDetails = models.TaskDetail.objects.filter(taskBar=taskBar).order_by('priority')
-        sequences = models.sequence.objects.filter(taskBar=taskBar).order_by('priority')
+        taskHistory = models.taskHistory.objects.filter(task__id=taskId)
+        task = models.task.objects.get(id=taskId)
+        taskDetails = models.taskDetail.objects.filter(task=task).order_by('priority')
+        sequences = models.sequence.objects.filter(task=task).order_by('priority')
         sequence_1 = sequences[0]
         sequence_2 = sequences[1]
         if len(sequences) > 2:
@@ -241,9 +249,40 @@ def ajax_taskImplement(request):
         return HttpResponse(sequence)
 
 
+# 代码自动合并
+@login_required
+@csrf_exempt
+def ajax_autoCodeMerge(request):
+    implement = request.POST.get('implemented')
+    sequenceId = request.POST.get('id')
+    if sequenceId:
+        sequence = models.sequence.objects.get(id=sequenceId)
+        sequence.implemented = implement
+        sequence.save()
+        task = sequence.task
+        taskDetails = models.taskDetail.objects.filter(task=task)
+        mergeTo = "master"
+        info = []
+        for i in range(len(taskDetails)):
+            jenkinsJob = taskDetails[i].proJenkins
+            mergeFrom = taskDetails[i].branch
+            project_dir = jenkinsJob.project.project_dir
+            branch_obj = branch(project_dir)
+            status = branch_obj.merge(mergeFrom, mergeTo, status=False)
+            if not status:
+                info.append(jenkinsJob.name)
+
+        if len(info) == 0:
+            res = "所有项目的分支合并完成！！"
+        else:
+            res = "以下项目%s的分支合并冲突，请手动处理！" % info
+
+        return HttpResponse(res)
+
+
 @login_required
 def createTask(request):
-    jenkins_jobs = models.jenkins_job.objects.all()
+    jenkins_jobs = models.pro_jenkinsJob.objects.all()
     plans = models.deployPlan.objects.all()
     segments = models.segment.objects.all()
     if request.method == 'POST':
@@ -253,20 +292,21 @@ def createTask(request):
         plan_obj = models.deployPlan.objects.get(title=planName)
         segment = request.POST.getlist('segment')
         buildId = request.POST.getlist('buildId')
+        Branch = request.POST.getlist('branch')
         createDate = datetime.datetime.now()
         createUser = request.user
-        task_obj = models.TaskBar(name=title, plan=plan_obj, createUser=createUser, createDate=createDate, onOff=1)
+        task_obj = models.task(name=title, plan=plan_obj, createUser=createUser, createDate=createDate, onOff=1)
         task_obj.save()
 
         for i in range(len(jenkinsJobs)):
-            jenkinsJob_obj = models.jenkins_job.objects.get(name=jenkinsJobs[i])
-            taskDetail_obj = models.TaskDetail(jenkinsJob=jenkinsJob_obj, taskBar=task_obj, buildID=buildId[i],
-                                               createDate=createDate, createUser=createUser, priority=i)
+            jenkinsJob_obj = models.pro_jenkinsJob.objects.get(name=jenkinsJobs[i])
+            taskDetail_obj = models.taskDetail(proJenkins=jenkinsJob_obj, task=task_obj, packageId=buildId[i],
+                                               branch=Branch[i], createDate=createDate, createUser=createUser, priority=i)
             taskDetail_obj.save()
 
         for j in range(len(segment)):
             segment_obj = models.segment.objects.get(name=segment[j])
-            sequence_obj = models.sequence(segment=segment_obj, taskBar=task_obj, createDate=createDate,
+            sequence_obj = models.sequence(segment=segment_obj, task=task_obj, createDate=createDate,
                                            createUser=createUser, priority=j + 1)
             sequence_obj.save()
 
@@ -277,18 +317,23 @@ def createTask(request):
     return HttpResponse(html)
 
 
-# 获取uat_buildId
+# 获取分支和发布包编号
 @login_required
-def ajax_load_buildIds(request):
+def ajax_load_info(request):
     if request.method == 'GET':
         jenkins_job_name = request.GET.get('jenkins_job_name')
         if jenkins_job_name:
-            jenkins_job = models.jenkins_job.objects.get(name=jenkins_job_name)
-            uat_jenkins_jobs = models.uat_jenkins_job.objects.filter(jenkins_job=jenkins_job).order_by("-id")
-            data = list(uat_jenkins_jobs.values("uat_buildId"))
-            result = json.dumps(data)
-            print(result)
-    return HttpResponse(result, "application/json")
+            project_obj = models.pro_jenkinsJob.objects.get(name=jenkins_job_name).project
+            branches = models.branch.objects.filter(project=project_obj)
+            uat_jenkins_jobs = models.uat_jenkinsJob.objects.filter(project=project_obj).order_by("-id")
+            buildList = list(uat_jenkins_jobs.values("buildId"))
+            branchList = list(branches.values("name"))
+            allList = buildList
+            for i in range(len(branchList)):
+                allList.append(branchList[i])
+            allListResult = json.dumps(allList)
+
+            return HttpResponse(allListResult, "application/json")
 
 
 @login_required
@@ -297,10 +342,10 @@ def ajax_console_opt(request):
     if request.method == 'GET':
         taskId = request.GET.get('id')
         if taskId:
-            taskDetails = models.TaskDetail.objects.filter(taskBar__id=taskId)
+            taskDetails = models.taskDetail.objects.filter(task__id=taskId)
             operateHistoryList = []
             for i in range(len(taskDetails)):
-                operateHistory = models.OperationHistory.objects.filter(taskDetail=taskDetails[i]).order_by("-id")
+                operateHistory = models.operationHistory.objects.filter(taskDetail=taskDetails[i]).order_by("-id")
                 if operateHistory:
                     data = operateHistory[0].console_opt
                     operateHistoryList.append(data)
@@ -350,9 +395,9 @@ def ajax_runBuild(request):
     if request.method == 'POST':
         taskId = request.POST.get('id')
         if taskId:
-            taskDetail_all_obj = models.TaskDetail.objects.all()
-            taskDetail_obj = models.TaskDetail.objects.filter(taskBar=taskId).order_by('priority')
-            taskBar_obj = models.TaskBar.objects.get(id=taskId)
+            taskDetail_all_obj = models.taskDetail.objects.all()
+            taskDetail_obj = models.taskDetail.objects.filter(taskBar=taskId).order_by('priority')
+            task_obj = models.task.objects.get(id=taskId)
             info = {'build': 'SUCCESS'}
             params = {}
             rollbackError = []
@@ -362,7 +407,7 @@ def ajax_runBuild(request):
                 buildId = taskDetail_obj[i].buildID
                 jenkinsJob_obj = taskDetail_obj[i].jenkinsJob
                 param = eval(jenkinsJob_obj.param)
-                serverInfo_obj = models.JenkinsJob_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+                serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
                 if serverInfo_obj and info['build'] == 'SUCCESS':
                     for j in range(len(serverInfo_obj)):
                         params.update(param)
@@ -388,7 +433,7 @@ def ajax_runBuild(request):
                             info['build'] = 'Fail'
                             break
                         else:
-                            operateHistory_obj = models.OperationHistory(console_opt=console, type=1,
+                            operateHistory_obj = models.operationHistory(console_opt=console, type=1,
                                                                          operateUser=request.user,
                                                                          server=serverInfo_obj[j].serverInfo,
                                                                          taskDetail=taskDetail_obj[i], suuid=suid)
@@ -401,9 +446,9 @@ def ajax_runBuild(request):
                     break
 
             if info['build'] == 'SUCCESS':
-                taskHistory_obj = models.TaskHistory(type=1, operateUser=request.user, taskBar=taskBar_obj, suuid=suid)
+                taskHistory_obj = models.taskHistory(type=1, operateUser=request.user, task=task_obj, suuid=suid)
                 taskHistory_obj.save()
-                res = "任务编号: %s,发布成功" % taskBar_obj.id
+                res = "任务编号: %s,发布成功" % task_obj.id
                 logger.info(res)
                 return HttpResponse("done")
             else:
@@ -425,9 +470,9 @@ def ajax_rollBack(request):
     if request.method == 'POST':
         taskId = request.POST.get('id')
         if taskId:
-            taskBar_obj = models.TaskBar.objects.get(id=taskId)
-            taskDetail_obj = models.TaskDetail.objects.filter(taskBar=taskBar_obj).order_by('priority')
-            taskDetail_all_obj = models.TaskDetail.objects.all()
+            task_obj = models.task.objects.get(id=taskId)
+            taskDetail_obj = models.taskDetail.objects.filter(task=task_obj).order_by('priority')
+            taskDetail_all_obj = models.taskDetail.objects.all()
             params = {}
             rollbackError = []
             info = {'build': 'SUCCESS'}
@@ -441,7 +486,7 @@ def ajax_rollBack(request):
                     pre_build = \
                         taskDetail_all_obj.filter(jenkinsJob=jenkinsJob_obj, buildID__lt=buildId).order_by('-buildID')[
                             0].buildID
-                    serverInfo_obj = models.JenkinsJob_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+                    serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
                     if serverInfo_obj and info['build'] == 'SUCCESS':
                         for j in range(len(serverInfo_obj)):
                             params.update(param)
@@ -468,7 +513,7 @@ def ajax_rollBack(request):
                                 info['build'] = 'Fail'
                                 break
                             else:
-                                operateHistory_obj = models.OperationHistory(console_opt=console, type=2,
+                                operateHistory_obj = models.operationHistory(console_opt=console, type=2,
                                                                              operateUser=request.user,
                                                                              server=serverInfo_obj[j].serverInfo,
                                                                              taskDetail=taskDetail_obj[i])
@@ -483,7 +528,7 @@ def ajax_rollBack(request):
                     logger.error("%s已是首发版本，无法回退" % jenkinsJob_obj.name)
 
             if info['build'] == 'SUCCESS':
-                taskHistory_obj = models.TaskHistory(type=2, operateUser=request.user, taskBar=taskBar_obj, suuid=suid)
+                taskHistory_obj = models.taskHistory(type=2, operateUser=request.user, task=task_obj, suuid=suid)
                 taskHistory_obj.save()
                 res = "任务编号: %s, 回滚成功" % taskId
                 logger.info(res)
@@ -505,8 +550,8 @@ def ajax_rollBack(request):
 @login_required
 def console_opt(request, uid):
     if uid:
-        operateHistory_obj = models.OperationHistory.objects.filter(suuid=uid)
-        taskHistory = models.TaskHistory.objects.get(suuid=uid)
+        operateHistory_obj = models.operationHistory.objects.filter(suuid=uid)
+        taskHistory = models.taskHistory.objects.get(suuid=uid)
 
     template = get_template('console_opt.html')
     html = template.render(context=locals(), request=request)

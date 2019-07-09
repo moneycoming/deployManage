@@ -26,7 +26,7 @@ from xadmin.plugins import xversion
 xversion.register_models()
 
 urlpatterns = [
-    # url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', include(admin.site.urls)),
     url(r'^xadmin/', include(xadmin.site.urls)),
     url(r'^accounts/', include('allauth.urls')),
     url(r'^$', views.index, name='index'),
@@ -45,6 +45,7 @@ urlpatterns = [
     url(r'^ajax_deletePlan$', views.ajax_deletePlan),
     url(r'^ajax_taskImplement', views.ajax_taskImplement),
     url(r'^console_opt/(\w+)', views.console_opt, name='console'),
-    url(r'^ajax_load_buildIds$', views.ajax_load_buildIds, name='load_buildIds'),
+    url(r'^ajax_load_info', views.ajax_load_info, name='load_info'),
+    url(r'^ajax_autoCodeMerge$', views.ajax_autoCodeMerge, name='autoCodeMerge'),
     url(r'^getBuildResult$', views.ajax_console_opt),
 ]
