@@ -58,15 +58,15 @@ class branch:
             # 测试的时候关闭推送功能
             # origin.push(mergeTo)
             status = True
-            logging.info('分支%s合并成功！' % mergeFrom)
+            logging.info("分支%s合并成功！" % mergeFrom)
         except:
             past_branch = repo.create_head(mergeTo, 'HEAD')
             repo.head.reference = past_branch
             repo.head.reset(index=True, working_tree=True)
-            logging.error('分支%s合并冲突，请手动处理！' % mergeFrom)
+            logging.error("分支%s合并冲突，请手动处理！" % mergeFrom)
         try:
             repo.delete_head(mergeFrom)
         except:
-            logging.info('线上没有%s分支！' % mergeFrom)
+            logging.info("线上没有%s分支！" % mergeFrom)
 
         return status

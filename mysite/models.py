@@ -140,6 +140,7 @@ class deployPlan(models.Model):
 class segment(models.Model):
     name = models.CharField(max_length=20, verbose_name="任务执行环节")
     description = models.CharField(max_length=200, verbose_name="描述")
+    isDeploy = models.BooleanField(default=False, verbose_name="是否为项目部署环境")
 
 
 # Jenkins发布任务表
@@ -167,6 +168,8 @@ class task(models.Model):
 class sequence(models.Model):
     segment = models.ForeignKey(segment, on_delete=models.CASCADE)
     task = models.ForeignKey(task, on_delete=models.CASCADE)
+    pre_segment = models.IntegerField(verbose_name="上个节点序号")
+    next_segment = models.IntegerField(verbose_name="下个节点序号")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(User, verbose_name="创建者")
     priority = models.IntegerField(verbose_name="任务执行顺序")
