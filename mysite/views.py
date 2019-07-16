@@ -243,12 +243,14 @@ def taskDetail(request):
 def ajax_taskImplement(request):
     implement = request.POST.get('implemented')
     sequenceId = request.POST.get('id')
+    remark = request.POST.get('remark')
     if sequenceId:
         sequence = models.sequence.objects.get(id=sequenceId)
         sequence.implemented = implement
+        sequence.remarks = remark
         sequence.save()
 
-        return HttpResponse(sequence)
+        return HttpResponse(remark)
 
 
 # 代码自动合并

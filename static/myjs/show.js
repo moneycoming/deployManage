@@ -247,9 +247,10 @@ layui.use(['element', 'layer'], function () {
         $(this).text(str);
         var postData = {};
         var sequenceId = $(this).attr("id");
-        console.log(step);
+        var remark = $(this).parent().children("#remark").val();
         postData['id'] = sequenceId;
         postData['implemented'] = 1;
+        postData['remark'] = remark;
 
         $.ajax({
             url: '/ajax_taskImplement',
@@ -258,7 +259,9 @@ layui.use(['element', 'layer'], function () {
 
             success: function (arg) {
                 if (arg.length > 0) {
+                    $(`#${step} #p1`).removeClass("fade").html(arg);
                     $(`#${step} .segmentBtn`).hide();
+                    $(`#${step} #remark`).hide();
                     $(`#${step} #nextBtn`).removeClass("fade").show();
                 }
             },

@@ -164,6 +164,11 @@
                                             <div id="step1" class="tab-pane active">
                                                 <h5 class="page-header"></h5>
                                                 {% if sequence.implemented == 0 %}
+                                                    <p id="p1" class="fade"></p>
+                                                    <textarea class="form-control" name="desc" id="remark"
+                                                              placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）"
+                                                              rows="4" value=""></textarea>
+                                                    <h5 class="page-header"></h5>
                                                     <button type="button" class="layui-btn layui-btn-primary segmentBtn"
                                                             id="{{ sequence.id }}">执行
                                                     </button>
@@ -176,6 +181,8 @@
                                                            data-toggle="tab">下一步</a></button>
                                                 {% else %}
                                                     <h5 class="page-header"></h5>
+                                                    <p>执行人：{{ sequence.createUser.last_name }} {{ sequence.createUser.first_name }}</p>
+                                                    <p>备注：{{ sequence.remarks }}</p>
                                                     <button type="button" class="layui-btn layui-btn-primary"
                                                             style="float: right">
                                                         <a href="#step{{ sequence.next_segment }}"
@@ -280,6 +287,11 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane fade">
                                                 <h5 class="page-header"></h5>
                                                 {% if sequence.implemented == 0 %}
+                                                    <p id="p1" class="fade"></p>
+                                                    <textarea class="form-control" name="desc" id="remark"
+                                                              placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）"
+                                                              rows="4"></textarea>
+                                                    <h5 class="page-header"></h5>
                                                     <button type="button" class="layui-btn layui-btn-primary segmentBtn"
                                                             id="{{ sequence.id }}">执行
                                                     </button>
@@ -291,6 +303,9 @@
                                                            role="tab" data-toggle="tab">下一步</a></button>
                                                 {% else %}
                                                     <h5 class="page-header"></h5>
+                                                    <p>
+                                                        执行人：{{ sequence.createUser.last_name }} {{ sequence.createUser.first_name }}</p>
+                                                    <p>备注：{{ sequence.remarks }}</p>
                                                     <button type="button" class="layui-btn layui-btn-primary"
                                                             style="float: right">
                                                         <a href="#step{{ sequence.next_segment }}"
@@ -304,7 +319,12 @@
                                 <div id="step{{ lastNum }}" class="tab-pane fade">
                                     {% if sequence.implemented == 0 %}
                                         <h5 class="page-header"></h5>
-                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证
+                                        <textarea class="form-control" name="desc" id="textarea"
+                                                  placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）" rows="4"></textarea>
+                                        <h5 class="page-header"></h5>
+                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证通过
+                                        </button>
+                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证失败
                                         </button>
                                         <h5 class="page-header"></h5>
                                         <button type="button" id="nextBtn"
