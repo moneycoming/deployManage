@@ -140,7 +140,7 @@ class deployPlan(models.Model):
 class segment(models.Model):
     name = models.CharField(max_length=20, verbose_name="任务执行环节")
     description = models.CharField(max_length=200, verbose_name="描述")
-    isDeploy = models.BooleanField(default=False, verbose_name="是否为项目部署环境")
+    isDeploy = models.BooleanField(default=False, verbose_name="是否为项目部署环节")
 
 
 # Jenkins发布任务表
@@ -150,8 +150,12 @@ class task(models.Model):
     segment = models.ManyToManyField(segment, through='sequence')
     plan = models.ForeignKey(deployPlan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
-    createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者")
+    createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者", related_name='user_create')
+    checkUser = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, verbose_name="验证者", related_name='user_check')
+    checkDate = models.DateTimeField(auto_now_add=True, blank=True, verbose_name="验证日期")
     onOff = models.IntegerField(verbose_name="关闭/重启")
+    checked = models.BooleanField(default=False, verbose_name="验证通过？是：否")
+    remark = models.TextField(blank=True, verbose_name="备注")
 
     def user_name(self):
         name = self.createUser.last_name + self.createUser.first_name
@@ -170,8 +174,8 @@ class sequence(models.Model):
     task = models.ForeignKey(task, on_delete=models.CASCADE)
     pre_segment = models.IntegerField(verbose_name="上个节点序号")
     next_segment = models.IntegerField(verbose_name="下个节点序号")
-    createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
-    createUser = models.ForeignKey(User, verbose_name="创建者")
+    executeDate = models.DateTimeField(auto_now_add=True, blank=True, verbose_name="最新操作日期")
+    executor = models.ForeignKey(User, blank=True, verbose_name="最新执行者")
     priority = models.IntegerField(verbose_name="任务执行顺序")
     implemented = models.BooleanField(default=False, verbose_name="是否执行")
     remarks = models.CharField(max_length=200, blank=True, verbose_name="备注")
@@ -183,20 +187,12 @@ class taskDetail(models.Model):
     task = models.ForeignKey(task, on_delete=models.CASCADE)
     packageId = models.IntegerField(default=0, verbose_name="生产发布包编号")
     branch = models.CharField(max_length=100, verbose_name="分支")
-    createDate = models.DateTimeField(auto_now=True, verbose_name="最新构建日期")
-    createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="构建人")
     priority = models.IntegerField(verbose_name="项目执行顺序")
 
     def proJenkins_name(self):
         return self.proJenkins.name
 
     proJenkins_name.short_description = "Jenkins项目"
-
-    def user_name(self):
-        name = self.createUser.last_name + self.createUser.first_name
-        return name
-
-    user_name.short_description = "操作人"
 
     class Meta:
         verbose_name = u'任务详情'
@@ -250,10 +246,3 @@ class taskHistory(models.Model):
     class Meta:
         verbose_name = u'任务历史'
         verbose_name_plural = verbose_name
-
-# 扩展user表
-# class UserModels(AbstractUser):
-#     nick_name = models.CharField(max_length=50, verbose_name="昵称", default="")
-#     mobile = models.CharField(max_length=11, null=True, blank=True)
-#     permission = models.CharField(max_length=1, verbose_name="1:开发，2：测试")
-#

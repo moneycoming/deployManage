@@ -244,45 +244,72 @@ def ajax_taskImplement(request):
     implement = request.POST.get('implemented')
     sequenceId = request.POST.get('id')
     remark = request.POST.get('remark')
+    user = request.user
+    executeDate = datetime.datetime.now()
+    info = []
     if sequenceId:
         sequence = models.sequence.objects.get(id=sequenceId)
-        sequence.implemented = implement
-        sequence.remarks = remark
-        sequence.save()
+        if user.has_perm('projectDeploy'):
+            sequence.implemented = implement
+            sequence.remarks = remark
+            sequence.executor = user
+            sequence.executeDate = executeDate
+            sequence.save()
+            info.append('implemented')
+            info.append(remark)
+        else:
+            info.append("no_role")
+        infoJson = json.dumps(info)
 
-        return HttpResponse(remark)
+        return HttpResponse(infoJson, "application/json")
 
 
 # 代码自动合并
 @login_required
 @csrf_exempt
 def ajax_autoCodeMerge(request):
-    implement = request.POST.get('implemented')
-    sequenceId = request.POST.get('id')
-    if sequenceId:
-        sequence = models.sequence.objects.get(id=sequenceId)
-        sequence.implemented = implement
-        sequence.save()
-        task = sequence.task
-        taskDetails = models.taskDetail.objects.filter(task=task)
-        mergeTo = "master"
-        info = []
-        for i in range(len(taskDetails)):
-            jenkinsJob = taskDetails[i].proJenkins
-            mergeFrom = taskDetails[i].branch
-            project_dir = jenkinsJob.project.project_dir
-            branch_obj = branch(project_dir)
-            status = branch_obj.merge(mergeFrom, mergeTo, status=False)
-            if not status:
-                info.append(jenkinsJob.name)
+    checked = request.POST.get('checked')
+    taskId = request.POST.get('id')
+    remark = request.POST.get('remark')
+    checkUser = request.user
+    checkDate = datetime.datetime.now()
+    result = []
+    if taskId:
+        if checkUser.has_perm('taskdetail.checkDeploy'):
+            task = models.task.objects.get(id=taskId)
+            task.checkUser = checkUser
+            task.checkDate = checkDate
+            task.checked = checked
+            task.remark = remark
+            task.save()
+            taskDetails = models.taskDetail.objects.filter(task=task)
+            mergeTo = "master"
+            conflictBranches = []
+            for i in range(len(taskDetails)):
+                jenkinsJob = taskDetails[i].proJenkins
+                mergeFrom = taskDetails[i].branch
+                project_dir = jenkinsJob.project.project_dir
+                branch_obj = branch(project_dir)
+                status = branch_obj.merge(mergeFrom, mergeTo, status=False)
+                if not status:
+                    conflictBranches.append(jenkinsJob.name)
 
-        if len(info) == 0:
-            res = "所有项目的分支合并完成！！"
+            if len(conflictBranches) == 0:
+                res = "所有项目的分支合并完成！！"
+            else:
+                res = "以下项目%s的分支合并冲突，请手动处理！" % conflictBranches
+            result.append(res)
+            result.append(remark)
+            resultJson = json.dumps(result)
+            send_mail(task.name, res, mail_from, mail_to, fail_silently=False)
+
+            return HttpResponse(resultJson, "application/json")
         else:
-            res = "以下项目%s的分支合并冲突，请手动处理！" % info
-
-        send_mail(task.name, res, mail_from, mail_to, fail_silently=False)
-        return HttpResponse(res)
+            result.append("no_role")
+            res = "你没有验证部署的权限！！！"
+            result.append(res)
+            resultJson = json.dumps(result)
+            return HttpResponse(resultJson,  "application/json")
 
 
 @login_required
@@ -302,19 +329,17 @@ def createTask(request):
         createUser = request.user
         task_obj = models.task(name=title, plan=plan_obj, createUser=createUser, createDate=createDate, onOff=1)
         task_obj.save()
-        print(segments)
 
         for i in range(len(jenkinsJobs)):
             jenkinsJob_obj = models.pro_jenkinsJob.objects.get(name=jenkinsJobs[i])
             taskDetail_obj = models.taskDetail(proJenkins=jenkinsJob_obj, task=task_obj, packageId=buildId[i],
-                                               branch=Branch[i], createDate=createDate, createUser=createUser,
-                                               priority=i)
+                                               branch=Branch[i], priority=i)
             taskDetail_obj.save()
 
         for j in range(len(segments)):
             segment_obj = models.segment.objects.get(name=segments[j])
             sequence_obj = models.sequence(segment=segment_obj, task=task_obj, pre_segment=j, next_segment=j + 2,
-                                           createDate=createDate, createUser=createUser, priority=j + 1)
+                                           priority=j + 1)
             sequence_obj.save()
 
         return HttpResponseRedirect('/showTask')
@@ -348,16 +373,20 @@ def ajax_load_info(request):
 def ajax_console_opt(request):
     if request.method == 'GET':
         taskId = request.GET.get('id')
+        dateTime = request.GET.get('time')
         if taskId:
             taskDetails = models.taskDetail.objects.filter(task__id=taskId)
             operateHistoryList = []
             for i in range(len(taskDetails)):
-                operateHistory = models.operationHistory.objects.filter(taskDetail=taskDetails[i]).order_by("-id")
+                operateHistory = models.operationHistory.objects.filter(taskDetail=taskDetails[i]).filter(
+                    operateTime__gte=dateTime)
                 if operateHistory:
                     data = operateHistory[0].console_opt
                     operateHistoryList.append(data)
 
-            return HttpResponse(operateHistoryList)
+            jsonList = json.dumps(operateHistoryList)
+
+            return HttpResponse(jsonList, "application/json")
 
 
 @login_required
@@ -399,111 +428,31 @@ def fileKeySearch(request):
 @csrf_exempt
 @login_required
 def ajax_runBuild(request):
-    if request.method == 'POST':
-        taskId = request.POST.get('id')
-        if taskId:
-            taskDetail_all_obj = models.taskDetail.objects.all()
-            taskDetail_obj = models.taskDetail.objects.filter(taskBar=taskId).order_by('priority')
-            task_obj = models.task.objects.get(id=taskId)
-            info = {'build': 'SUCCESS'}
-            params = {}
-            rollbackError = []
-            uid = str(uuid.uuid4())
-            suid = ''.join(uid.split('-'))
-            for i in range(len(taskDetail_obj)):
-                buildId = taskDetail_obj[i].buildID
-                jenkinsJob_obj = taskDetail_obj[i].jenkinsJob
-                param = eval(jenkinsJob_obj.param)
-                serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
-                if serverInfo_obj and info['build'] == 'SUCCESS':
-                    for j in range(len(serverInfo_obj)):
-                        params.update(param)
-                        params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=buildId)
-                        pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
-                        console = pythonJenkins_obj.deploy()
-                        params = {}
-                        isFinished = console.find("Finished")
-                        while isFinished == -1:
-                            time.sleep(15)
-                            console = pythonJenkins_obj.isFinished()
-                            isFinished = console.find("Finished")
-                        isSuccess = console.find("Finished: SUCCESS")
-                        if isSuccess == -1:
-                            # 此处插入事务回滚
-                            logger.info("taskId: %s, job: %s ,build: %s, server: %s, 发布出错，执行回滚" %
-                                        (taskId, jenkinsJob_obj.name, buildId, serverInfo_obj[j].serverInfo.name))
-                            priority = taskDetail_obj[i].priority
-                            transaction_obj = Transaction(taskDetail_obj, taskDetail_all_obj, priority)
-                            rollbackError = transaction_obj.transRunBuild()
-                            info['jenkinsName'] = jenkinsJob_obj.name
-                            info['serverName'] = serverInfo_obj[j].serverInfo.name
-                            info['build'] = 'Fail'
-                            break
-                        else:
-                            operateHistory_obj = models.operationHistory(console_opt=console, type=1,
-                                                                         operateUser=request.user,
-                                                                         server=serverInfo_obj[j].serverInfo,
-                                                                         taskDetail=taskDetail_obj[i], suuid=suid)
-                            operateHistory_obj.save()
-                            logger.info("taskId: %s, job: %s ,server: %s, 发布记录存储完成" %
-                                        (taskId, jenkinsJob_obj.name, serverInfo_obj[j].serverInfo.name))
-                else:
-                    # 当出现发布失败后，立即终止后面的发布
-                    logger.info("发布任务: %s,服务器不存在，或者发布失败，终止所有发布。" % taskId)
-                    break
-
-            if info['build'] == 'SUCCESS':
-                taskHistory_obj = models.taskHistory(type=1, operateUser=request.user, task=task_obj, suuid=suid)
-                taskHistory_obj.save()
-                res = "任务编号: %s,发布成功" % task_obj.id
-                logger.info(res)
-                send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
-                return HttpResponse("done")
-            else:
-                if len(rollbackError) > 0:
-                    res = "项目：%s,所在服务器：%s,发布失败,发布事务回退！--回退失败，请手动处理！" % (info['jenkinsName'], info['serverName'])
-                else:
-                    res = "项目：%s,所在服务器：%s,发布失败,发布事务回退！--回退成功！" % (info['jenkinsName'], info['serverName'])
-                logger.info(res)
-                send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
-                return HttpResponse(res)
-        else:
-            res = "找不到对应的任务"
-            logger.error(res)
-            return HttpResponse(res)
-
-
-# 任务回滚
-@csrf_exempt
-def ajax_rollBack(request):
-    if request.method == 'POST':
-        taskId = request.POST.get('id')
-        if taskId:
-            task_obj = models.task.objects.get(id=taskId)
-            taskDetail_obj = models.taskDetail.objects.filter(task=task_obj).order_by('priority')
-            taskDetail_all_obj = models.taskDetail.objects.all()
-            params = {}
-            rollbackError = []
-            info = {'build': 'SUCCESS'}
-            uid = str(uuid.uuid4())
-            suid = ''.join(uid.split('-'))
-            for i in range(len(taskDetail_obj)):
-                buildId = taskDetail_obj[i].buildID
-                jenkinsJob_obj = taskDetail_obj[i].jenkinsJob
-                param = eval(jenkinsJob_obj.param)
-                try:
-                    pre_build = \
-                        taskDetail_all_obj.filter(jenkinsJob=jenkinsJob_obj, buildID__lt=buildId).order_by('-buildID')[
-                            0].buildID
-                    serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+    user = request.user
+    if user.has_perm('projectDeploy'):
+        if request.method == 'POST':
+            taskId = request.POST.get('id')
+            if taskId:
+                taskDetail_all_obj = models.taskDetail.objects.all()
+                taskDetail_obj = models.taskDetail.objects.filter(task=taskId).order_by('priority')
+                task_obj = models.task.objects.get(id=taskId)
+                info = {'build': 'SUCCESS'}
+                params = {}
+                rollbackError = []
+                uid = str(uuid.uuid4())
+                suid = ''.join(uid.split('-'))
+                for i in range(len(taskDetail_obj)):
+                    buildId = taskDetail_obj[i].packageId
+                    jenkinsJob_obj = taskDetail_obj[i].proJenkins
+                    param = eval(jenkinsJob_obj.param)
+                    serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(proJenkins=jenkinsJob_obj)
                     if serverInfo_obj and info['build'] == 'SUCCESS':
                         for j in range(len(serverInfo_obj)):
                             params.update(param)
-                            params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
+                            params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=buildId)
                             pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
                             console = pythonJenkins_obj.deploy()
                             params = {}
-                            # 判断Jenkins项目执行是否成功
                             isFinished = console.find("Finished")
                             while isFinished == -1:
                                 time.sleep(15)
@@ -512,16 +461,104 @@ def ajax_rollBack(request):
                             isSuccess = console.find("Finished: SUCCESS")
                             if isSuccess == -1:
                                 # 此处插入事务回滚
-                                logger.info("taskId: %s, job: %s ,pre_buildId: %s, server: %s, 回滚出错，执行回退" %
-                                            (taskId, jenkinsJob_obj.name, pre_build, serverInfo_obj[j].serverInfo.name))
+                                logger.info("taskId: %s, job: %s ,build: %s, server: %s, 发布出错，执行回滚" %
+                                            (taskId, jenkinsJob_obj.name, buildId, serverInfo_obj[j].serverInfo.name))
                                 priority = taskDetail_obj[i].priority
                                 transaction_obj = Transaction(taskDetail_obj, taskDetail_all_obj, priority)
-                                rollbackError = transaction_obj.transRollback()
+                                rollbackError = transaction_obj.transRunBuild()
                                 info['jenkinsName'] = jenkinsJob_obj.name
                                 info['serverName'] = serverInfo_obj[j].serverInfo.name
                                 info['build'] = 'Fail'
                                 break
-                            else:
+
+                            operateHistory_obj = models.operationHistory(console_opt=console, type=1,
+                                                                         operateUser=request.user,
+                                                                         server=serverInfo_obj[j].serverInfo,
+                                                                         taskDetail=taskDetail_obj[i], suuid=suid)
+                            operateHistory_obj.save()
+                            logger.info("taskId: %s, job: %s ,server: %s, 发布记录存储完成" % (taskId, jenkinsJob_obj.name,
+                                                                                       serverInfo_obj[j].serverInfo.name))
+                    else:
+                        # 当出现发布失败后，立即终止后面的发布
+                        logger.info("发布任务: %s,服务器不存在，或者发布失败，终止所有发布。" % taskId)
+                        break
+
+                if info['build'] == 'SUCCESS':
+                    taskHistory_obj = models.taskHistory(type=1, operateUser=request.user, task=task_obj, suuid=suid)
+                    taskHistory_obj.save()
+                    res = "任务编号: %s,发布成功" % task_obj.id
+                    logger.info(res)
+                    send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
+                    return HttpResponse("done")
+                else:
+                    if len(rollbackError) > 0:
+                        res = "项目：%s,所在服务器：%s,发布失败,发布事务回退！--回退失败，请手动处理！" % (info['jenkinsName'], info['serverName'])
+                    else:
+                        res = "项目：%s,所在服务器：%s,发布失败,发布事务回退！--回退成功！" % (info['jenkinsName'], info['serverName'])
+                    logger.info(res)
+                    send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
+                    return HttpResponse(res)
+            else:
+                res = "找不到对应的任务"
+                logger.error(res)
+                return HttpResponse(res)
+    else:
+        res = "你没有发布任务的权限！！"
+        return HttpResponse(res)
+
+
+# 任务回滚
+@csrf_exempt
+def ajax_rollBack(request):
+    user = request.user
+    if user.has_perm('projectDeploy'):
+        if request.method == 'POST':
+            taskId = request.POST.get('id')
+            if taskId:
+                task_obj = models.task.objects.get(id=taskId)
+                taskDetail_obj = models.taskDetail.objects.filter(task=task_obj).order_by('priority')
+                taskDetail_all_obj = models.taskDetail.objects.all()
+                params = {}
+                rollbackError = []
+                info = {'build': 'SUCCESS'}
+                uid = str(uuid.uuid4())
+                suid = ''.join(uid.split('-'))
+                for i in range(len(taskDetail_obj)):
+                    buildId = taskDetail_obj[i].packageId
+                    jenkinsJob_obj = taskDetail_obj[i].proJenkins
+                    param = eval(jenkinsJob_obj.param)
+                    try:
+                        pre_build = \
+                            taskDetail_all_obj.filter(proJenkins=jenkinsJob_obj, packageId__lt=buildId).order_by(
+                                '-packageId')[0].buildID
+                        serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(proJenkins=jenkinsJob_obj)
+                        if serverInfo_obj and info['build'] == 'SUCCESS':
+                            for j in range(len(serverInfo_obj)):
+                                params.update(param)
+                                params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
+                                pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
+                                console = pythonJenkins_obj.deploy()
+                                params = {}
+                                # 判断Jenkins项目执行是否成功
+                                isFinished = console.find("Finished")
+                                while isFinished == -1:
+                                    time.sleep(15)
+                                    console = pythonJenkins_obj.isFinished()
+                                    isFinished = console.find("Finished")
+                                isSuccess = console.find("Finished: SUCCESS")
+                                if isSuccess == -1:
+                                    # 此处插入事务回滚
+                                    logger.info("taskId: %s, job: %s ,pre_buildId: %s, server: %s, 回滚出错，执行回退" %
+                                                (taskId, jenkinsJob_obj.name, pre_build,
+                                                 serverInfo_obj[j].serverInfo.name))
+                                    priority = taskDetail_obj[i].priority
+                                    transaction_obj = Transaction(taskDetail_obj, taskDetail_all_obj, priority)
+                                    rollbackError = transaction_obj.transRollback()
+                                    info['jenkinsName'] = jenkinsJob_obj.name
+                                    info['serverName'] = serverInfo_obj[j].serverInfo.name
+                                    info['build'] = 'Fail'
+                                    break
+
                                 operateHistory_obj = models.operationHistory(console_opt=console, type=2,
                                                                              operateUser=request.user,
                                                                              server=serverInfo_obj[j].serverInfo,
@@ -529,32 +566,35 @@ def ajax_rollBack(request):
                                 operateHistory_obj.save()
                                 logger.info("taskId: %s, job: %s ,server: %s, 回滚记录存储完成" %
                                             (taskId, jenkinsJob_obj.name, serverInfo_obj[j].serverInfo.name))
-                    else:
-                        # 当出现发布失败后，立即终止后面的发布
-                        logger.info("回滚任务: %s,服务器不存在，或者回滚失败，终止所有回滚。" % taskId)
-                        break
-                except IndexError:
-                    logger.error("%s已是首发版本，无法回退" % jenkinsJob_obj.name)
+                        else:
+                            # 当出现发布失败后，立即终止后面的发布
+                            logger.info("回滚任务: %s,服务器不存在，或者回滚失败，终止所有回滚。" % taskId)
+                            break
+                    except IndexError:
+                        logger.error("%s已是首发版本，无法回退" % jenkinsJob_obj.name)
 
-            if info['build'] == 'SUCCESS':
-                taskHistory_obj = models.taskHistory(type=2, operateUser=request.user, task=task_obj, suuid=suid)
-                taskHistory_obj.save()
-                res = "任务编号: %s, 回滚成功" % taskId
-                logger.info(res)
-                send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
-                return HttpResponse("done")
-            else:
-                if len(rollbackError) > 0:
-                    res = "项目：%s,所在服务器：%s,回滚失败,回滚事务回退！ --事务回退失败，请手动处理！" % (info['jenkinsName'], info['serverName'])
+                if info['build'] == 'SUCCESS':
+                    taskHistory_obj = models.taskHistory(type=2, operateUser=request.user, task=task_obj, suuid=suid)
+                    taskHistory_obj.save()
+                    res = "任务编号: %s, 回滚成功" % taskId
+                    logger.info(res)
+                    send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
+                    return HttpResponse("done")
                 else:
-                    res = "项目：%s,所在服务器：%s,回滚失败，回滚事务回退！ --事务回退成功！" % (info['jenkinsName'], info['serverName'])
-                logger.info(res)
-                send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
+                    if len(rollbackError) > 0:
+                        res = "项目：%s,所在服务器：%s,回滚失败,回滚事务回退！ --事务回退失败，请手动处理！" % (info['jenkinsName'], info['serverName'])
+                    else:
+                        res = "项目：%s,所在服务器：%s,回滚失败，回滚事务回退！ --事务回退成功！" % (info['jenkinsName'], info['serverName'])
+                    logger.info(res)
+                    send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
+                    return HttpResponse(res)
+            else:
+                res = "找不到对应的任务"
+                logger.error(res)
                 return HttpResponse(res)
-        else:
-            res = "找不到对应的任务"
-            logger.error(res)
-            return HttpResponse(res)
+    else:
+        res = "你没有回滚的权限！！！"
+        return HttpResponse(res)
 
 
 # 查看控制台信息

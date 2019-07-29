@@ -27,15 +27,15 @@ class project_job_Admin(admin.ModelAdmin):
 
 
 class TaskBar_Admin(admin.ModelAdmin):
-    list_display = ('name', 'createDate', 'user_name', 'onOff')
-    search_fields = ('name', 'createDate', 'createUser', 'onOff')
-    list_filter = ('name', 'createDate', 'createUser', 'onOff')
+    list_display = ('name', 'createDate', 'onOff')
+    search_fields = ('name', 'createDate', 'onOff')
+    list_filter = ('name', 'createDate', 'onOff')
 
 
 class TaskDetail_Admin(admin.ModelAdmin):
-    list_display = ('packageId', 'createDate', 'user_name', 'priority')
-    search_fields = ('packageId', 'createDate', 'createUser', 'priority')
-    list_filter = ('packageId', 'createDate', 'createUser', 'priority')
+    list_display = ('packageId', 'priority')
+    search_fields = ('packageId', 'priority')
+    list_filter = ('packageId', 'priority')
 
 
 class OperationHistory_Admin(admin.ModelAdmin):

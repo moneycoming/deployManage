@@ -89,21 +89,11 @@
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
-                                                            <div class="layui-progress layui-progress-big"
-                                                                 lay-showpercent="true"
-                                                                 lay-filter="runtask">
-                                                                <div class="layui-progress-bar layui-bg-green"
-                                                                     lay-percent="0%"></div>
-                                                            </div>
                                                             <div class="site-demo-button"
                                                                  style="margin-top: 20px; margin-bottom: 0;">
                                                                 <button class="layui-btn layui-btn-primary runTask"
                                                                         data-type="loading">
                                                                     立即执行
-                                                                </button>
-                                                                <button class="layui-btn layui-btn-primary showBuildResult"
-                                                                        data-type="loading" style="float: right">
-                                                                    显示控制台信息
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
                                                                 <div class="layui-collapse buildResult"
@@ -112,18 +102,16 @@
                                                             </div>
                                                         </div>
                                                         <div class="layui-tab-item">
-                                                            <div class="layui-progress layui-progress-big"
-                                                                 lay-showpercent="true"
-                                                                 lay-filter="rollback">
-                                                                <div class="layui-progress-bar layui-bg-red"
-                                                                     lay-percent="0%"></div>
-                                                            </div>
                                                             <div class="site-demo-button"
                                                                  style="margin-top: 20px; margin-bottom: 0;">
                                                                 <button class="layui-btn layui-btn-primary rollback"
                                                                         data-type="loading">
                                                                     立即回滚
                                                                 </button>
+                                                                <h5 class="page-header"></h5>
+                                                                <div class="layui-collapse RollBackResult"
+                                                                     lay-accordion="">
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="layui-tab-item">
@@ -181,7 +169,8 @@
                                                            data-toggle="tab">下一步</a></button>
                                                 {% else %}
                                                     <h5 class="page-header"></h5>
-                                                    <p>执行人：{{ sequence.createUser.last_name }} {{ sequence.createUser.first_name }}</p>
+                                                    <p>
+                                                        执行人：{{ sequence.executor.last_name }} {{ sequence.executor.first_name }}</p>
                                                     <p>备注：{{ sequence.remarks }}</p>
                                                     <button type="button" class="layui-btn layui-btn-primary"
                                                             style="float: right">
@@ -212,21 +201,11 @@
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
-                                                            <div class="layui-progress layui-progress-big"
-                                                                 lay-showpercent="true"
-                                                                 lay-filter="runtask">
-                                                                <div class="layui-progress-bar layui-bg-green"
-                                                                     lay-percent="0%"></div>
-                                                            </div>
                                                             <div class="site-demo-button"
                                                                  style="margin-top: 20px; margin-bottom: 0;">
                                                                 <button class="layui-btn layui-btn-primary runTask"
                                                                         data-type="loading">
                                                                     立即执行
-                                                                </button>
-                                                                <button class="layui-btn layui-btn-primary showBuildResult"
-                                                                        data-type="loading" style="float: right">
-                                                                    显示控制台信息
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
                                                                 <div class="layui-collapse buildResult"
@@ -235,18 +214,16 @@
                                                             </div>
                                                         </div>
                                                         <div class="layui-tab-item">
-                                                            <div class="layui-progress layui-progress-big"
-                                                                 lay-showpercent="true"
-                                                                 lay-filter="rollback">
-                                                                <div class="layui-progress-bar layui-bg-red"
-                                                                     lay-percent="0%"></div>
-                                                            </div>
                                                             <div class="site-demo-button"
                                                                  style="margin-top: 20px; margin-bottom: 0;">
                                                                 <button class="layui-btn layui-btn-primary rollback"
                                                                         data-type="loading">
                                                                     立即回滚
                                                                 </button>
+                                                                <h5 class="page-header"></h5>
+                                                                <div class="layui-collapse RollBackResult"
+                                                                     lay-accordion="">
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="layui-tab-item">
@@ -304,7 +281,7 @@
                                                 {% else %}
                                                     <h5 class="page-header"></h5>
                                                     <p>
-                                                        执行人：{{ sequence.createUser.last_name }} {{ sequence.createUser.first_name }}</p>
+                                                        执行人：{{ sequence.executor.last_name }} {{ sequence.executor.first_name }}</p>
                                                     <p>备注：{{ sequence.remarks }}</p>
                                                     <button type="button" class="layui-btn layui-btn-primary"
                                                             style="float: right">
@@ -317,24 +294,19 @@
                                     {% endif %}
                                 {% endfor %}
                                 <div id="step{{ lastNum }}" class="tab-pane fade">
-                                    {% if sequence.implemented == 0 %}
                                         <h5 class="page-header"></h5>
-                                        <textarea class="form-control" name="desc" id="textarea"
+                                        {% if task.checked == 0 %}
+                                        <p id="p1" class="fade"></p>
+                                        <textarea class="form-control" name="remark" id="remark"
                                                   placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）" rows="4"></textarea>
                                         <h5 class="page-header"></h5>
-                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证通过
-                                        </button>
-                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证失败
-                                        </button>
-                                        <h5 class="page-header"></h5>
-                                        <button type="button" id="nextBtn"
-                                                class="layui-btn layui-btn-disabled fade" style="float: right">已验证
-                                        </button>
-                                    {% else %}
-                                        <h5 class="page-header"></h5>
-                                        <button type="button" class="layui-btn layui-btn-disabled" style="float: right">
-                                            已验证
-                                        </button>
+                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证通过</button>
+                                        {% else %}
+                                        <p id="p1">
+                                            <br>执行人：{{ task.checkUser.last_name }}{{ task.checkUser.first_name }}
+                                            <br>执行日期：{{ task.checkDate }}
+                                            <br>备注：{{ task.remark }}
+                                        </p>
                                     {% endif %}
                                 </div>
                             </div>
