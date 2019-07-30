@@ -275,7 +275,7 @@ def ajax_autoCodeMerge(request):
     checkDate = datetime.datetime.now()
     result = []
     if taskId:
-        if checkUser.has_perm('taskdetail.checkDeploy'):
+        if checkUser.has_perm('mysite.can_check_project'):
             task = models.task.objects.get(id=taskId)
             task.checkUser = checkUser
             task.checkDate = checkDate
@@ -314,35 +314,37 @@ def ajax_autoCodeMerge(request):
 
 @login_required
 def createTask(request):
-    jenkins_jobs = models.pro_jenkinsJob.objects.all()
-    plans = models.deployPlan.objects.all()
-    segments = models.segment.objects.all()
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        jenkinsJobs = request.POST.getlist('jenkinsJob')
-        planName = request.POST.get('plan')
-        plan_obj = models.deployPlan.objects.get(title=planName)
-        segments = request.POST.getlist('segment')
-        buildId = request.POST.getlist('buildId')
-        Branch = request.POST.getlist('branch')
-        createDate = datetime.datetime.now()
-        createUser = request.user
-        task_obj = models.task(name=title, plan=plan_obj, createUser=createUser, createDate=createDate, onOff=1)
-        task_obj.save()
+    user = request.user
+    if user.has_perm('mysite.add_task'):
+        jenkins_jobs = models.pro_jenkinsJob.objects.all()
+        plans = models.deployPlan.objects.all()
+        segments = models.segment.objects.all()
+        if request.method == 'POST':
+            title = request.POST.get('title')
+            jenkinsJobs = request.POST.getlist('jenkinsJob')
+            planName = request.POST.get('plan')
+            plan_obj = models.deployPlan.objects.get(title=planName)
+            segments = request.POST.getlist('segment')
+            buildId = request.POST.getlist('buildId')
+            Branch = request.POST.getlist('branch')
+            createDate = datetime.datetime.now()
+            createUser = request.user
+            task_obj = models.task(name=title, plan=plan_obj, createUser=createUser, createDate=createDate, onOff=1)
+            task_obj.save()
 
-        for i in range(len(jenkinsJobs)):
-            jenkinsJob_obj = models.pro_jenkinsJob.objects.get(name=jenkinsJobs[i])
-            taskDetail_obj = models.taskDetail(proJenkins=jenkinsJob_obj, task=task_obj, packageId=buildId[i],
-                                               branch=Branch[i], priority=i)
-            taskDetail_obj.save()
+            for i in range(len(jenkinsJobs)):
+                jenkinsJob_obj = models.pro_jenkinsJob.objects.get(name=jenkinsJobs[i])
+                taskDetail_obj = models.taskDetail(proJenkins=jenkinsJob_obj, task=task_obj, packageId=buildId[i],
+                                                   branch=Branch[i], priority=i)
+                taskDetail_obj.save()
 
-        for j in range(len(segments)):
-            segment_obj = models.segment.objects.get(name=segments[j])
-            sequence_obj = models.sequence(segment=segment_obj, task=task_obj, pre_segment=j, next_segment=j + 2,
-                                           priority=j + 1)
-            sequence_obj.save()
+            for j in range(len(segments)):
+                segment_obj = models.segment.objects.get(name=segments[j])
+                sequence_obj = models.sequence(segment=segment_obj, task=task_obj, pre_segment=j, next_segment=j + 2,
+                                               priority=j + 1)
+                sequence_obj.save()
 
-        return HttpResponseRedirect('/showTask')
+            return HttpResponseRedirect('/showTask')
 
     template = get_template('createTask.html')
     html = template.render(context=locals(), request=request)
@@ -429,7 +431,7 @@ def fileKeySearch(request):
 @login_required
 def ajax_runBuild(request):
     user = request.user
-    if user.has_perm('projectDeploy'):
+    if user.has_perm('mysite.can_deploy_project'):
         if request.method == 'POST':
             taskId = request.POST.get('id')
             if taskId:
@@ -511,7 +513,7 @@ def ajax_runBuild(request):
 @csrf_exempt
 def ajax_rollBack(request):
     user = request.user
-    if user.has_perm('projectDeploy'):
+    if user.has_perm('mysite.can_deploy_project'):
         if request.method == 'POST':
             taskId = request.POST.get('id')
             if taskId:

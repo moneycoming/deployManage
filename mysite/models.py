@@ -20,7 +20,6 @@ class project(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="项目名称")
     desc = models.CharField(max_length=50, blank=True, verbose_name="项目描述")
     applicationName = models.CharField(max_length=50, unique=True, verbose_name="项目名称")
-    # branchList = models.TextField(verbose_name="所有分支")
     project_dir = models.CharField(max_length=200, blank=False, verbose_name="代码仓库")
     createBy = models.ForeignKey(User, on_delete=models.CASCADE)
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
@@ -197,6 +196,10 @@ class taskDetail(models.Model):
     class Meta:
         verbose_name = u'任务详情'
         verbose_name_plural = verbose_name
+        permissions = (
+            ('can_deploy_project', '发布项目'),
+            ('can_check_project', '线上验证'),
+        )
 
 
 # 操作历史表，用于记录操作历史和控制台信息

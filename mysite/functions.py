@@ -4,6 +4,10 @@ from git import Repo
 import logging
 
 
+# 添加全局变量，记录日志
+logger = logging.getLogger('log')
+
+
 class TimeChange:
     def __init__(self, timeStamp):
         self.timeStamp = timeStamp
@@ -48,7 +52,7 @@ class branch:
         try:
             repo.delete_head(mergeFrom)
         except:
-            logging.warning("删除分支，分支%s不存在" % mergeFrom)
+            logger.warning("删除分支，分支%s不存在" % mergeFrom)
         git.checkout(mergeFrom)
         if curBranch != mergeTo:
             git.checkout(mergeTo)
@@ -58,15 +62,15 @@ class branch:
             # 测试的时候关闭推送功能
             # origin.push(mergeTo)
             status = True
-            logging.info("分支%s合并成功！" % mergeFrom)
+            logger.info("分支%s合并成功！" % mergeFrom)
         except:
             past_branch = repo.create_head(mergeTo, 'HEAD')
             repo.head.reference = past_branch
             repo.head.reset(index=True, working_tree=True)
-            logging.error("分支%s合并冲突，请手动处理！" % mergeFrom)
+            logger.error("分支%s合并冲突，请手动处理！" % mergeFrom)
         try:
             repo.delete_head(mergeFrom)
         except:
-            logging.info("线上没有%s分支！" % mergeFrom)
+            logger.info("线上没有%s分支！" % mergeFrom)
 
         return status

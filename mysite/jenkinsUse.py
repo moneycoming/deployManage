@@ -54,7 +54,6 @@ class projectBean:
 
     def look_branch(self):
         project = self.project
-        # jenkinsJob_obj = models.jenkins_job.objects.get(name=jenkinsJob)
         project_dir = project.project_dir
         os.chdir(project_dir)
         branch_byte = subprocess.check_output(["git", "branch", "-r"])
