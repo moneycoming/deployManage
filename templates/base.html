@@ -142,16 +142,10 @@
 
             success: function (data) {
                 var html = "";
-                var html2 = "";
                 for (var i = 0; i < data.length; i++) {
                     var item = data[i];
-                    if (item.buildId) {
-                        html += "<option>" + item.buildId + "</option>";
-                        $(`#${id} #buildId`).html(html);
-                    } else {
-                        html2 += "<option>" + item.name + "</option>";
-                        $(`#${id} #branch`).html(html2);
-                    }
+                    html += "<option>" + item.name + "</option>";
+                    $(`#${id} #branch`).html(html);
                 }
             }
         })

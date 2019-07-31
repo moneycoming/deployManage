@@ -19,6 +19,8 @@ from django_apscheduler.jobstores import DjangoJobStore, register_events, regist
 from apscheduler.jobstores.base import ConflictingIdError
 from mysite.dataAnalysis import DataAnalysis
 from django.core.mail import send_mail
+from django.contrib.auth.models import User
+
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -140,11 +142,14 @@ def showPlan(request):
 def createPlan(request):
     productions = models.production.objects.all()
     kinds = models.kind.objects.all()
+    users = User.objects.all()
+    projects = models.project.objects.all()
     if request.method == 'POST':
         title = request.POST.get('title')
         desc = request.POST.get('desc')
         production = request.POST.get('production')
         kind = request.POST.get('kind')
+        memberList = request.POST.getlist('member')
         createDate = datetime.datetime.now()
         createUser = request.user
         production_obj = models.production.objects.get(name=production)
@@ -351,23 +356,18 @@ def createTask(request):
     return HttpResponse(html)
 
 
-# 获取分支和发布包编号
+# 获取项目的所有分支
 @login_required
 def ajax_load_info(request):
     if request.method == 'GET':
         jenkins_job_name = request.GET.get('jenkins_job_name')
         if jenkins_job_name:
-            project_obj = models.pro_jenkinsJob.objects.get(name=jenkins_job_name).project
-            branches = models.branch.objects.filter(project=project_obj)
-            uat_jenkins_jobs = models.uat_jenkinsJob.objects.filter(project=project_obj).order_by("-id")
-            buildList = list(uat_jenkins_jobs.values("buildId"))
+            project = models.project.objects.get(name=jenkins_job_name)
+            branches = models.branch.objects.filter(project=project)
             branchList = list(branches.values("name"))
-            allList = buildList
-            for i in range(len(branchList)):
-                allList.append(branchList[i])
-            allListResult = json.dumps(allList)
+            branchListJson = json.dumps(branchList)
 
-            return HttpResponse(allListResult, "application/json")
+            return HttpResponse(branchListJson, "application/json")
 
 
 @login_required
@@ -471,6 +471,15 @@ def ajax_runBuild(request):
                                 info['jenkinsName'] = jenkinsJob_obj.name
                                 info['serverName'] = serverInfo_obj[j].serverInfo.name
                                 info['build'] = 'Fail'
+
+                                operateHistory_obj = models.operationHistory(console_opt=console, type=1,
+                                                                             operateUser=request.user,
+                                                                             server=serverInfo_obj[j].serverInfo,
+                                                                             taskDetail=taskDetail_obj[i], suuid=suid)
+                                operateHistory_obj.save()
+                                logger.info("taskId: %s, job: %s ,server: %s, 发布记录存储完成" % (taskId, jenkinsJob_obj.name,
+                                                                                           serverInfo_obj[
+                                                                                               j].serverInfo.name))
                                 break
 
                             operateHistory_obj = models.operationHistory(console_opt=console, type=1,

@@ -82,14 +82,14 @@ class Transaction:
         trans_taskDetail_obj = taskDetail_obj.filter(priority__lte=priority).order_by('priority')
         rollbackError = []
         for i in range(len(trans_taskDetail_obj)):
-            buildId = trans_taskDetail_obj[i].buildID
-            jenkinsJob_obj = trans_taskDetail_obj[i].jenkinsJob
+            buildId = trans_taskDetail_obj[i].packageId
+            jenkinsJob_obj = trans_taskDetail_obj[i].proJenkins
             param = eval(jenkinsJob_obj.param)
             try:
                 pre_build = \
-                    taskDetail_all_obj.filter(jenkinsJob=jenkinsJob_obj, buildID__lt=buildId).order_by('-buildID')[
-                        0].buildID
-                serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+                    taskDetail_all_obj.filter(proJenkins=jenkinsJob_obj, packageId__lt=buildId).order_by('-packageId')[
+                        0].packageId
+                serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(proJenkins=jenkinsJob_obj)
                 for j in range(len(serverInfo_obj)):
                     params.update(param)
                     params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
@@ -124,10 +124,10 @@ class Transaction:
         priority = self.priority
         trans_taskDetail_obj = taskDetail_obj.filter(priority__lte=priority).order_by('priority')
         for i in range(len(trans_taskDetail_obj)):
-            buildId = trans_taskDetail_obj[i].buildID
-            jenkinsJob_obj = trans_taskDetail_obj[i].jenkinsJob
+            buildId = trans_taskDetail_obj[i].packageId
+            jenkinsJob_obj = trans_taskDetail_obj[i].proJenkins
             param = eval(jenkinsJob_obj.param)
-            serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(jenkinsJob=jenkinsJob_obj)
+            serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(proJenkins=jenkinsJob_obj)
             for s in range(len(serverInfo_obj)):
                 params.update(param)
                 params.update(SERVER_IP=serverInfo_obj[s].serverInfo.serverIp, REL_VERSION=buildId)

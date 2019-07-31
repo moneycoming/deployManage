@@ -114,6 +114,7 @@ class deployPlan(models.Model):
     title = models.CharField(max_length=200, verbose_name="标题")
     kind = models.ForeignKey(kind, verbose_name="发布类型")
     description = models.TextField(verbose_name="说明")
+    member = models.ManyToManyField(User, through="plan_member")
     production = models.ForeignKey(production, on_delete=models.CASCADE, verbose_name="所属产品")
     createUser = models.ForeignKey(User, verbose_name="创建者")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
@@ -133,6 +134,12 @@ class deployPlan(models.Model):
     class Meta:
         verbose_name = u'发布计划'
         verbose_name_plural = verbose_name
+
+
+# 计划成员表
+class plan_member(models.Model):
+    member = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="成员")
+    plan = models.ForeignKey(deployPlan, on_delete=models.CASCADE, verbose_name="计划")
 
 
 # 任务执行环节
