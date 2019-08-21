@@ -7,14 +7,14 @@ class DataAnalysis:
 
     def totalCounts(self):
         production = self.production
-        plans = models.deployPlan.objects.filter(production=production)
+        plans = models.plan.objects.filter(production=production)
         counts = len(plans)
 
         return counts
 
     def monthCounts(self, month):
         production = self.production
-        plans = models.deployPlan.objects.filter(production=production)
+        plans = models.plan.objects.filter(production=production)
         monthCounts = 0
         for i in range(len(plans)):
             if month == plans[i].createDate.month:
@@ -24,7 +24,7 @@ class DataAnalysis:
 
     def monthKindCounts(self, month, kind):
         production = self.production
-        deployPlans = models.deployPlan.objects.filter(production=production)
+        deployPlans = models.plan.objects.filter(production=production)
         perKindPlans = deployPlans.filter(kind=kind)
         monthKindCounts = 0
         for i in range(len(perKindPlans)):

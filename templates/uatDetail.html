@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <div class="breadcrumbs">
+        <div class="breadcrumbs-inner">
+            <div class="row m-0">
+                <div class="col-sm-4">
+                    <div class="page-header float-left">
+                        <div class="page-title">
+                            <h1>Dashboard</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="page-header float-right">
+                        <div class="page-title">
+                            <ol class="breadcrumb text-right">
+                                <li><a href="{% url 'index' %}">首页</a></li>
+                                <li><a href="{% url 'showPlan' %}">计划栏</a></li>
+                                <li><a href="planDetail?pid={{ plan_obj.id }}">计划详情</a></li>
+                                <li class="active">预发详情</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content -->
+    <div class="content">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">详情栏</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-success" role="alert">
+                                <h4 class="alert-heading">部署流程</h4>
+                                <hr>
+                                <p>点击项目列表中的项目名，进入项目部署页面</p>
+{#                                <hr>#}
+{#                                <p class="mb-0">包含两个步骤（可重复执行）：</p>#}
+{#                                <p class="mb-0">1-创建预发分支</p>#}
+{#                                <p class="mb-0">2-部署预发环境</p>#}
+                            </div>
+                            <h3>项目列表</h3>
+                            {% for project_plan in project_plans %}
+                                <p><br><a href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }} --
+                                    项目名：{{ project_plan.project.name }}</a></p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div><!-- .animated -->
+        </div><!-- .content -->
+    </div>
+{% endblock %}

@@ -56,12 +56,15 @@ class projectBean:
         project = self.project
         project_dir = project.project_dir
         os.chdir(project_dir)
+        subprocess.check_output(["git", "remote", "update", "--prune"])
         branch_byte = subprocess.check_output(["git", "branch", "-r"])
         branch_str = str(branch_byte, 'utf-8')
         branches = branch_str.split('\n')
         branch_list = []
         for branch in branches[1: -1]:
-            branch_list.append(branch.lstrip('* origin/'))
+            branch_list.append(branch.lstrip('* origin').lstrip('/'))
+            if 'master' in branch_list:
+                branch_list.remove('master')
 
         return branch_list
 
@@ -89,7 +92,7 @@ class Transaction:
                 pre_build = \
                     taskDetail_all_obj.filter(proJenkins=jenkinsJob_obj, packageId__lt=buildId).order_by('-packageId')[
                         0].packageId
-                serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(proJenkins=jenkinsJob_obj)
+                serverInfo_obj = models.jenkinsPro_serverInfo.objects.filter(proJenkins=jenkinsJob_obj)
                 for j in range(len(serverInfo_obj)):
                     params.update(param)
                     params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
@@ -127,7 +130,7 @@ class Transaction:
             buildId = trans_taskDetail_obj[i].packageId
             jenkinsJob_obj = trans_taskDetail_obj[i].proJenkins
             param = eval(jenkinsJob_obj.param)
-            serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(proJenkins=jenkinsJob_obj)
+            serverInfo_obj = models.jenkinsPro_serverInfo.objects.filter(proJenkins=jenkinsJob_obj)
             for s in range(len(serverInfo_obj)):
                 params.update(param)
                 params.update(SERVER_IP=serverInfo_obj[s].serverInfo.serverIp, REL_VERSION=buildId)

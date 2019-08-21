@@ -116,9 +116,9 @@
                                                     <div class="col-lg-6 col-md-6">
                                                         <select data-placeholder="Choose a country..." multiple
                                                                 class="standardSelect" name="member">
-                                                            {% for user in users %}
+                                                            {% for member in members %}
                                                                 <option>
-                                                                    {{ user.last_name }}{{ user.first_name }}</option>
+                                                                    {{ member.name }}</option>
                                                             {% endfor %}
                                                         </select>
                                                     </div>
@@ -160,7 +160,7 @@
                                                 <div class="col-lg-10 col-md-10">
                                                     <div class="row">
                                                         <div class="col-lg-6 col-md-6">
-                                                            <select class="form-control" name="jenkinsJob"
+                                                            <select class="form-control" name="project"
                                                                     onchange="change(this,this[selectedIndex].value)">
                                                                 {% for project in projects %}
                                                                     <option>{{ project.name }}</option>
@@ -170,7 +170,7 @@
                                                             <span class="help-block">项目名</span>
                                                         </div>
                                                         <div class="col-lg-3 col-md-6">
-                                                            <select class="form-control" id="branch" name="branch">
+                                                            <select class="form-control" id="branch" name="devBranch">
                                                                 <optgroup label="branch">
                                                                     <option id="default">请选择</option>
                                                                 </optgroup>

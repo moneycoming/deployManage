@@ -35,13 +35,13 @@ function getBuildResult(task) {
             html = "";
             console.log(data.length);
             if (data.length > 0) {
-                for (var i = 0; i < data.length; i ++){
+                for (var i = 0; i < data.length; i++) {
                     html += "<div class=\"layui-colla-item\">\n" +
-                    "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
-                    "                                        <div class=\"layui-colla-content layui-show\">\n" +
-                    "                                            <p><pre>" + data[i] + "</pre></p>\n" +
-                    "                                        </div>\n" +
-                    "                                    </div>"
+                        "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
+                        "                                        <div class=\"layui-colla-content layui-show\">\n" +
+                        "                                            <p><pre>" + data[i] + "</pre></p>\n" +
+                        "                                        </div>\n" +
+                        "                                    </div>"
                 }
 
             }
@@ -71,13 +71,13 @@ function getRollBackResult(task) {
         success: function (data) {
             html = "";
             if (data.length > 0) {
-                for (var i = 0; i < data.length; i ++){
+                for (var i = 0; i < data.length; i++) {
                     html += "<div class=\"layui-colla-item\">\n" +
-                    "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
-                    "                                        <div class=\"layui-colla-content layui-show\">\n" +
-                    "                                            <p><pre>" + data[i] + "</pre></p>\n" +
-                    "                                        </div>\n" +
-                    "                                    </div>"
+                        "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
+                        "                                        <div class=\"layui-colla-content layui-show\">\n" +
+                        "                                            <p><pre>" + data[i] + "</pre></p>\n" +
+                        "                                        </div>\n" +
+                        "                                    </div>"
                 }
             }
             else {
@@ -424,6 +424,45 @@ layui.use(['element', 'layer'], function () {
                     $(`#${step} #remark`).hide();
                     $(`#${step} #nextBtn`).removeClass("fade").show();
                 }
+            },
+            error: function () {
+                console.log("error");
+            }
+        })
+    });
+});
+//创建预发分支
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", ".createUatBranch", function () {
+        var postData = {};
+        var planId = getQueryVariable("pid");
+        var projectId = getQueryVariable("prjId");
+        console.log(projectId);
+        postData['pid'] = planId;
+        postData['prjId'] = projectId;
+
+
+        $.ajax({
+            url: '/ajax_createUatBranch',
+            type: 'POST',
+            data: postData,
+
+            success: function (arg) {
+                layer.open({
+                    type: 1
+                    , title: '结果'
+                    , content: '<div style="padding: 20px 100px;">' + arg[0] + '</div>'
+                    , btn: '关闭'
+                    , btnAlign: 'c' //按钮居中
+                    , area: '500px;'
+                    , shade: 0.5 //不显示遮罩
+                    , yes: function () {
+                        layer.closeAll();
+                    }
+                });
+                $(`#uatBranch`).html(arg[1]);
             },
             error: function () {
                 console.log("error");

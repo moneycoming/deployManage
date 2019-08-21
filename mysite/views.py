@@ -21,7 +21,6 @@ from mysite.dataAnalysis import DataAnalysis
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
 
-
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
 
@@ -38,7 +37,7 @@ try:
             python_jenkins_obj = PythonJenkins(uat_job_name, param)
             uat_buildId = python_jenkins_obj.look_uat_buildId()
             if uat_buildId:
-                uat_jenkinsJobs = models.uat_jenkinsJob.objects.filter(project=projects[i])
+                uat_jenkinsJobs = models.jenkinsUat.objects.filter(project=projects[i])
                 repetition = "1"
                 for j in range(len(uat_jenkinsJobs)):
                     if uat_buildId == uat_jenkinsJobs[j].buildId:
@@ -47,24 +46,32 @@ try:
                             "uat_jenkins_job: %s, uat_buildId: %d, 已存在" % (uat_jenkinsJobs[j].name, uat_buildId))
                         break
                 if repetition == "1":
-                    uat_jenkinsJob_Model = models.uat_jenkinsJob(name=uat_job_name, project=projects[i],
-                                                                 buildId=uat_buildId)
+                    uat_jenkinsJob_Model = models.jenkinsUat(name=uat_job_name, project=projects[i],
+                                                             buildId=uat_buildId)
                     uat_jenkinsJob_Model.save()
                     logger.info(
                         "uat_jenkins_job: %s, uat_buildId: %d,已存储" % (uat_job_name, uat_buildId))
 
 
-    @register_job(scheduler, "interval", seconds=3600)
+    @register_job(scheduler, "interval", seconds=60)
     def get_branch_info():
         projects = models.project.objects.all()
         for k in range(len(projects)):
-            models.branch.objects.filter(project=projects[k]).delete()
+            branches = models.devBranch.objects.filter(project=projects[k])
             projectBean_obj = projectBean(projects[k])
-            branchList = projectBean_obj.look_branch()
-            for i in range(len(branchList)):
-                branchModel = models.branch(name=branchList[i], project=projects[k])
-                branchModel.save()
-                logger.info("jenkins_job: %s, 分支: %s" % (projects[k].name, branchList[i]))
+            branchOld = []
+            for m in range(len(branches)):
+                branchOld.append(branches[m].name)
+            branchNew = projectBean_obj.look_branch()
+            list1 = list(set(branchOld).difference(set(branchNew)))
+            list2 = list(set(branchNew).difference(set(branchOld)))
+            for i in range(len(list1)):
+                branches.filter(name=list1[i]).delete()
+                logger.info("分支%s已删除" % list1[i])
+            for j in range(len(list2)):
+                branch_obj = models.devBranch(name=list2[j], project=projects[k])
+                branch_obj.save()
+                logger.info("分支%s已添加" % list2[j])
 
 
     register_events(scheduler)
@@ -80,18 +87,18 @@ mail_from = 'zhumingjie@zhixuezhen.com'
 
 # 首页及任务信息展示
 def index(request):
-    plans = models.deployPlan.objects.all()
+    plans = models.plan.objects.all()
     productions = models.production.objects.all()
     monthAllPlan = []
     for i in range(len(productions)):
-        dataAnalysis_obj = DataAnalysis(productions[i])
-        planCounts = dataAnalysis_obj.totalCounts()
+        data_analysis_obj = DataAnalysis(productions[i])
+        planCounts = data_analysis_obj.totalCounts()
         productions.filter(id=productions[i].id).update(planCounts=planCounts)
         monthPerPlan = []
         productionName = [productions[i].name]
         monthMixPlan = []
         for j in range(1, datetime.datetime.now().month + 1):
-            monthCounts = dataAnalysis_obj.monthCounts(j)
+            monthCounts = data_analysis_obj.monthCounts(j)
             monthPerPlan.append(monthCounts)
         monthMixPlan.append(productionName)
         monthMixPlan.append(monthPerPlan)
@@ -131,7 +138,7 @@ def productionKindChart(request):
 
 @login_required
 def showPlan(request):
-    plans = models.deployPlan.objects.all()
+    plans = models.plan.objects.all()
 
     template = get_template('showPlan.html')
     html = template.render(context=locals(), request=request)
@@ -142,7 +149,7 @@ def showPlan(request):
 def createPlan(request):
     productions = models.production.objects.all()
     kinds = models.kind.objects.all()
-    users = User.objects.all()
+    members = models.member.objects.all()
     projects = models.project.objects.all()
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -150,14 +157,27 @@ def createPlan(request):
         production = request.POST.get('production')
         kind = request.POST.get('kind')
         memberList = request.POST.getlist('member')
+        projectList = request.POST.getlist('project')
+        devBranchList = request.POST.getlist('devBranch')
         createDate = datetime.datetime.now()
         createUser = request.user
-        production_obj = models.production.objects.get(name=production)
-        kind_obj = models.kind.objects.get(name=kind)
+        productionObj = models.production.objects.get(name=production)
+        kindObj = models.kind.objects.get(name=kind)
 
-        plan_obj = models.deployPlan(title=title, description=desc, kind=kind_obj, production=production_obj,
-                                     createUser=createUser, createDate=createDate)
-        plan_obj.save()
+        planObj = models.plan(title=title, description=desc, kind=kindObj, production=productionObj,
+                              createUser=createUser, createDate=createDate)
+        planObj.save()
+
+        for i in range(len(memberList)):
+            memberObj = models.member.objects.get(name=memberList[i])
+            plan_member = models.plan_member(plan=planObj, member=memberObj)
+            plan_member.save()
+
+        for j in range(len(projectList)):
+            projectObj = models.project.objects.get(name=projectList[j])
+            devBranchObj = models.devBranch.objects.filter(project=projectObj).get(name=devBranchList[j])
+            project_plan = models.project_plan(plan=planObj, project=projectObj, devBranch=devBranchObj)
+            project_plan.save()
 
         return HttpResponseRedirect('/showPlan')
 
@@ -210,7 +230,7 @@ def ajax_deleteTask(request):
 def ajax_deletePlan(request):
     planId = request.POST.get('id')
     if planId:
-        plan = models.deployPlan.objects.get(id=planId)
+        plan = models.plan.objects.get(id=planId)
         plan.delete()
 
         return HttpResponse("success")
@@ -220,12 +240,70 @@ def ajax_deletePlan(request):
 def planDetail(request):
     planId = request.GET.get('pid')
     if planId:
-        plan_obj = models.deployPlan.objects.get(id=planId)
+        plan_obj = models.plan.objects.get(id=planId)
         tasks = models.task.objects.filter(plan__id=planId)
+        project_plans = models.project_plan.objects.filter(plan=plan_obj)
 
     template = get_template('planDetail.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
+
+
+@login_required
+def uatDetail(request):
+    planId = request.GET.get('pid')
+    if planId:
+        plan_obj = models.plan.objects.get(id=planId)
+        project_plans = models.project_plan.objects.filter(plan=plan_obj)
+
+    template = get_template('uatDetail.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+@login_required
+def uatDeploy(request):
+    projectId = request.GET.get('prjId')
+    planId = request.GET.get('pid')
+    if projectId and planId:
+        project_obj = models.project.objects.get(id=projectId)
+        plan_obj = models.plan.objects.get(id=planId)
+        project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
+        print(project_plan_obj.uatBranch)
+        # uatBranch_obj = project_plan_obj.uatBranch
+
+    template = get_template('uatDeploy.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+@login_required
+@csrf_exempt
+def ajax_createUatBranch(request):
+    planId = request.POST.get('pid')
+    projectId = request.POST.get('prjId')
+    if projectId and planId:
+        result = []
+        uid = str(uuid.uuid4())
+        branchCode = ''.join(uid.split('-'))[0:10]
+        uatBranch = "uat-"
+        uatBranch += branchCode
+        project_obj = models.project.objects.get(id=projectId)
+        plan_obj = models.plan.objects.get(id=planId)
+        project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
+        devBranch = project_plan_obj.devBranch
+        branch_obj = branch(project_obj.project_dir)
+        branch_obj.create_branch(uatBranch)
+        status = branch_obj.merge_branch(devBranch.name, uatBranch)
+        if status:
+            project_plan_obj.uatBranch = uatBranch
+            project_plan_obj.save()
+            res = "预发分支：%s创建成功！" % uatBranch
+        else:
+            res = "预发分支创建失败！"
+        result.append(res)
+        result.append(uatBranch)
+        return HttpResponse(json.dumps(result), "application/json")
 
 
 @login_required
@@ -295,7 +373,7 @@ def ajax_autoCodeMerge(request):
                 mergeFrom = taskDetails[i].branch
                 project_dir = jenkinsJob.project.project_dir
                 branch_obj = branch(project_dir)
-                status = branch_obj.merge(mergeFrom, mergeTo, status=False)
+                status = branch_obj.merge_branch(mergeFrom, mergeTo, status=False)
                 if not status:
                     conflictBranches.append(jenkinsJob.name)
 
@@ -314,21 +392,21 @@ def ajax_autoCodeMerge(request):
             res = "你没有验证部署的权限！！！"
             result.append(res)
             resultJson = json.dumps(result)
-            return HttpResponse(resultJson,  "application/json")
+            return HttpResponse(resultJson, "application/json")
 
 
 @login_required
 def createTask(request):
     user = request.user
     if user.has_perm('mysite.add_task'):
-        jenkins_jobs = models.pro_jenkinsJob.objects.all()
-        plans = models.deployPlan.objects.all()
+        jenkins_jobs = models.jenkinsPro.objects.all()
+        plans = models.plan.objects.all()
         segments = models.segment.objects.all()
         if request.method == 'POST':
             title = request.POST.get('title')
             jenkinsJobs = request.POST.getlist('jenkinsJob')
             planName = request.POST.get('plan')
-            plan_obj = models.deployPlan.objects.get(title=planName)
+            plan_obj = models.plan.objects.get(title=planName)
             segments = request.POST.getlist('segment')
             buildId = request.POST.getlist('buildId')
             Branch = request.POST.getlist('branch')
@@ -338,7 +416,7 @@ def createTask(request):
             task_obj.save()
 
             for i in range(len(jenkinsJobs)):
-                jenkinsJob_obj = models.pro_jenkinsJob.objects.get(name=jenkinsJobs[i])
+                jenkinsJob_obj = models.jenkinsPro.objects.get(name=jenkinsJobs[i])
                 taskDetail_obj = models.taskDetail(proJenkins=jenkinsJob_obj, task=task_obj, packageId=buildId[i],
                                                    branch=Branch[i], priority=i)
                 taskDetail_obj.save()
@@ -363,7 +441,7 @@ def ajax_load_info(request):
         jenkins_job_name = request.GET.get('jenkins_job_name')
         if jenkins_job_name:
             project = models.project.objects.get(name=jenkins_job_name)
-            branches = models.branch.objects.filter(project=project)
+            branches = models.devBranch.objects.filter(project=project)
             branchList = list(branches.values("name"))
             branchListJson = json.dumps(branchList)
 
@@ -447,7 +525,7 @@ def ajax_runBuild(request):
                     buildId = taskDetail_obj[i].packageId
                     jenkinsJob_obj = taskDetail_obj[i].proJenkins
                     param = eval(jenkinsJob_obj.param)
-                    serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(proJenkins=jenkinsJob_obj)
+                    serverInfo_obj = models.jenkinsPro_serverInfo.objects.filter(proJenkins=jenkinsJob_obj)
                     if serverInfo_obj and info['build'] == 'SUCCESS':
                         for j in range(len(serverInfo_obj)):
                             params.update(param)
@@ -488,7 +566,8 @@ def ajax_runBuild(request):
                                                                          taskDetail=taskDetail_obj[i], suuid=suid)
                             operateHistory_obj.save()
                             logger.info("taskId: %s, job: %s ,server: %s, 发布记录存储完成" % (taskId, jenkinsJob_obj.name,
-                                                                                       serverInfo_obj[j].serverInfo.name))
+                                                                                       serverInfo_obj[
+                                                                                           j].serverInfo.name))
                     else:
                         # 当出现发布失败后，立即终止后面的发布
                         logger.info("发布任务: %s,服务器不存在，或者发布失败，终止所有发布。" % taskId)
@@ -542,7 +621,7 @@ def ajax_rollBack(request):
                         pre_build = \
                             taskDetail_all_obj.filter(proJenkins=jenkinsJob_obj, packageId__lt=buildId).order_by(
                                 '-packageId')[0].buildID
-                        serverInfo_obj = models.proJenkins_ServerInfo.objects.filter(proJenkins=jenkinsJob_obj)
+                        serverInfo_obj = models.jenkinsPro_serverInfo.objects.filter(proJenkins=jenkinsJob_obj)
                         if serverInfo_obj and info['build'] == 'SUCCESS':
                             for j in range(len(serverInfo_obj)):
                                 params.update(param)

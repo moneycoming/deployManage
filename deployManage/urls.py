@@ -48,4 +48,7 @@ urlpatterns = [
     url(r'^ajax_load_info', views.ajax_load_info, name='load_info'),
     url(r'^ajax_autoCodeMerge$', views.ajax_autoCodeMerge, name='autoCodeMerge'),
     url(r'^getBuildResult$', views.ajax_console_opt),
+    url(r'^uatDetail', views.uatDetail),
+    url(r'^uatDeploy', views.uatDeploy),
+    url(r'^ajax_createUatBranch', views.ajax_createUatBranch),
 ]

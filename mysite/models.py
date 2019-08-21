@@ -36,21 +36,21 @@ class project(models.Model):
 
 
 # 分支表
-class branch(models.Model):
+class devBranch(models.Model):
     name = models.CharField(max_length=100, verbose_name="分支名称")
     project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
 
 
 # pro Jenkins job
-class pro_jenkinsJob(models.Model):
+class jenkinsPro(models.Model):
     name = models.CharField(max_length=50, verbose_name="生产Jenkins Job")
-    serverIp = models.ManyToManyField(ServerInfo, through='proJenkins_ServerInfo')
+    serverIp = models.ManyToManyField(ServerInfo, through='jenkinsPro_serverInfo')
     project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
     param = models.CharField(max_length=200, blank=False, verbose_name="构建参数")
 
 
 # uat Jenkins job
-class uat_jenkinsJob(models.Model):
+class jenkinsUat(models.Model):
     name = models.CharField(max_length=50, verbose_name="预发Jenkins job")
     project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
     buildId = models.IntegerField(default=0, verbose_name="预发构建号")
@@ -66,19 +66,9 @@ class uat_jenkinsJob(models.Model):
 
 
 # 项目和服务器信息关系表
-class proJenkins_ServerInfo(models.Model):
-    proJenkins = models.ForeignKey(pro_jenkinsJob, on_delete=models.CASCADE)
+class jenkinsPro_serverInfo(models.Model):
+    jenkinsPro = models.ForeignKey(jenkinsPro, on_delete=models.CASCADE)
     serverInfo = models.ForeignKey(ServerInfo, on_delete=models.CASCADE)
-
-    def proJenkins_name(self):
-        return self.proJenkins.name
-
-    proJenkins_name.short_description = "项目"
-
-    def serverInfo_name(self):
-        return self.serverInfo.name
-
-    serverInfo_name.short_description = "关联服务器"
 
     class Meta:
         verbose_name = u'项目和服务器信息关系表'
@@ -109,14 +99,21 @@ class kind(models.Model):
     description = models.CharField(max_length=200, verbose_name="描述")
 
 
+# 成员表
+class member(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="extension")
+    name = models.CharField(max_length=50, verbose_name="姓名中文表示")
+
+
 # 发布计划表
-class deployPlan(models.Model):
+class plan(models.Model):
     title = models.CharField(max_length=200, verbose_name="标题")
     kind = models.ForeignKey(kind, verbose_name="发布类型")
+    project = models.ManyToManyField(project, through="project_plan")
     description = models.TextField(verbose_name="说明")
-    member = models.ManyToManyField(User, through="plan_member")
+    member = models.ManyToManyField(member, related_name="计划成员", through="plan_member")
     production = models.ForeignKey(production, on_delete=models.CASCADE, verbose_name="所属产品")
-    createUser = models.ForeignKey(User, verbose_name="创建者")
+    createUser = models.ForeignKey(User, related_name="创建者", verbose_name="创建者")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
 
     def production_name(self):
@@ -136,10 +133,19 @@ class deployPlan(models.Model):
         verbose_name_plural = verbose_name
 
 
+# 项目发布计划表
+class project_plan(models.Model):
+    project = models.ForeignKey(project, on_delete=models.CASCADE)
+    plan = models.ForeignKey(plan, on_delete=models.CASCADE)
+    devBranch = models.ForeignKey(devBranch, on_delete=models.CASCADE, verbose_name="开发分支")
+    uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
+    packageId = models.CharField(max_length=3, null=True, verbose_name="生产发布包编号")
+
+
 # 计划成员表
 class plan_member(models.Model):
-    member = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="成员")
-    plan = models.ForeignKey(deployPlan, on_delete=models.CASCADE, verbose_name="计划")
+    member = models.ForeignKey(member, on_delete=models.CASCADE, verbose_name="成员")
+    plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
 
 
 # 任务执行环节
@@ -152,9 +158,9 @@ class segment(models.Model):
 # Jenkins发布任务表
 class task(models.Model):
     name = models.CharField(max_length=200, verbose_name="任务名称")
-    proJenkins = models.ManyToManyField(pro_jenkinsJob, through='taskDetail')
+    proJenkins = models.ManyToManyField(jenkinsPro, through='taskDetail')
     segment = models.ManyToManyField(segment, through='sequence')
-    plan = models.ForeignKey(deployPlan, on_delete=models.CASCADE, verbose_name="所属计划")
+    plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者", related_name='user_create')
     checkUser = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, verbose_name="验证者", related_name='user_check')
@@ -189,7 +195,7 @@ class sequence(models.Model):
 
 # 任务详情，用于任务回滚等
 class taskDetail(models.Model):
-    proJenkins = models.ForeignKey(pro_jenkinsJob, on_delete=models.CASCADE)
+    proJenkins = models.ForeignKey(jenkinsPro, on_delete=models.CASCADE)
     task = models.ForeignKey(task, on_delete=models.CASCADE)
     packageId = models.IntegerField(default=0, verbose_name="生产发布包编号")
     branch = models.CharField(max_length=100, verbose_name="分支")
