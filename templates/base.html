@@ -151,6 +151,21 @@
         })
     }
 </script>
+{# 预发分支创建类型切换#}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $(".uatBranchChoose").change(
+            function () {
+                var $selected = $("input[name='uatBranchChoose']:checked").val();
+                if ($selected === "option1") {
+                    $(`#artificialBranch`).removeClass("fade");
+                }
+                else {
+                    $(`#artificialBranch`).addClass("fade");
+                }
+            });
+    });
+</script>
 <script type="text/javascript">
     $(document).ready(function () {
         $('#bootstrap-data-table-export').DataTable();

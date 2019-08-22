@@ -53,60 +53,101 @@
                                 <div class="tab-content pl-3 pt-2" id="nav-tabContent">
                                     <div class="tab-pane fade show active" id="nav-home" role="tabpanel"
                                          aria-labelledby="nav-home-tab">
-                                        <input class="layui-btn layui-btn-primary createUatBranch" type="button" value="创建分支">
-                                        <h5 class="page-header"></h5>
-                                        <h3>分支</h3><br>
-                                        {% if project_plan_obj %}
-                                            <p id="uatBranch">{{ project_plan_obj.uatBranch }}</p>
-                                        {% else %}
-                                            <p id="uatBranch">无</p>
-                                        {% endif %}
+                                        <div class="alert alert-success" role="alert">
+                                            <h4 class="alert-heading">说明</h4>
+                                            <hr>
+                                            <p>创建分支包括2种方式：</p>
+                                            <hr>
+                                            <p class="mb-0">1-自动创建预发分支，无须人工干预</p>
+                                            <p class="mb-0">2-手动创建预发分支，用于自动创建冲突后人工创建</p>
+                                        </div>
                                     </div>
-                                    <div class="tab-pane fade" id="nav-profile" role="tabpanel"
-                                         aria-labelledby="nav-profile-tab">
-                                        <p>Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt
-                                            tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor,
-                                            williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh
-                                            dreamcatcher synth. Cosby sweater eu banh mi, irure terry richardson ex sd.
-                                            Alip placeat salvia cillum iphone. Seitan alip s cardigan american apparel,
-                                            butcher voluptate nisi .</p>
+                                    <div class="row form-group">
+                                        <div class="col col-md-9">
+                                            <div class="form-check">
+                                                <div class="radio">
+                                                    <label for="radio1" class="form-check-label ">
+                                                        <input type="radio" id="radio1" name="uatBranchChoose"
+                                                               value="option1" class="form-check-input uatBranchChoose">手动创建
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label for="radio2" class="form-check-label ">
+                                                        <input type="radio" id="radio2" name="uatBranchChoose"
+                                                               value="option2" class="form-check-input uatBranchChoose">自动创建
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="tab-pane fade" id="nav-contact" role="tabpanel"
-                                         aria-labelledby="nav-contact-tab">
-                                        <p>Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt
-                                            tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor,
-                                            williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh
-                                            dreamcatcher synth. Cosby sweater eu banh mi, irure terry richardson ex sd.
-                                            Alip placeat salvia cillum iphone. Seitan alip s cardigan american apparel,
-                                            butcher voluptate nisi .</p>
+                                    <div id="artificialBranch" class="row form-group fade">
+                                        <div class="col-12 col-md-9"><input type="text" id="text-input" name="uatBranch" placeholder="branch name"
+                                                                            class="form-control">
+                                            <small class="form-text text-muted">输入手动创建的分支名</small>
+                                        </div>
                                     </div>
+                                    <input class="layui-btn layui-btn-primary createUatBranch" type="button" value="创建分支">
+                                    <h5 class="page-header"></h5>
+                                    <h3>分支</h3><br>
+                                    {% if project_plan_obj %}
+                                        <p id="uatBranch">{{ project_plan_obj.uatBranch }}</p>
+                                    {% else %}
+                                        <p id="uatBranch">无</p>
+                                    {% endif %}
+                                    {##}
+                                    {#                                    <div class="col col-md-3"><label for="text-input"#}
+                                    {#                                                                     class=" form-control-label">使用自建分支</label></div>#}
+                                    {#                                    <div class="col-12 col-md-9"><input type="text" id="text-input" name="text-input"#}
+                                    {#                                                                        placeholder="请输入分支名"#}
+                                    {#                                                                        class="form-control"></div>#}
+                                    {#                                    <h5 class="page-header"></h5>#}
+                                    {#                                    <input class="layui-btn layui-btn-primary createUatBranch" type="button"#}
+                                    {#                                           value="创建自建分支">#}
+                                </div>
+                                <div class="tab-pane fade" id="nav-profile" role="tabpanel"
+                                     aria-labelledby="nav-profile-tab">
+                                    <p>Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt
+                                        tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor,
+                                        williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh
+                                        dreamcatcher synth. Cosby sweater eu banh mi, irure terry richardson ex sd.
+                                        Alip placeat salvia cillum iphone. Seitan alip s cardigan american apparel,
+                                        butcher voluptate nisi .</p>
+                                </div>
+                                <div class="tab-pane fade" id="nav-contact" role="tabpanel"
+                                     aria-labelledby="nav-contact-tab">
+                                    <p>Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt
+                                        tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor,
+                                        williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh
+                                        dreamcatcher synth. Cosby sweater eu banh mi, irure terry richardson ex sd.
+                                        Alip placeat salvia cillum iphone. Seitan alip s cardigan american apparel,
+                                        butcher voluptate nisi .</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {#                    <div class="card">#}
-                    {#                        <div class="card-header">#}
-                    {#                            <strong class="card-title">预发部署</strong>#}
-                    {#                        </div>#}
-                    {#                        <div class="card-body">#}
-                    {#                            <div class="alert alert-success" role="alert">#}
-                    {#                                <h4 class="alert-heading">部署流程</h4>#}
-                    {#                                <p>点击项目列表中的项目名，进入项目部署页面</p>#}
-                    {#                                <hr>#}
-                    {#                                <p class="mb-0">包含两个步骤（可重复执行）：</p>#}
-                    {#                                <p class="mb-0">1-创建预发分支</p>#}
-                    {#                                <p class="mb-0">2-部署预发环境</p>#}
-                    {#                            </div>#}
-                    {#                            <h3>创建预发分支</h3>#}
-                    {#                            {% for project_plan in project_plans %}#}
-                    {#                                <p><br><a href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }} --#}
-                    {#                                    项目名：{{ project_plan.project.name }}</a></p>#}
-                    {#                            {% endfor %}#}
-                    {#                            <h3>部署预发环境</h3>#}
-                    {#                        </div>#}
-                    {#                    </div>#}
                 </div>
-            </div><!-- .animated -->
-        </div><!-- .content -->
-    </div>
+                {#                    <div class="card">#}
+                {#                        <div class="card-header">#}
+                {#                            <strong class="card-title">预发部署</strong>#}
+                {#                        </div>#}
+                {#                        <div class="card-body">#}
+                {#                            <div class="alert alert-success" role="alert">#}
+                {#                                <h4 class="alert-heading">部署流程</h4>#}
+                {#                                <p>点击项目列表中的项目名，进入项目部署页面</p>#}
+                {#                                <hr>#}
+                {#                                <p class="mb-0">包含两个步骤（可重复执行）：</p>#}
+                {#                                <p class="mb-0">1-创建预发分支</p>#}
+                {#                                <p class="mb-0">2-部署预发环境</p>#}
+                {#                            </div>#}
+                {#                            <h3>创建预发分支</h3>#}
+                {#                            {% for project_plan in project_plans %}#}
+                {#                                <p><br><a href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }} --#}
+                {#                                    项目名：{{ project_plan.project.name }}</a></p>#}
+                {#                            {% endfor %}#}
+                {#                            <h3>部署预发环境</h3>#}
+                {#                        </div>#}
+                {#                    </div>#}
+            </div>
+        </div><!-- .animated -->
+    </div><!-- .content -->
 {% endblock %}

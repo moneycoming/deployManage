@@ -269,8 +269,6 @@ def uatDeploy(request):
         project_obj = models.project.objects.get(id=projectId)
         plan_obj = models.plan.objects.get(id=planId)
         project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
-        print(project_plan_obj.uatBranch)
-        # uatBranch_obj = project_plan_obj.uatBranch
 
     template = get_template('uatDeploy.html')
     html = template.render(context=locals(), request=request)
@@ -282,19 +280,24 @@ def uatDeploy(request):
 def ajax_createUatBranch(request):
     planId = request.POST.get('pid')
     projectId = request.POST.get('prjId')
+    option = request.POST.get('radio')
     if projectId and planId:
-        result = []
-        uid = str(uuid.uuid4())
-        branchCode = ''.join(uid.split('-'))[0:10]
-        uatBranch = "uat-"
-        uatBranch += branchCode
         project_obj = models.project.objects.get(id=projectId)
         plan_obj = models.plan.objects.get(id=planId)
         project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
-        devBranch = project_plan_obj.devBranch
-        branch_obj = branch(project_obj.project_dir)
-        branch_obj.create_branch(uatBranch)
-        status = branch_obj.merge_branch(devBranch.name, uatBranch)
+        result = []
+        if option == "option1":
+            uatBranch = request.POST.get('uatBranch')
+            status = True
+        else:
+            uid = str(uuid.uuid4())
+            branchCode = ''.join(uid.split('-'))[0:10]
+            uatBranch = "uat-"
+            uatBranch += branchCode
+            devBranch = project_plan_obj.devBranch
+            branch_obj = branch(project_obj.project_dir)
+            branch_obj.create_branch(uatBranch)
+            status = branch_obj.merge_branch(devBranch.name, uatBranch)
         if status:
             project_plan_obj.uatBranch = uatBranch
             project_plan_obj.save()
@@ -303,6 +306,7 @@ def ajax_createUatBranch(request):
             res = "预发分支创建失败！"
         result.append(res)
         result.append(uatBranch)
+
         return HttpResponse(json.dumps(result), "application/json")
 
 

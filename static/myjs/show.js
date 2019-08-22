@@ -437,9 +437,17 @@ layui.use(['element', 'layer'], function () {
 
     $("body").on("click", ".createUatBranch", function () {
         var postData = {};
+        var selected = $("input[name='uatBranchChoose']:checked").val();
+        if (selected === "option1") {
+            var uatBranch = $(" input[ name='uatBranch' ] ").val();
+            postData['uatBranch'] = uatBranch;
+            postData['radio'] = 'option1';
+        }
+        else {
+            postData['radio'] = 'option2';
+        }
         var planId = getQueryVariable("pid");
         var projectId = getQueryVariable("prjId");
-        console.log(projectId);
         postData['pid'] = planId;
         postData['prjId'] = projectId;
 
@@ -470,3 +478,4 @@ layui.use(['element', 'layer'], function () {
         })
     });
 });
+
