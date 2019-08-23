@@ -10,7 +10,7 @@ import subprocess
 logger = logging.getLogger('log')
 
 
-class PythonJenkins:
+class pythonJenkins:
     def __init__(self, jenkinsJob, param):
         self.jenkinsJob = jenkinsJob
         self.param = param
@@ -23,15 +23,17 @@ class PythonJenkins:
         jenkinsJob = self.jenkinsJob
         param = self.param
         server = self.server
+        info = {}
         try:
             next_build_number = server.get_job_info(jenkinsJob)['nextBuildNumber']
             server.build_job(jenkinsJob, param)
             time.sleep(15)
-            console_opt = server.get_build_console_output(jenkinsJob, next_build_number)
+            consoleOpt = server.get_build_console_output(jenkinsJob, next_build_number)
+            info['buildId'] = next_build_number
+            info['consoleOpt'] = consoleOpt
         except jenkins.NotFoundException:
-            console_opt = None
             logger.error("jenkins项目未找到，请检查项目是否存在")
-        return console_opt
+        return info
 
     def isFinished(self):
         jenkinsJob = self.jenkinsJob
@@ -97,7 +99,7 @@ class Transaction:
                     params.update(param)
                     params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
                     logger.info(params)
-                    pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
+                    pythonJenkins_obj = pythonJenkins(jenkinsJob_obj.name, params)
                     console = pythonJenkins_obj.deploy()
                     params = {}
                     # 判断Jenkins项目执行是否成功
@@ -135,7 +137,7 @@ class Transaction:
                 params.update(param)
                 params.update(SERVER_IP=serverInfo_obj[s].serverInfo.serverIp, REL_VERSION=buildId)
                 logger.info(params)
-                pyJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
+                pyJenkins_obj = pythonJenkins(jenkinsJob_obj.name, params)
                 console = pyJenkins_obj.deploy()
                 params = {}
                 # 判断Jenkins项目执行是否成功

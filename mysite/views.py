@@ -9,7 +9,7 @@ from django.db import connection, connections
 from mysite.functions import TimeChange, fileObj, branch
 from mysite import models
 import datetime
-from mysite.jenkinsUse import PythonJenkins, Transaction, projectBean
+from mysite.jenkinsUse import pythonJenkins, Transaction, projectBean
 from django.views.decorators.csrf import csrf_exempt
 import uuid
 import time
@@ -28,31 +28,29 @@ logger = logging.getLogger('log')
 scheduler = BackgroundScheduler()
 scheduler.add_jobstore(DjangoJobStore(), "default")
 try:
-    @register_job(scheduler, "interval", seconds=60)
-    def get_uat_buildId():
-        projects = models.project.objects.all()
-        for i in range(len(projects)):
-            uat_job_name = "UAT-" + projects[i].applicationName
-            param = {}
-            python_jenkins_obj = PythonJenkins(uat_job_name, param)
-            uat_buildId = python_jenkins_obj.look_uat_buildId()
-            if uat_buildId:
-                uat_jenkinsJobs = models.jenkinsUat.objects.filter(project=projects[i])
-                repetition = "1"
-                for j in range(len(uat_jenkinsJobs)):
-                    if uat_buildId == uat_jenkinsJobs[j].buildId:
-                        repetition = "0"
-                        logger.info(
-                            "uat_jenkins_job: %s, uat_buildId: %d, 已存在" % (uat_jenkinsJobs[j].name, uat_buildId))
-                        break
-                if repetition == "1":
-                    uat_jenkinsJob_Model = models.jenkinsUat(name=uat_job_name, project=projects[i],
-                                                             buildId=uat_buildId)
-                    uat_jenkinsJob_Model.save()
-                    logger.info(
-                        "uat_jenkins_job: %s, uat_buildId: %d,已存储" % (uat_job_name, uat_buildId))
-
-
+    # @register_job(scheduler, "interval", seconds=60)
+    # def get_uat_buildId():
+    #     projects = models.project.objects.all()
+    #     for i in range(len(projects)):
+    #         uat_job_name = "UAT-" + projects[i].applicationName
+    #         param = {}
+    #         python_jenkins_obj = PythonJenkins(uat_job_name, param)
+    #         uat_buildId = python_jenkins_obj.look_uat_buildId()
+    #         if uat_buildId:
+    #             uat_jenkinsJobs = models.jenkinsUat.objects.filter(project=projects[i])
+    #             repetition = "1"
+    #             for j in range(len(uat_jenkinsJobs)):
+    #                 if uat_buildId == uat_jenkinsJobs[j].buildId:
+    #                     repetition = "0"
+    #                     logger.info(
+    #                         "uat_jenkins_job: %s, uat_buildId: %d, 已存在" % (uat_jenkinsJobs[j].name, uat_buildId))
+    #                     break
+    #             if repetition == "1":
+    #                 uat_jenkinsJob_Model = models.jenkinsUat(name=uat_job_name, project=projects[i],
+    #                                                          buildId=uat_buildId)
+    #                 uat_jenkinsJob_Model.save()
+    #                 logger.info(
+    #                     "uat_jenkins_job: %s, uat_buildId: %d,已存储" % (uat_job_name, uat_buildId))
     @register_job(scheduler, "interval", seconds=60)
     def get_branch_info():
         projects = models.project.objects.all()
@@ -164,20 +162,21 @@ def createPlan(request):
         productionObj = models.production.objects.get(name=production)
         kindObj = models.kind.objects.get(name=kind)
 
-        planObj = models.plan(title=title, description=desc, kind=kindObj, production=productionObj,
-                              createUser=createUser, createDate=createDate)
-        planObj.save()
+        plan_obj = models.plan(title=title, description=desc, kind=kindObj, production=productionObj,
+                               createUser=createUser, createDate=createDate)
+        plan_obj.save()
 
         for i in range(len(memberList)):
             memberObj = models.member.objects.get(name=memberList[i])
-            plan_member = models.plan_member(plan=planObj, member=memberObj)
+            plan_member = models.plan_member(plan=plan_obj, member=memberObj)
             plan_member.save()
 
         for j in range(len(projectList)):
-            projectObj = models.project.objects.get(name=projectList[j])
-            devBranchObj = models.devBranch.objects.filter(project=projectObj).get(name=devBranchList[j])
-            project_plan = models.project_plan(plan=planObj, project=projectObj, devBranch=devBranchObj)
-            project_plan.save()
+            project_obj = models.project.objects.get(name=projectList[j])
+            dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
+            project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=dev_branch_obj,
+                                                   order=j)
+            project_plan_obj.save()
 
         return HttpResponseRedirect('/showPlan')
 
@@ -269,6 +268,7 @@ def uatDeploy(request):
         project_obj = models.project.objects.get(id=projectId)
         plan_obj = models.plan.objects.get(id=planId)
         project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
+        consoleOpts = models.consoleOpt.objects.filter(project=project_obj, plan=plan_obj)
 
     template = get_template('uatDeploy.html')
     html = template.render(context=locals(), request=request)
@@ -456,21 +456,22 @@ def ajax_load_info(request):
 @csrf_exempt
 def ajax_console_opt(request):
     if request.method == 'GET':
-        taskId = request.GET.get('id')
-        dateTime = request.GET.get('time')
-        if taskId:
-            taskDetails = models.taskDetail.objects.filter(task__id=taskId)
-            operateHistoryList = []
-            for i in range(len(taskDetails)):
-                operateHistory = models.operationHistory.objects.filter(taskDetail=taskDetails[i]).filter(
-                    operateTime__gte=dateTime)
-                if operateHistory:
-                    data = operateHistory[0].console_opt
-                    operateHistoryList.append(data)
+        planId = request.GET.get('pid')
+        projectId = request.GET.get('prjId')
+        deployTime = request.GET.get('time')
+        envSort = request.GET.get('envSort')
+        if projectId and planId:
+            project_obj = models.project.objects.get(id=projectId)
+            plan_obj = models.plan.objects.get(id=planId)
+            consoleOpts = models.consoleOpt.objects.filter(project__id=projectId, plan__id=planId).filter(
+                deployTime__gte=deployTime)
+            logger.info("显示计划：%s,项目: %s的后台信息" % (plan_obj.title, project_obj.name))
+            contentList = [envSort]
+            if consoleOpts:
+                for i in range(len(consoleOpts)):
+                    contentList.append(consoleOpts[i].content)
 
-            jsonList = json.dumps(operateHistoryList)
-
-            return HttpResponse(jsonList, "application/json")
+            return HttpResponse(json.dumps(contentList), "application/json")
 
 
 @login_required
@@ -534,7 +535,7 @@ def ajax_runBuild(request):
                         for j in range(len(serverInfo_obj)):
                             params.update(param)
                             params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=buildId)
-                            pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
+                            pythonJenkins_obj = pythonJenkins(jenkinsJob_obj.name, params)
                             console = pythonJenkins_obj.deploy()
                             params = {}
                             isFinished = console.find("Finished")
@@ -630,7 +631,7 @@ def ajax_rollBack(request):
                             for j in range(len(serverInfo_obj)):
                                 params.update(param)
                                 params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=pre_build)
-                                pythonJenkins_obj = PythonJenkins(jenkinsJob_obj.name, params)
+                                pythonJenkins_obj = pythonJenkins(jenkinsJob_obj.name, params)
                                 console = pythonJenkins_obj.deploy()
                                 params = {}
                                 # 判断Jenkins项目执行是否成功
@@ -691,12 +692,60 @@ def ajax_rollBack(request):
         return HttpResponse(res)
 
 
+# 预发构建
+@csrf_exempt
+def ajax_uatBuild(request):
+    if request.method == 'POST':
+        planId = request.POST.get('pid')
+        projectId = request.POST.get('prjId')
+        deployTime = request.POST.get('time')
+        signId = ''.join(str(uuid.uuid4()).split('-'))
+        member_obj = models.member.objects.get(user=request.user)
+        plan_obj = models.plan.objects.get(id=planId)
+        project_obj = models.project.objects.get(id=projectId)
+        project_plan_obj = models.project_plan.objects.get(plan=plan_obj, project=project_obj)
+        jenkinsUat_obj = models.jenkinsUat.objects.get(project=project_obj)
+        project_servers = models.project_server.objects.filter(project=project_obj)
+        param = {}
+        param.update(eval(jenkinsUat_obj.param))
+        for i in range(len(project_servers)):
+            param.update(SERVER_IP=project_servers[i].server.ip, BRANCH=project_plan_obj.uatBranch)
+            logger.info("param：%s" % param)
+            pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, param)
+            info = pythonJenkins_obj.deploy()
+            logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
+            consoleOpt = info['consoleOpt']
+            buildId = info['buildId']
+            if info:
+                isFinished = consoleOpt.find("Finished")
+                while isFinished == -1:
+                    time.sleep(5)
+                    consoleOpt = pythonJenkins_obj.isFinished()
+                    isFinished = consoleOpt.find("Finished")
+                isSuccess = consoleOpt.find("Finished: SUCCESS")
+                if isSuccess:
+                    result = True
+                    project_plan_obj.lastPackageId = buildId
+                    project_plan_obj.save()
+                    logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
+                else:
+                    result = False
+                    logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
+                consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj, content=consoleOpt,
+                                                   packageId=buildId, result=result, deployTime=deployTime,
+                                                   deployUser=member_obj, signId=signId)
+                consoleOpt_obj.save()
+
+                return HttpResponse(result)
+
+
 # 查看控制台信息
 @login_required
 def console_opt(request, uid):
     if uid:
-        operateHistory_obj = models.operationHistory.objects.filter(suuid=uid)
-        taskHistory = models.taskHistory.objects.get(suuid=uid)
+        consoleOpts = models.consoleOpt.objects.filter(signId=uid)
+        planId = consoleOpts[0].plan.id
+        projectId = consoleOpts[0].project.id
 
     template = get_template('console_opt.html')
     html = template.render(context=locals(), request=request)

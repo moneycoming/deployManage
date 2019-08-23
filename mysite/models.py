@@ -6,18 +6,26 @@ from django.contrib.auth.models import AbstractUser
 
 
 # 服务器信息表
-class ServerInfo(models.Model):
+class server(models.Model):
     name = models.CharField(max_length=20, unique=True, verbose_name="服务器名称")
-    serverIp = models.CharField(max_length=15, unique=True, verbose_name="服务器IP")
+    ip = models.CharField(max_length=15, unique=True, verbose_name="服务器IP")
+    type = models.IntegerField(verbose_name="0:代表预发， 1:代表生产")
 
     class Meta:
         verbose_name = u'服务器信息'
         verbose_name_plural = verbose_name
 
 
+# 成员表
+class member(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="extension")
+    name = models.CharField(max_length=50, verbose_name="姓名中文表示")
+
+
 # 项目表
 class project(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="项目名称")
+    server = models.ManyToManyField(server, through="project_server")
     desc = models.CharField(max_length=50, blank=True, verbose_name="项目描述")
     applicationName = models.CharField(max_length=50, unique=True, verbose_name="项目名称")
     project_dir = models.CharField(max_length=200, blank=False, verbose_name="代码仓库")
@@ -32,46 +40,6 @@ class project(models.Model):
 
     class Meta:
         verbose_name = u'Jenkins任务'
-        verbose_name_plural = verbose_name
-
-
-# 分支表
-class devBranch(models.Model):
-    name = models.CharField(max_length=100, verbose_name="分支名称")
-    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
-
-
-# pro Jenkins job
-class jenkinsPro(models.Model):
-    name = models.CharField(max_length=50, verbose_name="生产Jenkins Job")
-    serverIp = models.ManyToManyField(ServerInfo, through='jenkinsPro_serverInfo')
-    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
-    param = models.CharField(max_length=200, blank=False, verbose_name="构建参数")
-
-
-# uat Jenkins job
-class jenkinsUat(models.Model):
-    name = models.CharField(max_length=50, verbose_name="预发Jenkins job")
-    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
-    buildId = models.IntegerField(default=0, verbose_name="预发构建号")
-
-    def project_name(self):
-        return self.project.name
-
-    project_name.short_description = "项目"
-
-    class Meta:
-        verbose_name = u'预发构建号'
-        verbose_name_plural = verbose_name
-
-
-# 项目和服务器信息关系表
-class jenkinsPro_serverInfo(models.Model):
-    jenkinsPro = models.ForeignKey(jenkinsPro, on_delete=models.CASCADE)
-    serverInfo = models.ForeignKey(ServerInfo, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name = u'项目和服务器信息关系表'
         verbose_name_plural = verbose_name
 
 
@@ -97,12 +65,6 @@ class production(models.Model):
 class kind(models.Model):
     name = models.CharField(max_length=10, verbose_name="类型名")
     description = models.CharField(max_length=200, verbose_name="描述")
-
-
-# 成员表
-class member(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="extension")
-    name = models.CharField(max_length=50, verbose_name="姓名中文表示")
 
 
 # 发布计划表
@@ -133,13 +95,62 @@ class plan(models.Model):
         verbose_name_plural = verbose_name
 
 
+# 分支表
+class devBranch(models.Model):
+    name = models.CharField(max_length=100, verbose_name="分支名称")
+    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
+
+
+# pro Jenkins job
+class jenkinsPro(models.Model):
+    name = models.CharField(max_length=50, verbose_name="生产Jenkins Job")
+    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
+    param = models.CharField(max_length=200, blank=False, verbose_name="构建参数")
+
+
+# uat Jenkins job
+class jenkinsUat(models.Model):
+    name = models.CharField(max_length=50, verbose_name="预发Jenkins job")
+    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
+    param = models.CharField(max_length=200, verbose_name="构建参数")
+
+    def project_name(self):
+        return self.project.name
+
+    project_name.short_description = "项目"
+
+    class Meta:
+        verbose_name = u'预发构建号'
+        verbose_name_plural = verbose_name
+
+
+# Jenkins控制台信息表
+class consoleOpt(models.Model):
+    project = models.ForeignKey(project, on_delete=models.CASCADE)
+    plan = models.ForeignKey(plan, on_delete=models.CASCADE)
+    type = models.IntegerField(verbose_name="0:代表预发， 1:代表生产")
+    content = models.TextField(verbose_name="控制台信息")
+    packageId = models.IntegerField(verbose_name="生产发布包编号")
+    result = models.BooleanField(verbose_name="构建成功，失败")
+    deployTime = models.DateTimeField(auto_now_add=True, verbose_name="最新操作日期")
+    deployUser = models.ForeignKey(member, verbose_name="执行人")
+    signId = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
+
+
+# 项目服务器信息关系表
+class project_server(models.Model):
+    project = models.ForeignKey(project, on_delete=models.CASCADE)
+    server = models.ForeignKey(server, on_delete=models.CASCADE)
+
+
 # 项目发布计划表
 class project_plan(models.Model):
     project = models.ForeignKey(project, on_delete=models.CASCADE)
     plan = models.ForeignKey(plan, on_delete=models.CASCADE)
     devBranch = models.ForeignKey(devBranch, on_delete=models.CASCADE, verbose_name="开发分支")
     uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
-    packageId = models.CharField(max_length=3, null=True, verbose_name="生产发布包编号")
+    lastPackageId = models.CharField(max_length=3, null=True, verbose_name="最新生产发布包编号")
+    order = models.IntegerField(verbose_name="执行顺序")
 
 
 # 计划成员表
@@ -221,7 +232,7 @@ class operationHistory(models.Model):
     console_opt = models.CharField(max_length=10000, verbose_name="控制台信息")
     operateTime = models.DateTimeField(auto_now=True, verbose_name="操作时间")
     type = models.IntegerField(verbose_name="执行：1， 回滚;2")
-    server = models.ForeignKey(ServerInfo, on_delete=models.CASCADE)
+    server = models.ForeignKey(server, on_delete=models.CASCADE)
     operateUser = models.ForeignKey(User, on_delete=models.CASCADE)
     suuid = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
 

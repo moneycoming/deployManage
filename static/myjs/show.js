@@ -24,18 +24,18 @@ function getQueryVariable(variable) {
     return (false);
 }
 
-// 任务执行定时器
-function getBuildResult(task) {
+// 实时显示预发/生产控制台信息
+function getBuildResult(arg) {
     $.ajax({
         url: '/getBuildResult',
         type: 'GET',
-        data: task,
+        data: arg,
 
         success: function (data) {
             html = "";
-            console.log(data.length);
-            if (data.length > 0) {
-                for (var i = 0; i < data.length; i++) {
+            console.log(data[0]);
+            if (data.length > 1) {
+                for (var i = 1; i < data.length; i++) {
                     html += "<div class=\"layui-colla-item\">\n" +
                         "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
                         "                                        <div class=\"layui-colla-content layui-show\">\n" +
@@ -53,7 +53,12 @@ function getBuildResult(task) {
                     "                                        </div>\n" +
                     "                                    </div>"
             }
-            $(`.buildResult`).html(html);
+            if(data[0] === 'uat'){
+                $(`.uatBuildResult`).html(html);
+            }else {
+                $(`.proBuildResult`).html(html);
+            }
+
         },
         error: function () {
             console.log('error');
@@ -224,6 +229,74 @@ layui.use(['element', 'layer'], function () {
         })
     });
 });
+//预发构建执行
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+    var timer;
+    $("body").on("click", ".uatBuild", uatBuild);
+
+    function uatBuild() {
+        var myDate = nowtime(new Date().getTime());
+        var type = $(this).data('type');
+        var postData = {};
+        var projectId = getQueryVariable("prjId");
+        var planId = getQueryVariable("pid");
+        postData['prjId'] = projectId;
+        postData['pid'] = planId;
+        postData['time'] = myDate;
+        postData['envSort'] = 'uat';
+        if (timer) {
+            getBuildResult(postData);
+        } else {
+            timer = setInterval(() => {
+                getBuildResult(postData)
+            }, 3000)
+        }
+
+        $.ajax({
+            url: '/ajax_uatBuild',
+            type: 'POST',
+            data: postData,
+
+            success: function (arg) {
+                if (arg) {
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布成功'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + "部署成功！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                } else {
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布异常'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + "部署失败！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                }
+            },
+            error: function () {
+                console.log('error');
+            }
+        })
+    }
+});
 //面板
 layui.use(['element', 'layer'], function () {
     var element = layui.element;
@@ -317,61 +390,63 @@ layui.use(['element', 'layer'], function () {
     });
 });
 //定时局部显示控制台信息
-layui.use(['element', 'layer'], function () {
-    var $ = layui.jquery
-        , element = layui.element, layer = layui.layer;
-
-    //触发事件
-    var timer;
-    $("body").on("click", ".showBuildResult", resultTimer);
-
-    function resultTimer() {
-        if (timer) {
-            getBuildResult();
-        } else {
-            console.log('no timer');
-            timer = setInterval(() => {
-                getBuildResult()
-            }, 3000)
-        }
-    }
-
-    function getBuildResult() {
-        var task = {};
-        var id = getQueryVariable("tid");
-        task['id'] = id;
-
-        $.ajax({
-            url: '/getBuildResult',
-            type: 'GET',
-            data: task,
-
-            success: function (data) {
-                html = "";
-                if (data) {
-                    html += "<div class=\"layui-colla-item\">\n" +
-                        "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
-                        "                                        <div class=\"layui-colla-content layui-show\">\n" +
-                        "                                            <p><pre>" + data + "</pre></p>\n" +
-                        "                                        </div>\n" +
-                        "                                    </div>"
-                }
-                else {
-                    html += "<div class=\"layui-colla-item\">\n" +
-                        "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
-                        "                                        <div class=\"layui-colla-content layui-show\">\n" +
-                        "                                            <p><pre>项目正在构建中，请等待。。。</pre></p>\n" +
-                        "                                        </div>\n" +
-                        "                                    </div>"
-                }
-                $(`.buildResult`).html(html);
-            },
-            error: function () {
-                console.log('error');
-            }
-        })
-    }
-});
+// layui.use(['element', 'layer'], function () {
+//     var $ = layui.jquery
+//         , element = layui.element, layer = layui.layer;
+//
+//     //触发事件
+//     var timer;
+//     $("body").on("click", ".showBuildResult", resultTimer);
+//
+//     function resultTimer() {
+//         if (timer) {
+//             getBuildResult();
+//         } else {
+//             console.log('no timer');
+//             timer = setInterval(() => {
+//                 getBuildResult()
+//             }, 3000)
+//         }
+//     }
+//
+//     function getBuildResult() {
+//         var postData = {};
+//         var projectId = getQueryVariable("priId");
+//         var planId = getQueryVariable("pid");
+//         postData['prjId'] = projectId;
+//         postData['pid'] = planId;
+//
+//         $.ajax({
+//             url: '/getBuildResult',
+//             type: 'POST',
+//             data: postData,
+//
+//             success: function (data) {
+//                 html = "";
+//                 if (data) {
+//                     html += "<div class=\"layui-colla-item\">\n" +
+//                         "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
+//                         "                                        <div class=\"layui-colla-content layui-show\">\n" +
+//                         "                                            <p><pre>" + data + "</pre></p>\n" +
+//                         "                                        </div>\n" +
+//                         "                                    </div>"
+//                 }
+//                 else {
+//                     html += "<div class=\"layui-colla-item\">\n" +
+//                         "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
+//                         "                                        <div class=\"layui-colla-content layui-show\">\n" +
+//                         "                                            <p><pre>项目正在构建中，请等待。。。</pre></p>\n" +
+//                         "                                        </div>\n" +
+//                         "                                    </div>"
+//                 }
+//                 $(`.uatBuildResult`).html(html);
+//             },
+//             error: function () {
+//                 console.log('error');
+//             }
+//         })
+//     }
+// });
 //执行代码自动合并
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;

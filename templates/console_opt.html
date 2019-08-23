@@ -16,9 +16,11 @@
                         <div class="page-title">
                             <ol class="breadcrumb text-right">
                                 <li><a href="{% url 'index' %}">首页</a></li>
-                                <li><a href="{% url 'showTask' %}">任务栏</a></li>
-                                <li><a href="/taskDetail?tid={{ taskHistory.taskBar.id }}">任务详情</a></li>
-                                <li class="active">构建信息</li>
+                                <li><a href="{% url 'showPlan' %}">计划栏</a></li>
+                                <li><a href="/planDetail?pid={{ planId }}">计划详情</a></li>
+                                <li><a href="/uatDetail?pid={{ planId }}">预发详情</a></li>
+                                <li><a href="/uatDeploy?pid={{ planId }}&prjId={{ projectId }}">预发部署</a></li>
+                                <li class="active">控制台信息</li>
                             </ol>
                         </div>
                     </div>
@@ -37,11 +39,11 @@
                         </div>
                         <div class="card-body">
                             <div class="layui-collapse" lay-accordion="">
-                                {% for jenkins in operateHistory_obj %}
+                                {% for consoleOpt in consoleOpts %}
                                     <div class="layui-colla-item">
-                                        <h2 class="layui-colla-title">{{ jenkins.taskDetail.proJenkins.name }}</h2>
+                                        <h2 class="layui-colla-title">{{ consoleOpt.project.name }}</h2>
                                         <div class="layui-colla-content layui-show">
-                                            <p><pre>{{ jenkins.console_opt }}</pre></p>
+                                            <p><pre>{{ consoleOpt.content }}</pre></p>
                                         </div>
                                     </div>
                                 {% endfor %}
