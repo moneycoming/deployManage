@@ -278,36 +278,49 @@ def uatDeploy(request):
 @login_required
 @csrf_exempt
 def ajax_createUatBranch(request):
-    planId = request.POST.get('pid')
-    projectId = request.POST.get('prjId')
-    option = request.POST.get('radio')
-    if projectId and planId:
-        project_obj = models.project.objects.get(id=projectId)
-        plan_obj = models.plan.objects.get(id=planId)
-        project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
-        result = []
-        if option == "option1":
-            uatBranch = request.POST.get('uatBranch')
-            status = True
-        else:
-            uid = str(uuid.uuid4())
-            branchCode = ''.join(uid.split('-'))[0:10]
-            uatBranch = "uat-"
-            uatBranch += branchCode
-            devBranch = project_plan_obj.devBranch
-            branch_obj = branch(project_obj.project_dir)
-            branch_obj.create_branch(uatBranch)
-            status = branch_obj.merge_branch(devBranch.name, uatBranch)
-        if status:
-            project_plan_obj.uatBranch = uatBranch
-            project_plan_obj.save()
-            res = "预发分支：%s创建成功！" % uatBranch
-        else:
-            res = "预发分支创建失败！"
-        result.append(res)
-        result.append(uatBranch)
+    if request.method == 'POST':
+        planId = request.POST.get('pid')
+        projectId = request.POST.get('prjId')
+        option = request.POST.get('radio')
+        member_obj = models.member.objects.get(user=request.user)
+        if projectId and planId:
+            project_obj = models.project.objects.get(id=projectId)
+            plan_obj = models.plan.objects.get(id=planId)
+            project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
+            production_members = models.production_member.objects.filter(production=plan_obj.production)
+            isMember = False
+            for m in range(len(production_members)):
+                if member_obj == production_members[m].member:
+                    isMember = True
+            result = []
+            if isMember and member_obj.user.has_perm("can_deploy_project"):
+                if option == "option1":
+                    uatBranch = request.POST.get('uatBranch')
+                    status = True
+                else:
+                    uid = str(uuid.uuid4())
+                    branchCode = ''.join(uid.split('-'))[0:10]
+                    uatBranch = "uat-"
+                    uatBranch += branchCode
+                    devBranch = project_plan_obj.devBranch
+                    branch_obj = branch(project_obj.project_dir)
+                    branch_obj.create_branch(uatBranch)
+                    status = branch_obj.merge_branch(devBranch.name, uatBranch)
 
-        return HttpResponse(json.dumps(result), "application/json")
+                if status:
+                    project_plan_obj.uatBranch = uatBranch
+                    project_plan_obj.save()
+                    res = "预发分支：%s创建成功！" % uatBranch
+                    result.append(res)
+                    result.append(uatBranch)
+                else:
+                    res = "预发分支创建失败！"
+                    result.append(res)
+            else:
+                res = "你没有创建预发分支的权限！"
+                result.append(res)
+
+            return HttpResponse(json.dumps(result), "application/json")
 
 
 @login_required
@@ -706,37 +719,44 @@ def ajax_uatBuild(request):
         project_plan_obj = models.project_plan.objects.get(plan=plan_obj, project=project_obj)
         jenkinsUat_obj = models.jenkinsUat.objects.get(project=project_obj)
         project_servers = models.project_server.objects.filter(project=project_obj)
-        param = {}
-        param.update(eval(jenkinsUat_obj.param))
-        for i in range(len(project_servers)):
-            param.update(SERVER_IP=project_servers[i].server.ip, BRANCH=project_plan_obj.uatBranch)
-            logger.info("param：%s" % param)
-            pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, param)
-            info = pythonJenkins_obj.deploy()
-            logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
-            consoleOpt = info['consoleOpt']
-            buildId = info['buildId']
-            if info:
-                isFinished = consoleOpt.find("Finished")
-                while isFinished == -1:
-                    time.sleep(5)
-                    consoleOpt = pythonJenkins_obj.isFinished()
-                    isFinished = consoleOpt.find("Finished")
-                isSuccess = consoleOpt.find("Finished: SUCCESS")
-                if isSuccess:
-                    result = True
-                    project_plan_obj.lastPackageId = buildId
-                    project_plan_obj.save()
-                    logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
-                else:
-                    result = False
-                    logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
-                consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj, content=consoleOpt,
-                                                   packageId=buildId, result=result, deployTime=deployTime,
-                                                   deployUser=member_obj, signId=signId)
-                consoleOpt_obj.save()
+        production_members = models.production_member.objects.filter(production=plan_obj.production)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+        if isMember and member_obj.user.has_perm("can_deploy_project"):
+            param = {}
+            param.update(eval(jenkinsUat_obj.param))
+            for i in range(len(project_servers)):
+                param.update(SERVER_IP=project_servers[i].server.ip, BRANCH=project_plan_obj.uatBranch)
+                logger.info("param：%s" % param)
+                pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, param)
+                logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
+                info = pythonJenkins_obj.deploy()
+                if info:
+                    consoleOpt = info['consoleOpt']
+                    buildId = info['buildId']
+                    isSuccess = consoleOpt.find("Finished: SUCCESS")
+                    if isSuccess != -1:
+                        result = True
+                        project_plan_obj.lastPackageId = buildId
+                        project_plan_obj.save()
+                        res = "分支%s部署成功" % project_plan_obj.uatBranch
+                        logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
+                    else:
+                        result = False
+                        res = "分支%s部署失败" % project_plan_obj.uatBranch
+                        logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
+                    consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj, content=consoleOpt,
+                                                       packageId=buildId, result=result, deployTime=deployTime,
+                                                       deployUser=member_obj, signId=signId)
+                    consoleOpt_obj.save()
+                    return HttpResponse(res)
+        else:
+            logger.error("用户%s没有执行预发部署的权限！" % member_obj.name)
+            res = "您没有执行产品%s预发部署权限！" % plan_obj.production.name
 
-                return HttpResponse(result)
+            return HttpResponse(res)
 
 
 # 查看控制台信息

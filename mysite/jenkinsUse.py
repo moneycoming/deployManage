@@ -29,18 +29,18 @@ class pythonJenkins:
             server.build_job(jenkinsJob, param)
             time.sleep(15)
             consoleOpt = server.get_build_console_output(jenkinsJob, next_build_number)
+            isSuccess = consoleOpt.find("Finished: SUCCESS")
+            isFailure = consoleOpt.find("Finished: FAILURE")
+            while isSuccess == -1 and isFailure == -1:
+                time.sleep(5)
+                consoleOpt = server.get_build_console_output(jenkinsJob, next_build_number)
+                isSuccess = consoleOpt.find("Finished: SUCCESS")
+                isFailure = consoleOpt.find("Finished: FAILURE")
             info['buildId'] = next_build_number
             info['consoleOpt'] = consoleOpt
         except jenkins.NotFoundException:
             logger.error("jenkins项目未找到，请检查项目是否存在")
         return info
-
-    def isFinished(self):
-        jenkinsJob = self.jenkinsJob
-        server = self.server
-        last_build_number = server.get_job_info(jenkinsJob)['nextBuildNumber'] - 1
-        console_opt = server.get_build_console_output(jenkinsJob, last_build_number)
-        return console_opt
 
     def look_uat_buildId(self):
         jenkinsJob = self.jenkinsJob

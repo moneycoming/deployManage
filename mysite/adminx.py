@@ -22,59 +22,21 @@ class GlobalSettings(object):
 
 xadmin.site.register(views.CommAdminView, GlobalSettings)
 
-#
-# class ServerInfo_Admin(object):
-#     list_display = ['name', 'serverIp']
-#     search_fields = ['name', 'serverIp']
-#     list_filter = ['name', 'serverIp']
-#
-#
-# class uat_jenkins_job_Admin(object):
-#     list_display = ['name', 'jenkinsJob_name', 'uat_buildId']
-#     search_fields = ['name', 'jenkins_job', 'uat_buildId']
-#     list_filter = ['name', 'jenkins_job', 'uat_buildId']
-#
-#
-# class jenkins_job_Admin(object):
-#     list_display = ['name', 'desc', 'healthPort', 'applicationName', 'user_name', 'createDate']
-#     search_fields = ['name', 'desc', 'healthPort', 'applicationName', 'createBy', 'createDate']
-#     list_filter = ['name', 'desc', 'healthPort', 'applicationName', 'createBy', 'createDate']
-#
-#
-# class TaskBar_Admin(object):
-#     list_display = ['name', 'createDate', 'user_name', 'onOff']
-#     search_fields = ['name', 'createDate', 'createUser', 'onOff']
-#     list_filter = ['name', 'createDate', 'createUser', 'onOff']
-#
-#
-# class TaskDetail_Admin(object):
-#     list_display = ['jenkinsJob_name', 'buildID', 'createDate', 'user_name', 'priority']
-#     search_fields = ['buildID', 'createDate', 'createUser', 'priority']
-#     list_filter = ['buildID', 'createDate', 'createUser', 'priority']
-#
-#
-# class OperationHistory_Admin(object):
-#     list_display = ['console_opt', 'operateTime', 'server_name', 'type', 'user_name', 'suuid']
-#     search_fields = ['console_opt', 'operateTime', 'type', 'operateUser', 'suuid']
-#     list_filter = ['console_opt', 'operateTime', 'type', 'operateUser', 'suuid']
-#
-#
-# class TaskHistory_Admin(object):
-#     list_display = ['taskBar_name', 'user_name', 'operateTime', 'type', 'suuid']
-#     search_fields = ['operateTime', 'type', 'suuid']
-#     list_filter = ['operateTime', 'type', 'suuid']
-#
-#
-# class JenkinsJob_ServerInfo_Admin(object):
-#     list_display = ['jenkinsJob_name', 'serverInfo_name']
-#
-#
-# class production_Admin(object):
-#     list_display = ['name', 'taskCounts', 'user_name', 'createDate']
-#
-#
-# xadmin.site.register(jenkinsUat, uat_jenkins_job_Admin)
-# xadmin.site.register(ServerInfo, ServerInfo_Admin)
+
+class production_admin(object):
+    list_display = ['name', 'planCounts', 'createDate', 'user_name']
+    search_fields = ['name']
+    list_filter = ['name']
+
+
+class production_member_admin(object):
+    list_display = ['name', 'member_name']
+    search_fields = ['name']
+    list_filter = ['name']
+
+
+xadmin.site.register(production, production_admin)
+xadmin.site.register(production_member, production_member_admin)
 # xadmin.site.register(project, jenkins_job_Admin)
 # xadmin.site.register(task, TaskBar_Admin)
 # xadmin.site.register(taskDetail, TaskDetail_Admin)

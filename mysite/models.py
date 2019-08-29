@@ -46,9 +46,10 @@ class project(models.Model):
 # 产品分类表
 class production(models.Model):
     name = models.CharField(max_length=20, verbose_name="产品名称")
-    planCounts = models.IntegerField(verbose_name="任务总数")
+    planCounts = models.IntegerField(null=True, default=0, verbose_name="发布总数")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者")
+    member = models.ManyToManyField(member, through='production_member')
 
     def user_name(self):
         name = self.createUser.last_name + self.createUser.first_name
@@ -58,6 +59,28 @@ class production(models.Model):
 
     class Meta:
         verbose_name = u'产品信息'
+        verbose_name_plural = verbose_name
+
+
+# 产品人员关系表
+class production_member(models.Model):
+    name = models.CharField(max_length=50, verbose_name="团队名称")
+    member = models.ForeignKey(member, verbose_name="成员")
+    production = models.ForeignKey(production, verbose_name="产品")
+
+    def member_name(self):
+        name = self.member.name
+        return name
+
+    def production_name(self):
+        name = self.production.name
+        return name
+
+    member_name.short_description = "成员"
+    production_name.short_description = "产品"
+
+    class Meta:
+        verbose_name = u'团队'
         verbose_name_plural = verbose_name
 
 
@@ -174,7 +197,8 @@ class task(models.Model):
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者", related_name='user_create')
-    checkUser = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, verbose_name="验证者", related_name='user_check')
+    checkUser = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, verbose_name="验证者",
+                                  related_name='user_check')
     checkDate = models.DateTimeField(auto_now_add=True, blank=True, verbose_name="验证日期")
     onOff = models.IntegerField(verbose_name="关闭/重启")
     checked = models.BooleanField(default=False, verbose_name="验证通过？是：否")
