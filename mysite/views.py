@@ -162,14 +162,9 @@ def createPlan(request):
         productionObj = models.production.objects.get(name=production)
         kindObj = models.kind.objects.get(name=kind)
 
-        plan_obj = models.plan(title=title, description=desc, kind=kindObj, production=productionObj,
-                               createUser=createUser, createDate=createDate)
+        plan_obj = models.plan(name=title, description=desc, kind=kindObj, production=productionObj,
+                               createUser__user=createUser, createDate=createDate)
         plan_obj.save()
-
-        for i in range(len(memberList)):
-            memberObj = models.member.objects.get(name=memberList[i])
-            plan_member = models.plan_member(plan=plan_obj, member=memberObj)
-            plan_member.save()
 
         for j in range(len(projectList)):
             project_obj = models.project.objects.get(name=projectList[j])

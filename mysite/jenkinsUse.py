@@ -1,3 +1,4 @@
+# -- coding:UTF-8 --
 import jenkins
 from mysite import models
 import time
@@ -60,7 +61,8 @@ class projectBean:
         os.chdir(project_dir)
         subprocess.check_output(["git", "remote", "update", "--prune"])
         branch_byte = subprocess.check_output(["git", "branch", "-r"])
-        branch_str = str(branch_byte, 'utf-8')
+        # branch_str = str(branch_byte, 'utf-8')
+        branch_str = str(branch_byte)
         branches = branch_str.split('\n')
         branch_list = []
         for branch in branches[1: -1]:

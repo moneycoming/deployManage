@@ -209,7 +209,7 @@ class BaseWidget(forms.Form):
         self.helper = helper
 
         self.id = self.cleaned_data['id']
-        self.title = self.cleaned_data['title'] or self.base_title
+        self.title = self.cleaned_data['name'] or self.base_title
 
         if not (self.user.is_superuser or self.has_perm()):
             raise PermissionDenied

@@ -13,5 +13,6 @@ static/admin
 /staticfiles
 logs
 venv
+venv2.7
 extra_apps/xadmin/migrations
 mysite/gitMerge.py

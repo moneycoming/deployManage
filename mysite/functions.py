@@ -1,8 +1,8 @@
+# -- coding:UTF-8 --
 import time
 from django.db import models
 from git import Repo
 import logging
-import os
 import subprocess
 
 # 添加全局变量，记录日志
