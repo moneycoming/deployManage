@@ -195,6 +195,10 @@ class segment(models.Model):
     description = models.CharField(max_length=200, verbose_name="描述")
     isDeploy = models.BooleanField(default=False, verbose_name="是否为项目部署环节")
 
+    class Meta:
+        verbose_name = u'任务执行环节列表'
+        verbose_name_plural = verbose_name
+
     def __str__(self):
         return self.name
 
@@ -202,26 +206,18 @@ class segment(models.Model):
 # Jenkins发布任务表
 class task(models.Model):
     name = models.CharField(max_length=200, verbose_name="任务名称")
-    proJenkins = models.ManyToManyField(jenkinsPro, through='taskDetail')
-    segment = models.ManyToManyField(segment, through='sequence')
+    segment = models.ManyToManyField(segment, through='sequence', verbose_name="执行环节")
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
-    createUser = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="创建者", related_name='user_create')
-    checkUser = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, verbose_name="验证者",
-                                  related_name='user_check')
-    checkDate = models.DateTimeField(auto_now_add=True, blank=True, verbose_name="验证日期")
+    createUser = models.ForeignKey(member, on_delete=models.CASCADE, verbose_name="由谁创建", related_name='taskCreateUser')
+    checkUser = models.ForeignKey(member, on_delete=models.CASCADE, null=True, verbose_name="由谁验证", related_name='checkUser')
+    checkDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="验证日期")
     onOff = models.IntegerField(verbose_name="关闭/重启")
     checked = models.BooleanField(default=False, verbose_name="验证通过？是：否")
-    remark = models.TextField(blank=True, verbose_name="备注")
-
-    def user_name(self):
-        name = self.createUser.last_name + self.createUser.first_name
-        return name
-
-    user_name.short_description = "创建者"
+    remark = models.TextField(null=True, verbose_name="备注")
 
     class Meta:
-        verbose_name = u'任务信息'
+        verbose_name = u'任务列表'
         verbose_name_plural = verbose_name
 
     def __str__(self):
@@ -230,18 +226,19 @@ class task(models.Model):
 
 # 任务执行队列
 class sequence(models.Model):
-    segment = models.ForeignKey(segment, on_delete=models.CASCADE)
-    task = models.ForeignKey(task, on_delete=models.CASCADE)
+    segment = models.ForeignKey(segment, on_delete=models.CASCADE, verbose_name="执行环节")
+    task = models.ForeignKey(task, on_delete=models.CASCADE, verbose_name="所属任务")
     pre_segment = models.IntegerField(verbose_name="上个节点序号")
     next_segment = models.IntegerField(verbose_name="下个节点序号")
-    executeDate = models.DateTimeField(auto_now_add=True, blank=True, verbose_name="最新操作日期")
-    executor = models.ForeignKey(User, blank=True, verbose_name="最新执行者")
-    priority = models.IntegerField(verbose_name="任务执行顺序")
-    implemented = models.BooleanField(default=False, verbose_name="是否执行")
-    remarks = models.CharField(max_length=200, blank=True, verbose_name="备注")
+    executeDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="最新操作日期")
+    executor = models.ForeignKey(member, null=True, verbose_name="最新执行者")
+    priority = models.IntegerField(verbose_name="执行顺序")
+    implemented = models.BooleanField(default=False, verbose_name="是否已执行")
+    remarks = models.CharField(max_length=200, null=True, verbose_name="备注")
 
-    # def __str__(self):
-    #     return self.name
+    class Meta:
+        verbose_name = u'任务队列管理'
+        verbose_name_plural = verbose_name
 
 
 # 任务详情，用于任务回滚等

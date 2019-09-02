@@ -47,12 +47,6 @@
                                         2.添加执行环节
                                     </a>
                                 </li>
-                                <li id="step3Li" class="gray">
-                                    <img id="step3Img" src="{% static "images/gray_gray.png" %}"/>
-                                    <a href="#" role="tab" data-toggle="tab">
-                                        3.添加Jenkins任务
-                                    </a>
-                                </li>
                             </ul>
                             <form class="form-horizontal group-border hover-stripped" role="form" id="validate"
                                   method="post" action="/createTask">
@@ -73,12 +67,12 @@
                                             <div class="col-lg-10">
                                                 <div class="row">
                                                     <div class="col-lg-6 col-md-6">
-                                                        <select data-placeholder="选择所属计划..." class="standardSelect"
+                                                        <select title="选择计划" data-placeholder="选择所属计划..." class="standardSelect"
                                                                 name="plan">
                                                             <optgroup label="计划列表">
                                                                 <option value="" label="default"></option>
                                                                 {% for plan in plans %}
-                                                                    <option>{{ plan.title }}</option>
+                                                                    <option>{{ plan.name }}</option>
                                                                 {% endfor %}
                                                             </optgroup>
                                                         </select>
@@ -87,39 +81,26 @@
                                             </div>
                                         </div>
                                         <button type="button" class="layui-btn layui-btn-primary" style="float: right">
-                                            <a
-                                                    href="#step2" onclick="eventFun.setStep(2)" role="tab"
-                                                    data-toggle="tab">下一步</a></button>
-                                    </div>
-                                    <div id="step2" class="tab-pane fade">
-                                        <label class="col-lg-2 control-label">执行环节</label>
-                                        <select data-placeholder="Choose a country..." multiple class="standardSelect" name="segment">
-                                            {% for segment in segments %}
-                                                <option>{{ segment.name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <h5 class="page-header"></h5>
-                                        <button type="button" class="layui-btn layui-btn-primary" style="float: right">
-                                            <a href="#step3" onclick="eventFun.setStep(3)" role="tab" data-toggle="tab">下一步</a>
+                                            <a href="#step2" onclick="eventFun.setStep(2)" role="tab" data-toggle="tab">下一步</a>
                                         </button>
                                     </div>
-                                    <div id="step3" class="tab-pane fade">
+                                    <div id="step2" class="tab-pane fade">
                                         <h5 class="page-header"></h5>
                                         <div class="form-group">
                                             <div class="col-lg-6">
                                                 <!-- col-lg-6 start here -->
-                                                <button type="button" class="layui-btn layui-btn-primary" id="add-btn"
-                                                        onclick="add_div()">添加项目
+                                                <button type="button" class="layui-btn layui-btn-primary"
+                                                        id="add-btn" onclick="add_div()">添加环节
                                                 </button>
-                                                <button type="button" class="layui-btn layui-btn-primary" id="add-btn"
-                                                        onclick="del_div()">删除项目
+                                                <button type="button" class="layui-btn layui-btn-primary"
+                                                        id="add-btn" onclick="del_div()">删除环节
                                                 </button>
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             <div class="sufee-alert alert with-close alert-danger alert-dismissible fade show">
                                                 <span class="badge badge-pill badge-danger">提示</span>
-                                                项目的执行顺序为从上到下，依次执行，请按项目执行顺序添加项目！！！
+                                                输入此次发布任务涉及到的环节，执行顺序从上到下！！！
                                                 <button type="button" class="close" data-dismiss="alert"
                                                         aria-label="close">
                                                     <span aria-hidden="true">&times;</span>
@@ -127,42 +108,27 @@
                                             </div>
                                         </div>
                                         <div class="form-group" id="details">
-                                            <label class="col-lg-2 col-md-2 col-sm-12 control-label">项目</label>
                                             <div class="col-lg-10 col-md-10">
                                                 <div class="row">
                                                     <div class="col-lg-6 col-md-6">
-                                                        <select class="form-control" name="jenkinsJob"
-                                                                onchange="change(this,this[selectedIndex].value)">
-                                                            <optgroup label="jenkins job">
-                                                                {#                                                                <option value="" label="default"></option>#}
-                                                                {% for jenkins_job in jenkins_jobs %}
-                                                                    <option>{{ jenkins_job.name }}</option>
+                                                        <select title="选择环节" class="form-control" name="segment">
+                                                            <optgroup label="segment">
+                                                                {% for segment in segments %}
+                                                                    <option>{{ segment.name }}</option>
                                                                 {% endfor %}
                                                             </optgroup>
                                                         </select>
-                                                        <span class="help-block">Jenkins项目</span>
-                                                    </div>
-                                                    <div class="col-lg-3 col-md-6">
-                                                        <select class="form-control" id="buildId" name="buildId">
-                                                            <optgroup label="buildID">
-                                                                <option id="default">请输入</option>
-                                                            </optgroup>
-                                                        </select>
-                                                        <span class="help-block">构建号</span>
-                                                    </div>
-                                                    <div class="col-lg-3 col-md-6">
-                                                        <select class="form-control" id="branch" name="branch">
-                                                            <optgroup label="branch">
-                                                                <option id="default">请选择</option>
-                                                            </optgroup>
-                                                        </select>
-                                                        <span class="help-block">分支</span>
+                                                        <span class="help-block">环节</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                        <h5 class="page-header"></h5>
                                         <button type="submit" class="layui-btn layui-btn-primary" style="float: right">
                                             创建
+                                        </button>
+                                        <button type="button" class="layui-btn layui-btn-primary" style="float: right">
+                                            <a href="#step1" onclick="eventFun.setStep(1)" role="tab" data-toggle="tab">上一步</a>
                                         </button>
                                     </div>
                                 </div>

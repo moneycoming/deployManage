@@ -134,6 +134,7 @@ def productionKindChart(request):
     return HttpResponse(html)
 
 
+# 计划主页
 @login_required
 def showPlan(request):
     plans = models.plan.objects.all()
@@ -143,6 +144,7 @@ def showPlan(request):
     return HttpResponse(html)
 
 
+# 创建计划
 @login_required
 def createPlan(request):
     productions = models.production.objects.all()
@@ -180,11 +182,11 @@ def createPlan(request):
     return HttpResponse(html)
 
 
+# 任务主页
 @login_required
 def showTask(request):
     # 使用了js分页技术，无须做分页
-    jenkins_tasks = models.taskDetail.objects.all()
-    taskBar_obj = models.task.objects.all()
+    tasks = models.task.objects.all()
 
     template = get_template('showTask.html')
     html = template.render(context=locals(), request=request)
@@ -230,6 +232,7 @@ def ajax_deletePlan(request):
         return HttpResponse("success")
 
 
+# 计划详情
 @login_required
 def planDetail(request):
     planId = request.GET.get('pid')
@@ -243,6 +246,7 @@ def planDetail(request):
     return HttpResponse(html)
 
 
+# 预发详情
 @login_required
 def uatDetail(request):
     planId = request.GET.get('pid')
@@ -255,6 +259,7 @@ def uatDetail(request):
     return HttpResponse(html)
 
 
+# 预发部署
 @login_required
 def uatDeploy(request):
     projectId = request.GET.get('prjId')
@@ -270,6 +275,7 @@ def uatDeploy(request):
     return HttpResponse(html)
 
 
+# 创建预发分支
 @login_required
 @csrf_exempt
 def ajax_createUatBranch(request):
@@ -318,14 +324,14 @@ def ajax_createUatBranch(request):
             return HttpResponse(json.dumps(result), "application/json")
 
 
+# 任务详情
 @login_required
 def taskDetail(request):
     taskId = request.GET.get('tid')
     if taskId:
-        taskHistory = models.taskHistory.objects.filter(task__id=taskId)
-        task = models.task.objects.get(id=taskId)
-        taskDetails = models.taskDetail.objects.filter(task=task).order_by('priority')
-        sequences = models.sequence.objects.filter(task=task).order_by('priority')
+        task_obj = models.task.objects.get(id=taskId)
+        project_plans = models.project_plan.objects.filter(plan=task_obj.plan).order_by('order')
+        sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
         lastNum = len(sequences) + 1
 
     template = get_template('taskDetail.html')
@@ -333,21 +339,22 @@ def taskDetail(request):
     return HttpResponse(html)
 
 
+# 任务是否执行
 @login_required
 @csrf_exempt
 def ajax_taskImplement(request):
     implement = request.POST.get('implemented')
     sequenceId = request.POST.get('id')
     remark = request.POST.get('remark')
-    user = request.user
     executeDate = datetime.datetime.now()
+    member_obj = models.member.objects.get(user=request.user)
     info = []
     if sequenceId:
         sequence = models.sequence.objects.get(id=sequenceId)
-        if user.has_perm('projectDeploy'):
+        if member_obj.user.has_perm('can_deploy_project'):
             sequence.implemented = implement
             sequence.remarks = remark
-            sequence.executor = user
+            sequence.executor = member_obj
             sequence.executeDate = executeDate
             sequence.save()
             info.append('implemented')
@@ -407,36 +414,25 @@ def ajax_autoCodeMerge(request):
             return HttpResponse(resultJson, "application/json")
 
 
+# 创建任务
 @login_required
 def createTask(request):
     user = request.user
-    if user.has_perm('mysite.add_task'):
-        jenkins_jobs = models.jenkinsPro.objects.all()
+    if user.has_perm('add_task'):
         plans = models.plan.objects.all()
         segments = models.segment.objects.all()
         if request.method == 'POST':
             title = request.POST.get('title')
-            jenkinsJobs = request.POST.getlist('jenkinsJob')
-            planName = request.POST.get('plan')
-            plan_obj = models.plan.objects.get(title=planName)
-            segments = request.POST.getlist('segment')
-            buildId = request.POST.getlist('buildId')
-            Branch = request.POST.getlist('branch')
+            plan_obj = models.plan.objects.get(name=request.POST.get('plan'))
+            segmentList = request.POST.getlist('segment')
             createDate = datetime.datetime.now()
-            createUser = request.user
-            task_obj = models.task(name=title, plan=plan_obj, createUser=createUser, createDate=createDate, onOff=1)
+            member_obj = models.member.objects.get(user=request.user)
+            task_obj = models.task(name=title, plan=plan_obj, createUser=member_obj, createDate=createDate, onOff=1)
             task_obj.save()
-
-            for i in range(len(jenkinsJobs)):
-                jenkinsJob_obj = models.jenkinsPro.objects.get(name=jenkinsJobs[i])
-                taskDetail_obj = models.taskDetail(proJenkins=jenkinsJob_obj, task=task_obj, packageId=buildId[i],
-                                                   branch=Branch[i], priority=i)
-                taskDetail_obj.save()
-
-            for j in range(len(segments)):
-                segment_obj = models.segment.objects.get(name=segments[j])
-                sequence_obj = models.sequence(segment=segment_obj, task=task_obj, pre_segment=j, next_segment=j + 2,
-                                               priority=j + 1)
+            for i in range(len(segmentList)):
+                segment_obj = models.segment.objects.get(name=segmentList[i])
+                sequence_obj = models.sequence(segment=segment_obj, task=task_obj, pre_segment=i, next_segment=i + 2,
+                                               priority=i + 1)
                 sequence_obj.save()
 
             return HttpResponseRedirect('/showTask')
@@ -460,6 +456,7 @@ def ajax_load_info(request):
             return HttpResponse(branchListJson, "application/json")
 
 
+# 构建信息控制台展示
 @login_required
 @csrf_exempt
 def ajax_console_opt(request):
@@ -522,7 +519,7 @@ def fileKeySearch(request):
 @login_required
 def ajax_runBuild(request):
     user = request.user
-    if user.has_perm('mysite.can_deploy_project'):
+    if user.has_perm('can_deploy_project'):
         if request.method == 'POST':
             taskId = request.POST.get('id')
             if taskId:

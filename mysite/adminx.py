@@ -101,6 +101,24 @@ class project_plan_admin(object):
     list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order']
 
 
+class segment_admin(object):
+    list_display = ['name', 'description', 'isDeploy']
+    search_fields = ['name', 'description']
+    list_filter = ['name', 'description']
+
+
+class task_admin(object):
+    list_display = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked', 'remark']
+    search_fields = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked', 'remark']
+    list_filter = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked', 'remark']
+
+
+class sequence_admin(object):
+    list_display = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority', 'implemented', 'remarks']
+    search_fields = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority', 'implemented', 'remarks']
+    list_filter = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority', 'implemented', 'remarks']
+
+
 xadmin.site.register(production, production_admin)
 xadmin.site.register(production_member, production_member_admin)
 xadmin.site.register(server, server_admin)
@@ -114,3 +132,6 @@ xadmin.site.register(jenkinsUat, jenkinsUat_admin)
 xadmin.site.register(consoleOpt, consoleOpt_admin)
 xadmin.site.register(project_server, project_server_admin)
 xadmin.site.register(project_plan, project_plan_admin)
+xadmin.site.register(segment, segment_admin)
+xadmin.site.register(task, task_admin)
+xadmin.site.register(sequence, sequence_admin)

@@ -109,22 +109,6 @@
                                             </div>
                                         </div>
                                         <!-- End .form-group  -->
-                                        <div class="form-group">
-                                            <label class="col-lg-2 control-label">项目人员</label>
-                                            <div class="col-lg-10">
-                                                <div class="row">
-                                                    <div class="col-lg-6 col-md-6">
-                                                        <select data-placeholder="Choose a country..." multiple
-                                                                class="standardSelect" name="member">
-                                                            {% for member in members %}
-                                                                <option>
-                                                                    {{ member.name }}</option>
-                                                            {% endfor %}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                         <button type="button" class="layui-btn layui-btn-primary" style="float: right">
                                             <a href="#step2" onclick="eventFun.setStep(2)" role="tab" data-toggle="tab">下一步</a>
                                         </button>
@@ -149,7 +133,7 @@
                                             <div class="form-group">
                                                 <div class="sufee-alert alert with-close alert-danger alert-dismissible fade show">
                                                     <span class="badge badge-pill badge-danger">提示</span>
-                                                    输入此次发布计划涉及到的项目和开发分支！！！
+                                                    输入此次发布计划涉及到的项目和开发分支，执行顺序从上到下！！！
                                                     <button type="button" class="close" data-dismiss="alert"
                                                             aria-label="close">
                                                         <span aria-hidden="true">&times;</span>
@@ -160,8 +144,9 @@
                                                 <div class="col-lg-10 col-md-10">
                                                     <div class="row">
                                                         <div class="col-lg-6 col-md-6">
-                                                            <select class="form-control" name="project"
+                                                            <select title="选择项目" class="form-control" name="project"
                                                                     onchange="change(this,this[selectedIndex].value)">
+                                                                <optgroup label="project">
                                                                 {% for project in projects %}
                                                                     <option>{{ project.name }}</option>
                                                                 {% endfor %}
@@ -170,7 +155,7 @@
                                                             <span class="help-block">项目名</span>
                                                         </div>
                                                         <div class="col-lg-3 col-md-6">
-                                                            <select class="form-control" id="branch" name="devBranch">
+                                                            <select title="选择分支" class="form-control" id="branch" name="devBranch">
                                                                 <optgroup label="branch">
                                                                     <option id="default">请选择</option>
                                                                 </optgroup>

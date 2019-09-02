@@ -52,7 +52,7 @@
                                 </tr>
                                 </thead>
                                 <tbody id="show_tbody">
-                                {% for task in taskBar_obj %}
+                                {% for task in tasks %}
                                     <tr>
                                         <td id="taskId">{{ task.id }}</td>
                                         {% if task.onOff == 1 %}
@@ -60,7 +60,7 @@
                                         {% else %}
                                             <td>{{ task.name }}</td>
                                         {% endif %}
-                                        <td>{{ task.plan.title }}</td>
+                                        <td>{{ task.plan.name }}</td>
                                         {% if task.onOff == 1 %}
                                             <td>
                                                 <button class="btn btn-secondary btn-sm closeBtn">关闭</button>
@@ -72,7 +72,7 @@
                                         {% endif %}
                                         <td>{{ task.createDate }}</td>
                                         <td>
-                                            {{ task.createUser.last_name }}{{ task.createUser.first_name }}</td>
+                                            {{ task.createUser.name }}</td>
                                         <td>
                                             <button type="button" class="btn btn-outline-secondary btn-sm" title="删除"
                                                     onclick="deleteTask(this)"><i class="fa fa-times"></i></button>

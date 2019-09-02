@@ -82,10 +82,10 @@
                                                     </ul>
                                                     <div class="layui-tab-content">
                                                         <div class="layui-tab-item layui-show">
-                                                            <p>【标题】{{ task.name }}</p>
+                                                            <p>【标题】{{ task_obj.name }}</p>
                                                             <br>【执行顺序】
-                                                            {% for task in taskDetails %}
-                                                                <br>{{ task.proJenkins.name }}：{{ task.packageId }}
+                                                            {% for project_plan in project_plans %}
+                                                                <br>{{ project_plan.project.name }}：{{ project_plan.uatBranch }}：{{ project_plan.lastPackageId }}
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
@@ -96,7 +96,7 @@
                                                                     立即执行
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
-                                                                <div class="layui-collapse buildResult"
+                                                                <div class="layui-collapse proBuildResult"
                                                                      lay-accordion="">
                                                                 </div>
                                                             </div>
@@ -194,10 +194,10 @@
                                                     </ul>
                                                     <div class="layui-tab-content">
                                                         <div class="layui-tab-item layui-show">
-                                                            <p>【标题】{{ task.name }}</p>
+                                                            <p>【标题】{{ task_obj.name }}</p>
                                                             <br>【执行顺序】
-                                                            {% for task in taskDetails %}
-                                                                <br>{{ task.proJenkins.name }}：{{ task.packageId }}
+                                                            {% for project_plan in project_plans %}
+                                                                <br>{{ project_plan.project.name }}：{{ project_plan.uatBranch }}：{{ project_plan.lastPackageId }}
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
