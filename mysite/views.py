@@ -19,6 +19,7 @@ from django_apscheduler.jobstores import DjangoJobStore, register_events, regist
 from apscheduler.jobstores.base import ConflictingIdError
 from mysite.dataAnalysis import DataAnalysis
 from django.core.mail import send_mail
+from dwebsocket.decorators import accept_websocket
 from django.contrib.auth.models import User
 
 # 添加全局变量，记录日志
@@ -161,11 +162,12 @@ def createPlan(request):
         devBranchList = request.POST.getlist('devBranch')
         createDate = datetime.datetime.now()
         createUser = request.user
+        member_obj = models.member.objects.get(user=request.user)
         productionObj = models.production.objects.get(name=production)
         kindObj = models.kind.objects.get(name=kind)
 
         plan_obj = models.plan(name=title, description=desc, kind=kindObj, production=productionObj,
-                               createUser__user=createUser, createDate=createDate)
+                               createUser=member_obj, createDate=createDate)
         plan_obj.save()
 
         for j in range(len(projectList)):
@@ -470,7 +472,7 @@ def ajax_console_opt(request):
             plan_obj = models.plan.objects.get(id=planId)
             consoleOpts = models.consoleOpt.objects.filter(project__id=projectId, plan__id=planId).filter(
                 deployTime__gte=deployTime)
-            logger.info("显示计划：%s,项目: %s的后台信息" % (plan_obj.title, project_obj.name))
+            logger.info("显示计划：%s,项目: %s的后台信息" % (plan_obj.name, project_obj.name))
             contentList = [envSort]
             if consoleOpts:
                 for i in range(len(consoleOpts)):
@@ -514,97 +516,88 @@ def fileKeySearch(request):
     return HttpResponse(html)
 
 
-# 任务执行
-@csrf_exempt
+# 任务部署
+# @csrf_exempt
 @login_required
+@accept_websocket
 def ajax_runBuild(request):
-    user = request.user
-    if user.has_perm('can_deploy_project'):
-        if request.method == 'POST':
-            taskId = request.POST.get('id')
+    if request.is_websocket():
+        for taskId in request.websocket:
             if taskId:
-                taskDetail_all_obj = models.taskDetail.objects.all()
-                taskDetail_obj = models.taskDetail.objects.filter(task=taskId).order_by('priority')
+                uniteKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                 task_obj = models.task.objects.get(id=taskId)
-                info = {'build': 'SUCCESS'}
-                params = {}
-                rollbackError = []
-                uid = str(uuid.uuid4())
-                suid = ''.join(uid.split('-'))
-                for i in range(len(taskDetail_obj)):
-                    buildId = taskDetail_obj[i].packageId
-                    jenkinsJob_obj = taskDetail_obj[i].proJenkins
-                    param = eval(jenkinsJob_obj.param)
-                    serverInfo_obj = models.jenkinsPro_serverInfo.objects.filter(proJenkins=jenkinsJob_obj)
-                    if serverInfo_obj and info['build'] == 'SUCCESS':
-                        for j in range(len(serverInfo_obj)):
-                            params.update(param)
-                            params.update(SERVER_IP=serverInfo_obj[j].serverInfo.serverIp, REL_VERSION=buildId)
-                            pythonJenkins_obj = pythonJenkins(jenkinsJob_obj.name, params)
-                            console = pythonJenkins_obj.deploy()
+                project_plans = models.project_plan.objects.filter(plan=task_obj.plan)
+                production_members = models.production_member.objects.filter(production=task_obj.plan.production)
+                member_obj = models.member.objects.get(user=request.user)
+                isMember = False
+                for m in range(len(production_members)):
+                    if member_obj == production_members[m].member:
+                        isMember = True
+                buildMessages = []
+                if isMember and member_obj.user.has_perm("can_deploy_project"):
+                    for i in range(len(project_plans)):
+                        project_obj = project_plans[i].project
+                        project_servers = models.project_server.objects.filter(project=project_obj)
+                        jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_obj)
+                        param = eval(jenkinsPro_obj.param)
+                        relVersion = project_plans[i].lastPackageId
+                        for j in range(len(project_servers)):
                             params = {}
-                            isFinished = console.find("Finished")
-                            while isFinished == -1:
-                                time.sleep(15)
-                                console = pythonJenkins_obj.isFinished()
-                                isFinished = console.find("Finished")
-                            isSuccess = console.find("Finished: SUCCESS")
-                            if isSuccess == -1:
-                                # 此处插入事务回滚
-                                logger.info("taskId: %s, job: %s ,build: %s, server: %s, 发布出错，执行回滚" %
-                                            (taskId, jenkinsJob_obj.name, buildId, serverInfo_obj[j].serverInfo.name))
-                                priority = taskDetail_obj[i].priority
-                                transaction_obj = Transaction(taskDetail_obj, taskDetail_all_obj, priority)
-                                rollbackError = transaction_obj.transRunBuild()
-                                info['jenkinsName'] = jenkinsJob_obj.name
-                                info['serverName'] = serverInfo_obj[j].serverInfo.name
-                                info['build'] = 'Fail'
+                            params.update(param)
+                            server_obj = project_servers[j].server
+                            if server_obj.type == 1:
+                                if relVersion:
+                                    uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
+                                    params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
+                                    pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
+                                    info = pythonJenkins_obj.deploy()
+                                    consoleOpt = info['consoleOpt']
+                                    isSuccess = consoleOpt.find("Finished: SUCCESS")
+                                    if isSuccess == -1:
+                                        result = False
+                                        for k in range(len(project_plans)):
+                                            if project_plans[k].failPoint:
+                                                project_plans[k].failPoint = False
+                                                project_plans[k].save()
+                                        project_plans[i].failPoint = True
+                                        project_plans[i].save()
+                                        res = "任务: %s, 项目: %s ,版本号: %s, 服务器: %s, 发布出错，终止发布！" % \
+                                              (task_obj.name, project_obj.name, relVersion, server_obj.name)
+                                        logger.info(res)
+                                        buildMessages.append(res)
+                                        buildMessages.append(uniqueKey)
+                                        request.websocket.send(json.dumps(buildMessages))
+                                        request.websocket.close()
+                                    else:
+                                        result = True
+                                        res = "任务: %s, 项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
+                                            task_obj.name, project_obj.name, relVersion, server_obj.name)
+                                        logger.info(res)
+                                        buildMessages.append(res)
+                                        buildMessages.append(uniqueKey)
+                                        request.websocket.send(json.dumps(buildMessages))
+                                    consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan, project=project_obj,
+                                                                       content=consoleOpt, packageId=relVersion,
+                                                                       result=result, deployUser=member_obj,
+                                                                       uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                    consoleOpt_obj.save()
+                                else:
+                                    logger.info("项目：%s，没有发布版本号，请先在预发创建！" % project_obj.name)
+                                    res = "项目：%s，没有发布版本号，请先在预发创建！" % project_obj.name
+                                    buildMessages.append(res)
+                                    request.websocket.send(json.dumps(buildMessages))
+                                    request.websocket.close()
 
-                                operateHistory_obj = models.operationHistory(console_opt=console, type=1,
-                                                                             operateUser=request.user,
-                                                                             server=serverInfo_obj[j].serverInfo,
-                                                                             taskDetail=taskDetail_obj[i], suuid=suid)
-                                operateHistory_obj.save()
-                                logger.info("taskId: %s, job: %s ,server: %s, 发布记录存储完成" % (taskId, jenkinsJob_obj.name,
-                                                                                           serverInfo_obj[
-                                                                                               j].serverInfo.name))
-                                break
-
-                            operateHistory_obj = models.operationHistory(console_opt=console, type=1,
-                                                                         operateUser=request.user,
-                                                                         server=serverInfo_obj[j].serverInfo,
-                                                                         taskDetail=taskDetail_obj[i], suuid=suid)
-                            operateHistory_obj.save()
-                            logger.info("taskId: %s, job: %s ,server: %s, 发布记录存储完成" % (taskId, jenkinsJob_obj.name,
-                                                                                       serverInfo_obj[
-                                                                                           j].serverInfo.name))
-                    else:
-                        # 当出现发布失败后，立即终止后面的发布
-                        logger.info("发布任务: %s,服务器不存在，或者发布失败，终止所有发布。" % taskId)
-                        break
-
-                if info['build'] == 'SUCCESS':
-                    taskHistory_obj = models.taskHistory(type=1, operateUser=request.user, task=task_obj, suuid=suid)
-                    taskHistory_obj.save()
-                    res = "任务编号: %s,发布成功" % task_obj.id
-                    logger.info(res)
-                    send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
-                    return HttpResponse("done")
+                    res = "任务：%s，部署完成！" % task_obj.name
+                    messages.success(request, res)
+                    buildMessages.append(res)
+                    request.websocket.send(json.dumps(buildMessages))
+                    request.websocket.close()
                 else:
-                    if len(rollbackError) > 0:
-                        res = "项目：%s,所在服务器：%s,发布失败,发布事务回退！--回退失败，请手动处理！" % (info['jenkinsName'], info['serverName'])
-                    else:
-                        res = "项目：%s,所在服务器：%s,发布失败,发布事务回退！--回退成功！" % (info['jenkinsName'], info['serverName'])
-                    logger.info(res)
-                    send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
-                    return HttpResponse(res)
-            else:
-                res = "找不到对应的任务"
-                logger.error(res)
-                return HttpResponse(res)
-    else:
-        res = "你没有发布任务的权限！！"
-        return HttpResponse(res)
+                    res = "你没有发布任务的权限！！"
+                    buildMessages.append(res)
+                    request.websocket.send(json.dumps(buildMessages))
+                    request.websocket.close()
 
 
 # 任务回滚
@@ -704,7 +697,7 @@ def ajax_uatBuild(request):
         planId = request.POST.get('pid')
         projectId = request.POST.get('prjId')
         deployTime = request.POST.get('time')
-        signId = ''.join(str(uuid.uuid4()).split('-'))
+        uniteKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
         member_obj = models.member.objects.get(user=request.user)
         plan_obj = models.plan.objects.get(id=planId)
         project_obj = models.project.objects.get(id=projectId)
@@ -717,33 +710,43 @@ def ajax_uatBuild(request):
             if member_obj == production_members[m].member:
                 isMember = True
         if isMember and member_obj.user.has_perm("can_deploy_project"):
-            param = {}
-            param.update(eval(jenkinsUat_obj.param))
-            for i in range(len(project_servers)):
-                param.update(SERVER_IP=project_servers[i].server.ip, BRANCH=project_plan_obj.uatBranch)
-                logger.info("param：%s" % param)
-                pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, param)
-                logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
-                info = pythonJenkins_obj.deploy()
-                if info:
-                    consoleOpt = info['consoleOpt']
-                    buildId = info['buildId']
-                    isSuccess = consoleOpt.find("Finished: SUCCESS")
-                    if isSuccess != -1:
-                        result = True
-                        project_plan_obj.lastPackageId = buildId
-                        project_plan_obj.save()
-                        res = "分支%s部署成功" % project_plan_obj.uatBranch
-                        logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
-                    else:
-                        result = False
-                        res = "分支%s部署失败" % project_plan_obj.uatBranch
-                        logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
-                    consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj, content=consoleOpt,
-                                                       packageId=buildId, result=result, deployTime=deployTime,
-                                                       deployUser=member_obj, signId=signId)
-                    consoleOpt_obj.save()
-                    return HttpResponse(res)
+            if project_plan_obj.uatBranch:
+                param = eval(jenkinsUat_obj.param)
+                for i in range(len(project_servers)):
+                    params = {}
+                    params.update(param)
+                    server_obj = project_servers[i].server
+                    if server_obj.type == 0:
+                        uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
+                        params.update(SERVER_IP=server_obj.ip, BRANCH=project_plan_obj.uatBranch)
+                        logger.info("param：%s" % params)
+                        pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, params)
+                        logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
+                        info = pythonJenkins_obj.deploy()
+                        if info:
+                            consoleOpt = info['consoleOpt']
+                            buildId = info['buildId']
+                            isSuccess = consoleOpt.find("Finished: SUCCESS")
+                            if isSuccess != -1:
+                                result = True
+                                project_plan_obj.lastPackageId = buildId
+                                project_plan_obj.save()
+                                res = "分支%s部署成功" % project_plan_obj.uatBranch
+                                logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
+                            else:
+                                result = False
+                                res = "分支%s部署失败" % project_plan_obj.uatBranch
+                                logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
+                            consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj,
+                                                               content=consoleOpt, packageId=buildId, result=result,
+                                                               deployTime=deployTime, deployUser=member_obj,
+                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
+                            consoleOpt_obj.save()
+                            return HttpResponse(res)
+            else:
+                logger.info("没有预发分支，请先创建！")
+                res = "没有预发分支，请先创建！"
+                return HttpResponse(res)
         else:
             logger.error("用户%s没有执行预发部署的权限！" % member_obj.name)
             res = "您没有执行产品%s预发部署权限！" % plan_obj.production.name
@@ -755,10 +758,20 @@ def ajax_uatBuild(request):
 @login_required
 def console_opt(request, uid):
     if uid:
-        consoleOpts = models.consoleOpt.objects.filter(signId=uid)
+        consoleOpts = models.consoleOpt.objects.filter(uniteKey=uid)
         planId = consoleOpts[0].plan.id
         projectId = consoleOpts[0].project.id
 
     template = get_template('console_opt.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+# 单个控制台信息查看
+def single_console_opt(request, uid):
+    if uid:
+        consoleOpt_obj = models.consoleOpt.objects.get(uniqueKey=uid)
+
+    template = get_template('single_console_opt.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)

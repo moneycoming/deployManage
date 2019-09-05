@@ -5,6 +5,9 @@
         <!-- Animated -->
         <div class="animated fadeIn">
             <!-- Widgets  -->
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
             <div class="row">
                 {% for production in productions %}
                     <div class="col-lg-3 col-md-6">
@@ -19,7 +22,8 @@
                                             <div class="stat-text">总计：<span
                                                     class="count">{{ production.planCounts }}</span></div>
                                             <div class="stat-heading">{{ production.name }}</div>
-                                        </div></a>
+                                        </div>
+                                    </a>
                                     </div>
                                 </div>
                             </div>

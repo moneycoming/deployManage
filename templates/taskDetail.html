@@ -85,19 +85,26 @@
                                                             <p>【标题】{{ task_obj.name }}</p>
                                                             <br>【执行顺序】
                                                             {% for project_plan in project_plans %}
-                                                                <br>{{ project_plan.project.name }}：{{ project_plan.uatBranch }}：{{ project_plan.lastPackageId }}
+                                                                <br>{{ project_plan.project.name }}：
+                                                                {{ project_plan.lastPackageId }}
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
                                                             <div class="site-demo-button"
                                                                  style="margin-top: 20px; margin-bottom: 0;">
                                                                 <button class="layui-btn layui-btn-primary runTask"
-                                                                        data-type="loading">
-                                                                    立即执行
+                                                                        data-type="loading">立即执行
+                                                                </button>
+                                                                <button class="layui-btn layui-btn-primary continueTask fade"
+                                                                        data-type="loading">继续发布
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
-                                                                <div class="layui-collapse proBuildResult"
-                                                                     lay-accordion="">
+                                                                <div class="layui-col-md12">
+                                                                    <div class="layui-card">
+                                                                        <div class="layui-card-header"><strong>控制台信息</strong></div>
+                                                                        <div class="layui-card-body proBuildResult">
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -170,7 +177,7 @@
                                                 {% else %}
                                                     <h5 class="page-header"></h5>
                                                     <p>
-                                                        执行人：{{ sequence.executor.last_name }} {{ sequence.executor.first_name }}</p>
+                                                        执行人：{{ sequence.executor.name }}</p>
                                                     <p>备注：{{ sequence.remarks }}</p>
                                                     <button type="button" class="layui-btn layui-btn-primary"
                                                             style="float: right">
@@ -197,25 +204,29 @@
                                                             <p>【标题】{{ task_obj.name }}</p>
                                                             <br>【执行顺序】
                                                             {% for project_plan in project_plans %}
-                                                                <br>{{ project_plan.project.name }}：{{ project_plan.uatBranch }}：{{ project_plan.lastPackageId }}
+                                                                <br>{{ project_plan.project.name }}：{{ project_plan.lastPackageId }}
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
-                                                            <div class="site-demo-button"
-                                                                 style="margin-top: 20px; margin-bottom: 0;">
-                                                                <button class="layui-btn layui-btn-primary runTask"
-                                                                        data-type="loading">
-                                                                    立即执行
+                                                            <div class="site-demo-button" style="margin-top: 20px; margin-bottom: 0;">
+                                                                <button class="layui-btn layui-btn-primary runTask" data-type="loading">立即执行
+                                                                </button>
+                                                                <button class="layui-btn layui-btn-primary continueTask fade" data-type="loading">继续发布
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
-                                                                <div class="layui-collapse buildResult" lay-accordion=""></div>
+                                                                <div class="layui-col-md12">
+                                                                    <div class="layui-card">
+                                                                        <div class="layui-card-header"><strong>控制台信息</strong></div>
+                                                                        <div class="layui-card-body proBuildResult">
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="layui-tab-item">
                                                             <div class="site-demo-button"
                                                                  style="margin-top: 20px; margin-bottom: 0;">
-                                                                <button class="layui-btn layui-btn-primary rollback"
-                                                                        data-type="loading">
+                                                                <button class="layui-btn layui-btn-primary rollback" data-type="loading">
                                                                     立即回滚
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
@@ -277,7 +288,7 @@
                                                 {% else %}
                                                     <h5 class="page-header"></h5>
                                                     <p>
-                                                        执行人：{{ sequence.executor.last_name }} {{ sequence.executor.first_name }}</p>
+                                                        执行人：{{ sequence.executor.name }}</p>
                                                     <p>备注：{{ sequence.remarks }}</p>
                                                     <button type="button" class="layui-btn layui-btn-primary"
                                                             style="float: right">
@@ -290,14 +301,15 @@
                                     {% endif %}
                                 {% endfor %}
                                 <div id="step{{ lastNum }}" class="tab-pane fade">
-                                        <h5 class="page-header"></h5>
-                                        {% if task.checked == 0 %}
+                                    <h5 class="page-header"></h5>
+                                    {% if task.checked == 0 %}
                                         <p id="p1" class="fade"></p>
                                         <textarea class="form-control" name="remark" id="remark"
                                                   placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）" rows="4"></textarea>
                                         <h5 class="page-header"></h5>
-                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证通过</button>
-                                        {% else %}
+                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证通过
+                                        </button>
+                                    {% else %}
                                         <p id="p1">
                                             <br>执行人：{{ task.checkUser.last_name }}{{ task.checkUser.first_name }}
                                             <br>执行日期：{{ task.checkDate }}

@@ -84,9 +84,10 @@ class jenkinsUat_admin(object):
 
 
 class consoleOpt_admin(object):
-    list_display = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser', 'signId']
-    search_fields = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser', 'signId']
-    list_filter = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser', 'signId']
+    list_display = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
+                    'uniqueKey', 'uniteKey']
+    search_fields = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser']
+    list_filter = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser']
 
 
 class project_server_admin(object):
@@ -96,9 +97,9 @@ class project_server_admin(object):
 
 
 class project_plan_admin(object):
-    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order']
-    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order']
-    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order']
+    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'failPoint']
+    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'failPoint']
+    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'failPoint']
 
 
 class segment_admin(object):
@@ -108,15 +109,21 @@ class segment_admin(object):
 
 
 class task_admin(object):
-    list_display = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked', 'remark']
-    search_fields = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked', 'remark']
-    list_filter = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked', 'remark']
+    list_display = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked',
+                    'remark']
+    search_fields = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff',
+                     'checked', 'remark']
+    list_filter = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked',
+                   'remark']
 
 
 class sequence_admin(object):
-    list_display = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority', 'implemented', 'remarks']
-    search_fields = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority', 'implemented', 'remarks']
-    list_filter = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority', 'implemented', 'remarks']
+    list_display = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority',
+                    'implemented', 'remarks']
+    search_fields = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority',
+                     'implemented', 'remarks']
+    list_filter = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority',
+                   'implemented', 'remarks']
 
 
 xadmin.site.register(production, production_admin)

@@ -20,7 +20,7 @@ import time
 import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(1, os.path.join(BASE_DIR, 'extra_apps'))
+# sys.path.insert(1, os.path.join(BASE_DIR, 'extra_apps'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -52,6 +52,7 @@ INSTALLED_APPS = (
     'reversion',
     'crispy_forms',
     'django_apscheduler',
+    'dwebsocket',
 )
 # form美化
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -99,7 +100,14 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'dwebsocket.middleware.WebSocketMiddleware',
 )
+
+# 可以允许每一个单独的视图实用websockets
+WEBSOCKET_ACCEPT_ALL = True
+
+# 使用uwsgi
+#WEBSOCKET_FACTORY_CLASS = 'dwebsocket.backends.uwsgi.factory.uWsgiWebSocketFactory'
 
 ROOT_URLCONF = 'deployManage.urls'
 

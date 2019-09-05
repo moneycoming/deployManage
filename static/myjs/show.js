@@ -104,66 +104,94 @@ function getRollBackResult(task) {
 //任务执行
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
-    var timer;
+    // var timer;
     $("body").on("click", ".runTask", runBuild);
 
     function runBuild() {
         var myDate = nowtime(new Date().getTime());
         var type = $(this).data('type');
-        var task = {};
-        var id = getQueryVariable("tid");
-        task['id'] = id;
-        task['time'] = myDate;
-        if (timer) {
-            getBuildResult(task);
-        } else {
-            timer = setInterval(() => {
-                getBuildResult(task)
-            }, 3000)
+        var postData = {};
+        var taskId = getQueryVariable("tid");
+        postData['id'] = taskId;
+        postData['time'] = myDate;
+
+        if ("WebSocket" in window) {
+            console.log("您的浏览器支持 WebSocket!");
+
+            // 打开一个 web socket
+            var ws = new WebSocket("ws:" + window.location.host + "/ajax_RunBuild");
+
+            ws.onopen = function () {
+                ws.send(taskId);
+                console.log("数据已发送...");
+            };
+
+            ws.onmessage = function (evt) {
+                var received_msg = JSON.parse(evt.data);
+                console.log("数据已接收...");
+                // console.log(received_msg);
+                html = "";
+                // if (received_msg.length > 0) {
+                for (var i = 0; i < received_msg.length; i++) {
+                    if (received_msg[i].length === 10){
+                        html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                        + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
+                    }else {
+                        html += "<pre>" + received_msg[i] + "</pre>"
+                    }
+                }
+
+                $(`.proBuildResult`).html(html);
+
+            };
+
+            ws.onclose = function () {
+                // 关闭 websocket
+                console.log("连接已关闭...");
+            };
         }
 
-        $.ajax({
-            url: '/ajax_RunBuild',
-            type: 'POST',
-            data: task,
+        else {
+            // 浏览器不支持 WebSocket
+            console.log("您的浏览器不支持 WebSocket!");
+        }
+        // if (timer) {
+        //     getBuildResult(postData);
+        // } else {
+        //     timer = setInterval(() => {
+        //         getBuildResult(postData)
+        //     }, 3000)
+        // }
 
-            success: function (arg) {
-                if (arg === "done") {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布成功'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "发布成功！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
-                        }
-                    });
-                } else {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布异常'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + arg + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
-                        }
-                    });
-                }
-            },
-            error: function () {
-                console.log('error');
-            }
-        })
+        // $.ajax({
+        //     url: '/ajax_RunBuild',
+        //     type: 'POST',
+        //     data: postData,
+        //
+        //     success: function (arg) {
+        //         layer.open({
+        //                 type: 1
+        //                 , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+        //                 , title: '发布结果'
+        //                 , id: 'layerDemo' + type//防止重复弹出
+        //                 , content: '<div style="padding: 20px 100px;">' + arg[0] + '</div>'
+        //                 , btn: '关闭'
+        //                 , btnAlign: 'c' //按钮居中
+        //                 , area: '500px;'
+        //                 , shade: 0.5 //不显示遮罩
+        //                 , yes: function () {
+        //                     layer.closeAll();
+        //                 }
+        //             });
+        //         if (arg[1] === 'fail'){
+        //             $(`.continueTask`).removeClass('fade');
+        //             $(`.runTask`).addClass('fade');
+        //         }
+        //     },
+        //     error: function () {
+        //         console.log('error');
+        //     }
+        // })
     }
 });
 //任务回滚

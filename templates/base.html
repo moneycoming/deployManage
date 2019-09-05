@@ -142,11 +142,15 @@
 
             success: function (data) {
                 var html = "";
-                for (var i = 0; i < data.length; i++) {
-                    var item = data[i];
-                    html += "<option>" + item.name + "</option>";
-                    $(`#${id} #branch`).html(html);
+                if (data.length > 0) {
+                    for (var i = 0; i < data.length; i++) {
+                        var item = data[i];
+                        html += "<option>" + item.name + "</option>";
+                    }
+                } else {
+                    html += "<option>无</option>";
                 }
+                $(`#${id} #branch`).html(html);
             }
         })
     }

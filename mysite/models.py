@@ -158,7 +158,8 @@ class consoleOpt(models.Model):
     result = models.BooleanField(verbose_name="构建成功，失败")
     deployTime = models.DateTimeField(auto_now_add=True, verbose_name="最新操作日期")
     deployUser = models.ForeignKey(member, verbose_name="执行人")
-    signId = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
+    uniqueKey = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
+    uniteKey = models.CharField(max_length=40, verbose_name="发布历史统一标记号")
 
     class Meta:
         verbose_name = u'后台信息管理'
@@ -183,6 +184,7 @@ class project_plan(models.Model):
     uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
     lastPackageId = models.CharField(max_length=3, null=True, verbose_name="最新生产发布包编号")
     order = models.IntegerField(verbose_name="执行顺序")
+    failPoint = models.BooleanField(default=False, verbose_name="部署错误记忆点")
 
     class Meta:
         verbose_name = u'发布计划和项目管理'
