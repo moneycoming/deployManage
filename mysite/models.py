@@ -185,6 +185,7 @@ class project_plan(models.Model):
     lastPackageId = models.CharField(max_length=3, null=True, verbose_name="最新生产发布包编号")
     order = models.IntegerField(verbose_name="执行顺序")
     failPoint = models.BooleanField(default=False, verbose_name="部署错误记忆点")
+    buildStatus = models.IntegerField(default=0, verbose_name="0：未发布，1；发布成功，2：发布失败")
 
     class Meta:
         verbose_name = u'发布计划和项目管理'

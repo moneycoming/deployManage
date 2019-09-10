@@ -101,7 +101,8 @@
                                                                 <h5 class="page-header"></h5>
                                                                 <div class="layui-col-md12">
                                                                     <div class="layui-card">
-                                                                        <div class="layui-card-header"><strong>控制台信息</strong></div>
+                                                                        <div class="layui-card-header">
+                                                                            <strong>控制台信息</strong></div>
                                                                         <div class="layui-card-body proBuildResult">
                                                                         </div>
                                                                     </div>
@@ -204,19 +205,41 @@
                                                             <p>【标题】{{ task_obj.name }}</p>
                                                             <br>【执行顺序】
                                                             {% for project_plan in project_plans %}
-                                                                <br>{{ project_plan.project.name }}：{{ project_plan.lastPackageId }}
+                                                                <br>{{ project_plan.project.name }}：
+                                                                {{ project_plan.lastPackageId }}
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
-                                                            <div class="site-demo-button" style="margin-top: 20px; margin-bottom: 0;">
-                                                                <button class="layui-btn layui-btn-primary runTask" data-type="loading">立即执行
+                                                            <div class="site-demo-button"
+                                                                 style="margin-top: 20px; margin-bottom: 0;">
+                                                                <div class="alert alert-success" role="alert">
+                                                                    <h4 class="alert-heading">说明</h4>
+                                                                    <hr>
+                                                                    <p>1-点击“立即发布”按钮进行发布，每个项目的发布预计耗时1分钟左右</p>
+                                                                    <p>2-点击“立即发布”按钮后，会有进度条显示整体发布进度</p>
+                                                                    <p>3-每个项目发布完成后，可以点击“控制台信息”下面的“查看控制台信息按钮”进行查看</p>
+                                                                </div>
+                                                                <div class="text" style="text-align:center;"><p
+                                                                        id="proDeployText"></p></div>
+                                                                <div class="progress mb-2 proDeployProgress fade">
+                                                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                                                         id="proBuildProgress" role="progressbar"
+                                                                         style="width: 0%"
+                                                                         aria-valuenow="55" aria-valuemin="0"
+                                                                         aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                <button class="layui-btn layui-btn-primary runTask"
+                                                                        data-type="loading">立即执行
                                                                 </button>
-                                                                <button class="layui-btn layui-btn-primary continueTask fade" data-type="loading">继续发布
+                                                                <button class="layui-btn layui-btn-primary continueTask fade"
+                                                                        data-type="loading">继续发布
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
                                                                 <div class="layui-col-md12">
                                                                     <div class="layui-card">
-                                                                        <div class="layui-card-header"><strong>控制台信息</strong></div>
+                                                                        <div class="layui-card-header fade" id="proConsoleOpt">
+                                                                            <strong>控制台信息</strong></div>
                                                                         <div class="layui-card-body proBuildResult">
                                                                         </div>
                                                                     </div>
@@ -226,11 +249,13 @@
                                                         <div class="layui-tab-item">
                                                             <div class="site-demo-button"
                                                                  style="margin-top: 20px; margin-bottom: 0;">
-                                                                <button class="layui-btn layui-btn-primary rollback" data-type="loading">
+                                                                <button class="layui-btn layui-btn-primary rollback"
+                                                                        data-type="loading">
                                                                     立即回滚
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
-                                                                <div class="layui-collapse RollBackResult" lay-accordion=""></div>
+                                                                <div class="layui-collapse RollBackResult"
+                                                                     lay-accordion=""></div>
                                                             </div>
                                                         </div>
                                                         <div class="layui-tab-item">

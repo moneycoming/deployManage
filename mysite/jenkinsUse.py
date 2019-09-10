@@ -43,13 +43,6 @@ class pythonJenkins:
             logger.error("jenkins项目未找到，请检查项目是否存在")
         return info
 
-    def look_uat_buildId(self):
-        jenkinsJob = self.jenkinsJob
-        server = self.server
-        last_build_number = server.get_job_info(jenkinsJob)['lastCompletedBuild']['number']
-
-        return last_build_number
-
 
 class projectBean:
     def __init__(self, project):
@@ -70,6 +63,27 @@ class projectBean:
             if 'master' in branch_list:
                 branch_list.remove('master')
         return branch_list
+
+    def countDeploySum(self, flag, order):
+        total = 0
+        project_plans = self.project.filter(order__gte=order)
+        for i in range(len(project_plans)):
+            project_obj = project_plans[i].project
+            project_servers = models.project_server.objects.filter(project=project_obj)
+            for j in range(len(project_servers)):
+                if project_servers[j].server.type == flag:
+                    total += 1
+        return total
+
+    def lookFailPoint(self):
+        project_plans = self.project
+
+        order = 0
+        for i in range(len(project_plans)):
+            if project_plans[i].failPoint:
+                order = project_plans[i].order
+
+        return order
 
 
 # 事务回滚
