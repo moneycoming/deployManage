@@ -100,7 +100,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'dwebsocket.middleware.WebSocketMiddleware',
+    # 'dwebsocket.middleware.WebSocketMiddleware',
 )
 
 # 可以允许每一个单独的视图实用websockets

@@ -97,9 +97,9 @@ class project_server_admin(object):
 
 
 class project_plan_admin(object):
-    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'failPoint']
-    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'failPoint']
-    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'failPoint']
+    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus']
+    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus']
+    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus']
 
 
 class segment_admin(object):

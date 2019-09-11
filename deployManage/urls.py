@@ -38,7 +38,6 @@ urlpatterns = [
     url(r'^planDetail', views.planDetail, name='planDetail'),
     url(r'^createTask$', views.createTask, name='createTask'),
     url(r'^createPlan$', views.createPlan, name='createPlan'),
-    url(r'^ajax_RunBuild$', views.ajax_runBuild, name='runBuild'),
     url(r'^ajax_RollBack$', views.ajax_rollBack, name='rollBack'),
     url(r'^ajax_uatBuild', views.ajax_uatBuild, name='uatBuild'),
     url(r'^ajax_showTask$', views.ajax_showTask),
@@ -53,4 +52,7 @@ urlpatterns = [
     url(r'^uatDetail', views.uatDetail),
     url(r'^uatDeploy', views.uatDeploy),
     url(r'^ajax_createUatBranch', views.ajax_createUatBranch),
+    url(r'^ws_startDeploy', views.ws_startDeploy, name='startDeploy'),
+    url(r'^ws_restartDeploy', views.ws_restartDeploy, name='restartDeploy'),
+    url(r'^ws_continueDeploy', views.ws_continueDeploy, name='continueDeploy'),
 ]

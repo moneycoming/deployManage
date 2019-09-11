@@ -82,26 +82,55 @@
                                                     </ul>
                                                     <div class="layui-tab-content">
                                                         <div class="layui-tab-item layui-show">
+                                                            <div class="alert alert-success" role="alert">
+                                                                <h4 class="alert-heading">说明</h4>
+                                                                <hr>
+                                                                <p>1-执行顺序从上到下</p>
+                                                                <p>2-中间未划横线的项目代表还没有发布或者发布失败</p>
+                                                                <p>3-中间划横线的项目代表已经发布完成</p>
+                                                            </div>
                                                             <p>【标题】{{ task_obj.name }}</p>
                                                             <br>【执行顺序】
                                                             {% for project_plan in project_plans %}
-                                                                <br>{{ project_plan.project.name }}：
-                                                                {{ project_plan.lastPackageId }}
+                                                                {% if project_plan.buildStatus == 1 %}
+                                                                    <br>
+                                                                    <del>{{ project_plan.project.name }}：{{ project_plan.lastPackageId }}</del>
+                                                                {% else %}
+                                                                    <br>{{ project_plan.project.name }}：
+                                                                    {{ project_plan.lastPackageId }}
+                                                                {% endif %}
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
                                                             <div class="site-demo-button"
                                                                  style="margin-top: 20px; margin-bottom: 0;">
-                                                                <button class="layui-btn layui-btn-primary runTask"
-                                                                        data-type="loading">立即执行
-                                                                </button>
-                                                                <button class="layui-btn layui-btn-primary continueTask fade"
-                                                                        data-type="loading">继续发布
-                                                                </button>
+                                                                <div class="alert alert-success" role="alert">
+                                                                    <h4 class="alert-heading">说明</h4>
+                                                                    <hr>
+                                                                    <p>1-点击“立即发布”按钮进行发布，每个项目的发布预计耗时1分钟左右</p>
+                                                                    <p>2-点击“立即发布”按钮后，会有进度条显示整体发布进度</p>
+                                                                    <p>3-每个项目发布完成后，可以点击“控制台信息”下面的“查看控制台信息按钮”进行查看</p>
+                                                                </div>
+                                                                <div class="text" style="text-align:center;"><p
+                                                                        id="proDeployText"></p></div>
+                                                                <div class="progress mb-2 proDeployProgress fade">
+                                                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                                                         id="proBuildProgress" role="progressbar"
+                                                                         style="width: 0%"
+                                                                         aria-valuenow="55" aria-valuemin="0"
+                                                                         aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                {% if show %}
+                                                                    <button class="layui-btn layui-btn-primary startDeploy"
+                                                                            data-type="loading">立即执行
+                                                                    </button>
+                                                                {% endif %}
                                                                 <h5 class="page-header"></h5>
                                                                 <div class="layui-col-md12">
                                                                     <div class="layui-card">
-                                                                        <div class="layui-card-header">
+                                                                        <div class="layui-card-header fade"
+                                                                             id="proConsoleOpt">
                                                                             <strong>控制台信息</strong></div>
                                                                         <div class="layui-card-body proBuildResult">
                                                                         </div>
@@ -202,11 +231,23 @@
                                                     </ul>
                                                     <div class="layui-tab-content">
                                                         <div class="layui-tab-item layui-show">
+                                                            <div class="alert alert-success" role="alert">
+                                                                <h4 class="alert-heading">说明</h4>
+                                                                <hr>
+                                                                <p>1-执行顺序从上到下</p>
+                                                                <p>2-中间未划横线的项目代表还没有发布或者发布失败</p>
+                                                                <p>3-中间划横线的项目代表已经发布完成</p>
+                                                            </div>
                                                             <p>【标题】{{ task_obj.name }}</p>
                                                             <br>【执行顺序】
                                                             {% for project_plan in project_plans %}
-                                                                <br>{{ project_plan.project.name }}：
-                                                                {{ project_plan.lastPackageId }}
+                                                                {% if project_plan.buildStatus == 1 %}
+                                                                    <br>
+                                                                    <del>{{ project_plan.project.name }}：{{ project_plan.lastPackageId }}</del>
+                                                                {% else %}
+                                                                    <br>{{ project_plan.project.name }}：
+                                                                    {{ project_plan.lastPackageId }}
+                                                                {% endif %}
                                                             {% endfor %}
                                                         </div>
                                                         <div class="layui-tab-item">
@@ -229,19 +270,30 @@
                                                                          aria-valuemax="100">
                                                                     </div>
                                                                 </div>
-                                                                <button class="layui-btn layui-btn-primary runTask"
-                                                                        data-type="loading">立即执行
+                                                                {% if show %}
+                                                                    <button class="layui-btn layui-btn-primary startDeploy"
+                                                                            data-type="loading">立即执行
+                                                                    </button>
+                                                                {% endif %}
+                                                                <button class="layui-btn layui-btn-primary restartDeploy fade"
+                                                                        data-type="loading">重新发布
                                                                 </button>
-                                                                <button class="layui-btn layui-btn-primary continueTask fade"
-                                                                        data-type="loading">继续发布
+                                                                <button class="layui-btn layui-btn-primary continueDeploy fade"
+                                                                        data-type="loading">跳过继续下一个发布
+                                                                </button>
+                                                                <button class="layui-btn layui-btn-primary rollbackOne fade"
+                                                                        data-type="loading">回滚当前项目
+                                                                </button>
+                                                                <button class="layui-btn layui-btn-primary rollbackAll fade"
+                                                                        data-type="loading">回滚所有项目
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
                                                                 <div class="layui-col-md12">
                                                                     <div class="layui-card">
-                                                                        <div class="layui-card-header fade" id="proConsoleOpt">
+                                                                        <div class="layui-card-header fade"
+                                                                             id="proConsoleOpt">
                                                                             <strong>控制台信息</strong></div>
-                                                                        <div class="layui-card-body proBuildResult">
-                                                                        </div>
+                                                                        <div class="layui-card-body proBuildResult"></div>
                                                                     </div>
                                                                 </div>
                                                             </div>
