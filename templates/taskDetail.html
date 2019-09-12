@@ -77,7 +77,6 @@
                                                     <ul class="layui-tab-title">
                                                         <li class="layui-this">任务信息</li>
                                                         <li>任务执行</li>
-                                                        <li>任务回滚</li>
                                                         <li>执行记录</li>
                                                     </ul>
                                                     <div class="layui-tab-content">
@@ -135,19 +134,6 @@
                                                                         <div class="layui-card-body proBuildResult">
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="layui-tab-item">
-                                                            <div class="site-demo-button"
-                                                                 style="margin-top: 20px; margin-bottom: 0;">
-                                                                <button class="layui-btn layui-btn-primary rollback"
-                                                                        data-type="loading">
-                                                                    立即回滚
-                                                                </button>
-                                                                <h5 class="page-header"></h5>
-                                                                <div class="layui-collapse RollBackResult"
-                                                                     lay-accordion="">
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -226,7 +212,6 @@
                                                     <ul class="layui-tab-title">
                                                         <li class="layui-this">任务信息</li>
                                                         <li>任务执行</li>
-                                                        <li>任务回滚</li>
                                                         <li>执行记录</li>
                                                     </ul>
                                                     <div class="layui-tab-content">
@@ -299,18 +284,6 @@
                                                             </div>
                                                         </div>
                                                         <div class="layui-tab-item">
-                                                            <div class="site-demo-button"
-                                                                 style="margin-top: 20px; margin-bottom: 0;">
-                                                                <button class="layui-btn layui-btn-primary rollback"
-                                                                        data-type="loading">
-                                                                    立即回滚
-                                                                </button>
-                                                                <h5 class="page-header"></h5>
-                                                                <div class="layui-collapse RollBackResult"
-                                                                     lay-accordion=""></div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="layui-tab-item">
                                                             <ul class="layui-timeline">
                                                                 <button type="button"
                                                                         class="layui-btn layui-btn-primary"
@@ -318,18 +291,18 @@
                                                                         onclick="window.location.reload()">刷新
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
-                                                                {% for task in taskHistory %}
+                                                                {% for consoleOpt in consoleOpts %}
                                                                     <li class="layui-timeline-item">
                                                                         <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
                                                                         <div class="layui-timeline-content layui-text">
-                                                                            <h3 class="layui-timeline-title">{{ task.operateTime }}</h3>
-                                                                            <p>{% if task.type == 1 %}
+                                                                            <h3 class="layui-timeline-title">{{ consoleOpt.deployTime }}</h3>
+                                                                            <p>{% if consoleOpt.category == 0 %}
                                                                                 操作：发布
                                                                             {% else %}
                                                                                 操作：回滚
                                                                             {% endif %}
-                                                                                <br>执行人：{{ task.operateUser.last_name }}{{ task.operateUser.first_name }}
-                                                                                <br><a href="/console_opt/{{ task.suuid }}">查看控制台信息</a>
+                                                                                <br>执行人：{{ consoleOpt.deployUser.name }}
+                                                                                <br><a href="/pro_console_opt/{{ consoleOpt.uniteKey }}">查看控制台信息</a>
                                                                             </p>
                                                                         </div>
                                                                     </li>

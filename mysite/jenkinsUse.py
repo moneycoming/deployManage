@@ -75,6 +75,17 @@ class projectBean:
                     total += 1
         return total
 
+    def countDeploySum2(self, flag, order):
+        total = 0
+        project_plans = self.project.filter(order__lte=order)
+        for i in range(len(project_plans)):
+            project_obj = project_plans[i].project
+            project_servers = models.project_server.objects.filter(project=project_obj)
+            for j in range(len(project_servers)):
+                if project_servers[j].server.type == flag:
+                    total += 1
+        return total
+
     def lookFailPoint(self):
         project_plans = self.project
 

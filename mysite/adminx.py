@@ -84,10 +84,11 @@ class jenkinsUat_admin(object):
 
 
 class consoleOpt_admin(object):
-    list_display = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
+    list_display = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
                     'uniqueKey', 'uniteKey']
-    search_fields = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser']
-    list_filter = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser']
+    search_fields = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime',
+                     'deployUser', 'uniqueKey', 'uniteKey']
+    list_filter = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime', 'deployUser']
 
 
 class project_server_admin(object):

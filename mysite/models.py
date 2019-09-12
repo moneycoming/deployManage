@@ -153,6 +153,7 @@ class consoleOpt(models.Model):
     project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
     type = models.IntegerField(verbose_name="0:代表预发， 1:代表生产")
+    category = models.IntegerField(verbose_name="0:代表发布， 1：代表回滚")
     content = models.TextField(verbose_name="控制台信息")
     packageId = models.IntegerField(verbose_name="生产发布包编号")
     result = models.BooleanField(verbose_name="构建成功，失败")

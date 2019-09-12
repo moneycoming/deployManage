@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% block content %}
+    <div class="breadcrumbs">
+        <div class="breadcrumbs-inner">
+            <div class="row m-0">
+                <div class="col-sm-4">
+                    <div class="page-header float-left">
+                        <div class="page-title">
+                            <h1>发布信息</h1>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div class="page-header float-right">
+                        <div class="page-title">
+                            <ol class="breadcrumb text-right">
+                                <li><a href="{% url 'index' %}">首页</a></li>
+                                <li><a href="{% url 'showPlan' %}">任务栏</a></li>
+                                <li><a href="/taskDetail?tid={{ task_obj.id }}">任务详情</a></li>
+                                <li class="active">控制台信息</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content -->
+    <div class="content">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">构建信息</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="layui-collapse" lay-accordion="">
+                                {% for consoleOpt in consoleOpts %}
+                                    <div class="layui-colla-item">
+                                        <h2 class="layui-colla-title">{{ consoleOpt.project.name }}</h2>
+                                        <div class="layui-colla-content layui-show">
+                                            <p><pre>{{ consoleOpt.content }}</pre></p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- .animated -->
+        </div><!-- .content -->
+    </div>
+{% endblock %}

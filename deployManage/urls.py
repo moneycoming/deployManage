@@ -44,7 +44,8 @@ urlpatterns = [
     url(r'^ajax_deleteTask$', views.ajax_deleteTask),
     url(r'^ajax_deletePlan$', views.ajax_deletePlan),
     url(r'^ajax_taskImplement', views.ajax_taskImplement),
-    url(r'^console_opt/(\w+)', views.console_opt, name='console'),
+    url(r'^uat_console_opt/(\w+)', views.uat_console_opt, name='uat_console_opt'),
+    url(r'^pro_console_opt/(\w+)', views.pro_console_opt, name='pro_console_opt'),
     url(r'^single_console_opt/(\w+)', views.single_console_opt, name='single_console'),
     url(r'^ajax_load_info', views.ajax_load_info, name='load_info'),
     url(r'^ajax_autoCodeMerge$', views.ajax_autoCodeMerge, name='autoCodeMerge'),
@@ -55,4 +56,6 @@ urlpatterns = [
     url(r'^ws_startDeploy', views.ws_startDeploy, name='startDeploy'),
     url(r'^ws_restartDeploy', views.ws_restartDeploy, name='restartDeploy'),
     url(r'^ws_continueDeploy', views.ws_continueDeploy, name='continueDeploy'),
+    url(r'^ws_rollbackOne', views.ws_rollbackOne, name='rollbackOne'),
+    url(r'^ws_rollbackAll', views.ws_rollbackAll, name='rollbackOne'),
 ]
