@@ -66,41 +66,6 @@ function getBuildResult(arg) {
     })
 }
 
-// 任务回滚定时器
-// function getRollBackResult(task) {
-//     $.ajax({
-//         url: '/getBuildResult',
-//         type: 'GET',
-//         data: task,
-//
-//         success: function (data) {
-//             html = "";
-//             if (data.length > 0) {
-//                 for (var i = 0; i < data.length; i++) {
-//                     html += "<div class=\"layui-colla-item\">\n" +
-//                         "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
-//                         "                                        <div class=\"layui-colla-content layui-show\">\n" +
-//                         "                                            <p><pre>" + data[i] + "</pre></p>\n" +
-//                         "                                        </div>\n" +
-//                         "                                    </div>"
-//                 }
-//             }
-//             else {
-//                 html += "<div class=\"layui-colla-item\">\n" +
-//                     "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
-//                     "                                        <div class=\"layui-colla-content layui-show\">\n" +
-//                     "                                            <p><pre>项目正在构建中，请等待。。。</pre></p>\n" +
-//                     "                                        </div>\n" +
-//                     "                                    </div>"
-//             }
-//             $(`.RollBackResult`).html(html);
-//         },
-//         error: function () {
-//             console.log('error');
-//         }
-//     })
-// }
-
 //任务执行
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
@@ -738,6 +703,58 @@ layui.use(['element', 'layer'], function () {
         }
     }
 });
+//创建预发分支
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", ".createUatBranch", function () {
+        $('.createUatBranch').hide();
+        $('#createUatBranchText').html("分支创建中，请等待...");
+        var postData = {};
+        var selected = $("input[name='uatBranchChoose']:checked").val();
+        if (selected === "option1") {
+            var uatBranch = $(" input[ name='uatBranch' ] ").val();
+            postData['uatBranch'] = uatBranch;
+            postData['radio'] = 'option1';
+        }
+        else {
+            postData['radio'] = 'option2';
+        }
+        var planId = getQueryVariable("pid");
+        var projectId = getQueryVariable("prjId");
+        postData['pid'] = planId;
+        postData['prjId'] = projectId;
+
+
+        $.ajax({
+            url: '/ajax_createUatBranch',
+            type: 'POST',
+            data: postData,
+
+            success: function (arg) {
+                layer.open({
+                    type: 1
+                    , title: '结果'
+                    , content: '<div style="padding: 20px 100px;">' + arg[0] + '</div>'
+                    , btn: '关闭'
+                    , btnAlign: 'c' //按钮居中
+                    , area: '500px;'
+                    , shade: 0.5 //不显示遮罩
+                    , yes: function () {
+                        layer.closeAll();
+                    }
+                });
+                if (arg[1].length > 0){
+                    $('#createUatBranchText').html("分支创建完成");
+                    $(`#uatBranch`).html(arg[1]);
+                }
+            },
+            error: function () {
+                console.log("error");
+            }
+        })
+    });
+});
 //预发构建执行
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
@@ -745,6 +762,7 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".uatBuild", uatBuild);
 
     function uatBuild() {
+        $('.uatBuild').hide();
         var myDate = nowtime(new Date().getTime());
         var type = $(this).data('type');
         var postData = {};
@@ -869,7 +887,8 @@ layui.use(['element', 'layer'], function () {
 
     $("body").on("click", ".segmentBtn", function () {
         var step = $(this).parent().attr('id');
-        str = $(this).text();
+        var taskId = getQueryVariable("tid");
+        var str = $(this).text();
         $(this).text(str);
         var postData = {};
         var sequenceId = $(this).attr("id");
@@ -877,6 +896,7 @@ layui.use(['element', 'layer'], function () {
         postData['id'] = sequenceId;
         postData['implemented'] = 1;
         postData['remark'] = remark;
+        postData['taskId'] = taskId;
 
         $.ajax({
             url: '/ajax_taskImplement',
@@ -912,32 +932,31 @@ layui.use(['element', 'layer'], function () {
         })
     });
 });
-//执行代码自动合并
+//任务验收通过
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
 
-    $("body").on("click", ".autoCodeMerge", function () {
+    $("body").on("click", ".checkSuccess", function () {
         var step = $(this).parent().attr('id');
         var postData = {};
-        var id = getQueryVariable("tid");
+        var taskId = getQueryVariable("tid");
         var remark = $(this).siblings("#remark").val();
-        console.log(remark);
-        postData['id'] = id;
-        postData['checked'] = 1;
+        postData['taskId'] = taskId;
         postData['remark'] = remark;
-
+        $('.checkSuccess').hide();
+        $('.checkFail').hide();
 
         $.ajax({
-            url: '/ajax_autoCodeMerge',
+            url: '/ajax_checkSuccess',
             type: 'POST',
             data: postData,
 
             success: function (arg) {
-                if (arg[0] === "no_role") {
+                if (arg === "no_role") {
                     layer.open({
                         type: 1
-                        , title: '合并结果'
-                        , content: '<div style="padding: 20px 100px;">' + arg[1] + '</div>'
+                        , title: '警告'
+                        , content: '<div style="padding: 20px 100px;">' + "你没有验收任务的权限" + '</div>'
                         , btn: '关闭'
                         , btnAlign: 'c' //按钮居中
                         , area: '500px;'
@@ -950,7 +969,7 @@ layui.use(['element', 'layer'], function () {
                     layer.open({
                         type: 1
                         , title: '合并结果'
-                        , content: '<div style="padding: 20px 100px;">' + arg[0] + '</div>'
+                        , content: '<div style="padding: 20px 100px;">' + "验收通过！" + '</div>'
                         , btn: '关闭'
                         , btnAlign: 'c' //按钮居中
                         , area: '500px;'
@@ -959,10 +978,9 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
-                    $(`#${step} #p1`).removeClass("fade").html(arg[1]);
-                    $(`#${step} .autoCodeMerge`).hide();
+                    $(`#${step} .checkSuccess`).hide();
                     $(`#${step} #remark`).hide();
-                    $(`#${step} #nextBtn`).removeClass("fade").show();
+                    $(`#${step} #p1`).removeClass("fade").html(arg);
                 }
             },
             error: function () {
@@ -971,51 +989,102 @@ layui.use(['element', 'layer'], function () {
         })
     });
 });
-//创建预发分支
+//合并代码
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
+    var type = $(this).data('type');
+    $("body").on("click", ".startCodeMerge", startCodeMerge);
 
-    $("body").on("click", ".createUatBranch", function () {
-        var postData = {};
-        var selected = $("input[name='uatBranchChoose']:checked").val();
-        if (selected === "option1") {
-            var uatBranch = $(" input[ name='uatBranch' ] ").val();
-            postData['uatBranch'] = uatBranch;
-            postData['radio'] = 'option1';
-        }
-        else {
-            postData['radio'] = 'option2';
-        }
-        var planId = getQueryVariable("pid");
-        var projectId = getQueryVariable("prjId");
-        postData['pid'] = planId;
-        postData['prjId'] = projectId;
+    function startCodeMerge() {
+        var taskId = getQueryVariable("tid");
+        $('#codeMergeText').text("代码合并进行中，请等待...");
+        $('.codeMergeProgress').removeClass('fade');
+        $('#codeMerge').width(5 + '%').text('5%');
+        $('#codeMergeOpt').removeClass('fade');
+        $('.startCodeMerge').hide();
+        if ("WebSocket" in window) {
+            console.log("您的浏览器支持 WebSocket!");
 
+            // 打开一个 web socket
+            var ws = new WebSocket("ws:" + window.location.host + "/ws_codeMerge");
 
-        $.ajax({
-            url: '/ajax_createUatBranch',
-            type: 'POST',
-            data: postData,
+            ws.onopen = function () {
+                ws.send(taskId);
+                console.log("数据已发送...");
+            };
 
-            success: function (arg) {
-                layer.open({
-                    type: 1
-                    , title: '结果'
-                    , content: '<div style="padding: 20px 100px;">' + arg[0] + '</div>'
-                    , btn: '关闭'
-                    , btnAlign: 'c' //按钮居中
-                    , area: '500px;'
-                    , shade: 0.5 //不显示遮罩
-                    , yes: function () {
-                        layer.closeAll();
+            ws.onmessage = function (evt) {
+                var received_msg = JSON.parse(evt.data);
+                console.log("数据已接收...");
+                if (received_msg[0] === 'no_role') {
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布结果'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + "你没有合并分支的权限！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                    $('#codeMergeText').hide();
+                    $('.codeMergeProgress').hide();
+                    $('#codeMergeOpt').hide();
+                } else {
+                    var html = "";
+                    var sumPoints = received_msg[0];
+                    var realPoints = 0;
+                    for (var i = 1; i < received_msg.length; i++) {
+                        if (received_msg[i] === 'ok') {
+                            realPoints++;
+                            $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                            var widthTemp = (realPoints / sumPoints) * 100;
+                            $('#codeMerge').width(widthTemp + '%').text(widthTemp + '%');
+                            html += "<br>" + received_msg[i+1]
+                        } else if (received_msg[i] === 'conflict') {
+                            realPoints++;
+                            $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                            var widthTemp2 = (realPoints / sumPoints) * 100;
+                            $('#codeMerge').width(widthTemp2 + '%').text(widthTemp2 + '%');
+                            html += "<br>" + received_msg[i+1]
+                        }
+                        else if (received_msg[i] === 'success') {
+                            layer.open({
+                                type: 1
+                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                , title: '合并结果'
+                                , id: 'layerDemo' + type//防止重复弹出
+                                , content: '<div style="padding: 20px 100px;">' + "合并结束！" + '</div>'
+                                , btn: '关闭'
+                                , btnAlign: 'c' //按钮居中
+                                , area: '500px;'
+                                , shade: 0.5 //不显示遮罩
+                                , yes: function () {
+                                    layer.closeAll();
+                                }
+                            });
+                        }
                     }
-                });
-                $(`#uatBranch`).html(arg[1]);
-            },
-            error: function () {
-                console.log("error");
-            }
-        })
-    });
-});
+                    $(`.codeMergeResult`).html(html);
+                    if (realPoints === sumPoints) {
+                        $('#codeMergeText').text("合并完成");
+                    }
+                }
+            };
 
+            ws.onclose = function () {
+                // 关闭 websocket
+                console.log("连接已关闭...");
+            };
+        }
+
+        else {
+            // 浏览器不支持 WebSocket
+            console.alert("您的浏览器不支持 WebSocket!");
+        }
+    }
+});

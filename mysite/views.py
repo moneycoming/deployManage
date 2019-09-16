@@ -9,7 +9,7 @@ from django.db import connection, connections
 from mysite.functions import TimeChange, fileObj, branch
 from mysite import models
 import datetime
-from mysite.jenkinsUse import pythonJenkins, Transaction, projectBean
+from mysite.jenkinsUse import pythonJenkins, projectBean
 from django.views.decorators.csrf import csrf_exempt
 import uuid
 import time
@@ -318,11 +318,16 @@ def taskDetail(request):
         sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
         lastNum = len(sequences) + 1
         consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan)
-
         show = False
+        mergeStatus = True
         for i in range(len(project_plans)):
             if project_plans[i].buildStatus != 1:
                 show = True
+                break
+
+        for j in range(len(project_plans)):
+            if project_plans[j] == 0:
+                mergeStatus = False
                 break
 
     template = get_template('taskDetail.html')
@@ -330,19 +335,26 @@ def taskDetail(request):
     return HttpResponse(html)
 
 
-# 任务是否执行
+# 任务队列是否执行完成
 @login_required
 @csrf_exempt
 def ajax_taskImplement(request):
     implement = request.POST.get('implemented')
     sequenceId = request.POST.get('id')
     remark = request.POST.get('remark')
+    taskId = request.POST.get('taskId')
     executeDate = datetime.datetime.now()
+    task_obj = models.task.objects.get(id=taskId)
+    production_members = models.production_member.objects.filter(production=task_obj.plan.production)
     member_obj = models.member.objects.get(user=request.user)
+    isMember = False
+    for m in range(len(production_members)):
+        if member_obj == production_members[m].member:
+            isMember = True
     info = []
     if sequenceId:
         sequence = models.sequence.objects.get(id=sequenceId)
-        if member_obj.user.has_perm('can_deploy_project'):
+        if isMember and member_obj.user.has_perm('can_deploy_project'):
             sequence.implemented = implement
             sequence.remarks = remark
             sequence.executor = member_obj
@@ -352,57 +364,36 @@ def ajax_taskImplement(request):
             info.append(remark)
         else:
             info.append("no_role")
-        infoJson = json.dumps(info)
 
-        return HttpResponse(infoJson, "application/json")
+        return HttpResponse(json.dumps(info), "application/json")
 
 
-# 代码自动合并
+# 任务验收通过
 @login_required
 @csrf_exempt
-def ajax_autoCodeMerge(request):
-    checked = request.POST.get('checked')
-    taskId = request.POST.get('id')
+def ajax_checkSuccess(request):
+    taskId = request.POST.get('taskId')
     remark = request.POST.get('remark')
-    checkUser = request.user
-    checkDate = datetime.datetime.now()
-    result = []
     if taskId:
-        if checkUser.has_perm('mysite.can_check_project'):
-            task = models.task.objects.get(id=taskId)
-            task.checkUser = checkUser
-            task.checkDate = checkDate
-            task.checked = checked
-            task.remark = remark
-            task.save()
-            taskDetails = models.taskDetail.objects.filter(task=task)
-            mergeTo = "master"
-            conflictBranches = []
-            for i in range(len(taskDetails)):
-                jenkinsJob = taskDetails[i].proJenkins
-                mergeFrom = taskDetails[i].branch
-                project_dir = jenkinsJob.project.project_dir
-                branch_obj = branch(project_dir)
-                status = branch_obj.merge_branch(mergeFrom, mergeTo, status=False)
-                if not status:
-                    conflictBranches.append(jenkinsJob.name)
+        task_obj = models.task.objects.get(id=taskId)
+        production_members = models.production_member.objects.filter(production=task_obj.plan.production)
+        member_obj = models.member.objects.get(user=request.user)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+        if isMember and member_obj.user.has_perm('can_check_project'):
+            task_obj.checkUser = member_obj
+            task_obj.checkDate = datetime.datetime.now()
+            task_obj.checked = 1
+            task_obj.remark = remark
+            task_obj.save()
+            res = "发布任务%s验证通过，请合并代码！" % task_obj.name
+            send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
 
-            if len(conflictBranches) == 0:
-                res = "所有项目的分支合并完成！！"
-            else:
-                res = "以下项目%s的分支合并冲突，请手动处理！" % conflictBranches
-            result.append(res)
-            result.append(remark)
-            resultJson = json.dumps(result)
-            send_mail(task.name, res, mail_from, mail_to, fail_silently=False)
-
-            return HttpResponse(resultJson, "application/json")
+            return HttpResponse(json.dumps(remark), "application/json")
         else:
-            result.append("no_role")
-            res = "你没有验证部署的权限！！！"
-            result.append(res)
-            resultJson = json.dumps(result)
-            return HttpResponse(resultJson, "application/json")
+            return HttpResponse("no_role")
 
 
 # 创建任务
@@ -445,29 +436,6 @@ def ajax_load_info(request):
             branchListJson = json.dumps(branchList)
 
             return HttpResponse(branchListJson, "application/json")
-
-
-# 构建信息控制台展示
-@login_required
-@csrf_exempt
-def ajax_console_opt(request):
-    if request.method == 'GET':
-        planId = request.GET.get('pid')
-        projectId = request.GET.get('prjId')
-        deployTime = request.GET.get('time')
-        envSort = request.GET.get('envSort')
-        if projectId and planId:
-            project_obj = models.project.objects.get(id=projectId)
-            plan_obj = models.plan.objects.get(id=planId)
-            consoleOpts = models.consoleOpt.objects.filter(project__id=projectId, plan__id=planId).filter(
-                deployTime__gte=deployTime)
-            logger.info("显示计划：%s,项目: %s的后台信息" % (plan_obj.name, project_obj.name))
-            contentList = [envSort]
-            if consoleOpts:
-                for i in range(len(consoleOpts)):
-                    contentList.append(consoleOpts[i].content)
-
-            return HttpResponse(json.dumps(contentList), "application/json")
 
 
 @login_required
@@ -518,6 +486,7 @@ def ws_startDeploy(request):
                     ~Q(buildStatus=1)).order_by('order')
                 production_members = models.production_member.objects.filter(production=task_obj.plan.production)
                 member_obj = models.member.objects.get(user=request.user)
+                sequence_obj = models.sequence.objects.filter(task=task_obj).get(segment__isDeploy=True)
                 isMember = False
                 for m in range(len(production_members)):
                     if member_obj == production_members[m].member:
@@ -604,6 +573,11 @@ def ws_startDeploy(request):
                         else:
                             break
                     if len(cursor) == 0:
+                        sequence_obj.implemented = True
+                        sequence_obj.executor = member_obj.name
+                        sequence_obj.executeDate = datetime.datetime.now()
+                        sequence_obj.remarks = "已部署"
+                        sequence_obj.save()
                         res = "任务：%s，部署完成！" % task_obj.name
                         buildMessages.append(res)
                         buildMessages.append('deploy_success')
@@ -626,6 +600,7 @@ def ws_restartDeploy(request):
                 task_obj = models.task.objects.get(id=taskId)
                 project_plans = models.project_plan.objects.filter(plan=task_obj.plan).filter(
                     ~Q(buildStatus=1)).order_by('order')
+                sequence_obj = models.sequence.objects.filter(task=task_obj).get(segment__isDeploy=True)
                 production_members = models.production_member.objects.filter(production=task_obj.plan.production)
                 member_obj = models.member.objects.get(user=request.user)
                 isMember = False
@@ -721,6 +696,11 @@ def ws_restartDeploy(request):
                                     request.websocket.close()
                                     break
                     if len(cursor) == 0:
+                        sequence_obj.implemented = True
+                        sequence_obj.executor = member_obj.name
+                        sequence_obj.executeDate = datetime.datetime.now()
+                        sequence_obj.remarks = "已部署"
+                        sequence_obj.save()
                         res = "任务：%s，部署完成！" % task_obj.name
                         buildMessages.append(res)
                         buildMessages.append('deploy_success')
@@ -743,6 +723,7 @@ def ws_continueDeploy(request):
                 task_obj = models.task.objects.get(id=taskId)
                 project_plans = models.project_plan.objects.filter(plan=task_obj.plan).filter(
                     ~Q(buildStatus=1)).order_by('order')
+                sequence_obj = models.sequence.objects.filter(task=task_obj).get(segment__isDeploy=True)
                 production_members = models.production_member.objects.filter(production=task_obj.plan.production)
                 member_obj = models.member.objects.get(user=request.user)
                 isMember = False
@@ -840,6 +821,11 @@ def ws_continueDeploy(request):
                                         request.websocket.close()
                                         break
                         if len(cursor) == 0:
+                            sequence_obj.implemented = True
+                            sequence_obj.executor = member_obj.name
+                            sequence_obj.executeDate = datetime.datetime.now()
+                            sequence_obj.remarks = "已部署"
+                            sequence_obj.save()
                             res = "任务：%s，部署完成！" % task_obj.name
                             buildMessages.append(res)
                             buildMessages.append('deploy_success')
@@ -1113,6 +1099,53 @@ def ajax_uatBuild(request):
             res = "您没有执行产品%s预发部署权限！" % plan_obj.production.name
 
             return HttpResponse(res)
+
+
+# 代码合并
+@login_required
+@accept_websocket
+def ws_codeMerge(request):
+    if request.is_websocket():
+        for taskId in request.websocket:
+            if taskId:
+                task_obj = models.task.objects.get(id=taskId)
+                project_plans = models.project_plan.objects.filter(plan=task_obj.plan)
+                production_members = models.production_member.objects.filter(production=task_obj.plan.production)
+                member_obj = models.member.objects.get(user=request.user)
+                isMember = False
+                buildMessages = []
+                for m in range(len(production_members)):
+                    if member_obj == production_members[m].member:
+                        isMember = True
+                if isMember and member_obj.user.has_perm("can_deploy_project"):
+                    buildMessages.append(len(project_plans))
+                    request.websocket.send(json.dumps(buildMessages))
+                    for i in range(len(project_plans)):
+                        project_obj = project_plans[i].project
+                        branch_obj = branch(project_obj.project_dir)
+                        status = branch_obj.merge_branch(project_plans[i].uatBranch, 'master_copy')
+                        if status:
+                            project_plans[i].mergeStatus = 1
+                            project_plans[i].save()
+                            buildMessages.append("ok")
+                            res = "项目%s合并完成" % project_plans[i].project.name
+                            buildMessages.append(res)
+                            request.websocket.send(json.dumps(buildMessages))
+                        else:
+                            project_plans[i].mergeStatus = 2
+                            project_plans[i].save()
+                            buildMessages.append("conflict")
+                            res = "项目%s合并冲突，请手工处理！" % project_plans[i].project.name
+                            buildMessages.append(res)
+                            request.websocket.send(json.dumps(buildMessages))
+                    buildMessages.append("success")
+                    request.websocket.send(json.dumps(buildMessages))
+                    request.websocket.close()
+                    send_mail("发布任务%s分支合并结果" % task_obj.name, str(buildMessages), mail_from, mail_to, fail_silently=False)
+                else:
+                    buildMessages.append("no_role")
+                    request.websocket.send(json.dumps(buildMessages))
+                    request.websocket.close()
 
 
 # 查看预发控制台信息

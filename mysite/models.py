@@ -187,6 +187,7 @@ class project_plan(models.Model):
     order = models.IntegerField(verbose_name="执行顺序")
     cursor = models.BooleanField(default=False, verbose_name="发布游标")
     buildStatus = models.IntegerField(default=0, verbose_name="0：未发布，1；发布成功，2：发布失败")
+    mergeStatus = models.IntegerField(default=0, verbose_name="0：未合并，1；合并完成，2：合并冲突")
 
     class Meta:
         verbose_name = u'发布计划和项目管理'
@@ -223,7 +224,7 @@ class task(models.Model):
     checkUser = models.ForeignKey(member, on_delete=models.CASCADE, null=True, verbose_name="由谁验证", related_name='checkUser')
     checkDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="验证日期")
     onOff = models.IntegerField(verbose_name="关闭/重启")
-    checked = models.BooleanField(default=False, verbose_name="验证通过？是：否")
+    checked = models.IntegerField(default=0, verbose_name="0：未验证，1：通过，2：不通过")
     remark = models.TextField(null=True, verbose_name="备注")
 
     class Meta:
@@ -249,83 +250,3 @@ class sequence(models.Model):
     class Meta:
         verbose_name = u'任务队列管理'
         verbose_name_plural = verbose_name
-
-
-# 任务详情，用于任务回滚等
-class taskDetail(models.Model):
-    proJenkins = models.ForeignKey(jenkinsPro, on_delete=models.CASCADE)
-    task = models.ForeignKey(task, on_delete=models.CASCADE)
-    packageId = models.IntegerField(default=0, verbose_name="生产发布包编号")
-    branch = models.CharField(max_length=100, verbose_name="分支")
-    priority = models.IntegerField(verbose_name="项目执行顺序")
-
-    def proJenkins_name(self):
-        return self.proJenkins.name
-
-    proJenkins_name.short_description = "Jenkins项目"
-
-    class Meta:
-        verbose_name = u'任务详情'
-        verbose_name_plural = verbose_name
-        permissions = (
-            ('can_deploy_project', '发布项目'),
-            ('can_check_project', '线上验证'),
-        )
-
-    # def __str__(self):
-    #     return self.name
-
-
-# 操作历史表，用于记录操作历史和控制台信息
-class operationHistory(models.Model):
-    taskDetail = models.ForeignKey(taskDetail, on_delete=models.CASCADE)
-    console_opt = models.CharField(max_length=10000, verbose_name="控制台信息")
-    operateTime = models.DateTimeField(auto_now=True, verbose_name="操作时间")
-    type = models.IntegerField(verbose_name="执行：1， 回滚;2")
-    server = models.ForeignKey(server, on_delete=models.CASCADE)
-    operateUser = models.ForeignKey(User, on_delete=models.CASCADE)
-    suuid = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
-
-    def user_name(self):
-        name = self.operateUser.last_name + self.operateUser.first_name
-        return name
-
-    user_name.short_description = "操作人"
-
-    def server_name(self):
-        return self.server.name
-
-    server_name.short_description = "关联服务器"
-
-    class Meta:
-        verbose_name = u'操作历史'
-        verbose_name_plural = verbose_name
-
-    # def __str__(self):
-    #     return self.name
-
-
-class taskHistory(models.Model):
-    task = models.ForeignKey(task, on_delete=models.CASCADE)
-    operateUser = models.ForeignKey(User, on_delete=models.CASCADE)
-    operateTime = models.DateTimeField(auto_now=True, verbose_name="操作时间")
-    type = models.IntegerField(verbose_name="执行：1， 回滚：2")
-    suuid = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
-
-    def task_name(self):
-        return self.task.name
-
-    task_name.short_description = "任务名称"
-
-    def user_name(self):
-        name = self.operateUser.last_name + self.operateUser.first_name
-        return name
-
-    user_name.short_description = "操作人"
-
-    class Meta:
-        verbose_name = u'任务历史'
-        verbose_name_plural = verbose_name
-
-    # def __str__(self):
-    #     return self.name

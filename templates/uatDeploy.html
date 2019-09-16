@@ -89,10 +89,11 @@
                                                 <small class="form-text text-muted">输入手动创建的分支名</small>
                                             </div>
                                         </div>
+                                        <div class="text" style="text-align:center;"><p id="createUatBranchText"></p></div>
                                         <input class="layui-btn layui-btn-primary createUatBranch" type="button"
                                                value="创建分支">
                                         <h5 class="page-header"></h5>
-                                        <h3>分支</h3><br>
+                                        <strong>分支信息</strong><br>
                                         {% if project_plan_obj.uatBranch %}
                                             <p id="uatBranch">{{ project_plan_obj.uatBranch }}</p>
                                         {% else %}

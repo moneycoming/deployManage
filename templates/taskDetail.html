@@ -125,14 +125,25 @@
                                                                             data-type="loading">立即执行
                                                                     </button>
                                                                 {% endif %}
+                                                                <button class="layui-btn layui-btn-primary restartDeploy fade"
+                                                                        data-type="loading">重新发布
+                                                                </button>
+                                                                <button class="layui-btn layui-btn-primary continueDeploy fade"
+                                                                        data-type="loading">跳过继续下一个发布
+                                                                </button>
+                                                                <button class="layui-btn layui-btn-primary rollbackOne fade"
+                                                                        data-type="loading">回滚当前项目
+                                                                </button>
+                                                                <button class="layui-btn layui-btn-primary rollbackAll fade"
+                                                                        data-type="loading">回滚所有项目
+                                                                </button>
                                                                 <h5 class="page-header"></h5>
                                                                 <div class="layui-col-md12">
                                                                     <div class="layui-card">
                                                                         <div class="layui-card-header fade"
                                                                              id="proConsoleOpt">
                                                                             <strong>控制台信息</strong></div>
-                                                                        <div class="layui-card-body proBuildResult">
-                                                                        </div>
+                                                                        <div class="layui-card-body proBuildResult"></div>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -145,18 +156,18 @@
                                                                         onclick="window.location.reload()">刷新
                                                                 </button>
                                                                 <h5 class="page-header"></h5>
-                                                                {% for task in taskHistory %}
+                                                                {% for consoleOpt in consoleOpts %}
                                                                     <li class="layui-timeline-item">
                                                                         <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
                                                                         <div class="layui-timeline-content layui-text">
-                                                                            <h3 class="layui-timeline-title">{{ task.operateTime }}</h3>
-                                                                            <p>{% if task.type == 1 %}
+                                                                            <h3 class="layui-timeline-title">{{ consoleOpt.deployTime }}</h3>
+                                                                            <p>{% if consoleOpt.category == 0 %}
                                                                                 操作：发布
                                                                             {% else %}
                                                                                 操作：回滚
                                                                             {% endif %}
-                                                                                <br>执行人：{{ task.operateUser.last_name }}{{ task.operateUser.first_name }}
-                                                                                <br><a href="/console_opt/{{ task.suuid }}">查看控制台信息</a>
+                                                                                <br>执行人：{{ consoleOpt.deployUser.name }}
+                                                                                <br><a href="/pro_console_opt/{{ consoleOpt.uniteKey }}">查看控制台信息</a>
                                                                             </p>
                                                                         </div>
                                                                     </li>
@@ -165,11 +176,13 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button type="button" class="layui-btn layui-btn-primary"
-                                                        style="float: right">
-                                                    <a href="#step{{ sequence.next_segment }}"
-                                                       onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                       role="tab" data-toggle="tab">下一步</a></button>
+                                                {% if sequence.implemented == 1 %}
+                                                    <button type="button" class="layui-btn layui-btn-primary"
+                                                            style="float: right">
+                                                        <a href="#step{{ sequence.next_segment }}"
+                                                           onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                           role="tab" data-toggle="tab">下一步</a></button>
+                                                {% endif %}
                                             </div>
                                         {% else %}
                                             <div id="step1" class="tab-pane active">
@@ -311,11 +324,13 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button type="button" class="layui-btn layui-btn-primary"
-                                                        style="float: right">
-                                                    <a href="#step{{ sequence.next_segment }}"
-                                                       onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                       role="tab" data-toggle="tab">下一步</a></button>
+                                                {% if sequence.implemented == 1 %}
+                                                    <button type="button" class="layui-btn layui-btn-primary"
+                                                            style="float: right">
+                                                        <a href="#step{{ sequence.next_segment }}"
+                                                           onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                           role="tab" data-toggle="tab">下一步</a></button>
+                                                {% endif %}
                                             </div>
                                         {% else %}
                                             <div id="step{{ sequence.priority }}" class="tab-pane fade">
@@ -352,20 +367,100 @@
                                 {% endfor %}
                                 <div id="step{{ lastNum }}" class="tab-pane fade">
                                     <h5 class="page-header"></h5>
-                                    {% if task.checked == 0 %}
-                                        <p id="p1" class="fade"></p>
-                                        <textarea class="form-control" name="remark" id="remark"
-                                                  placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）" rows="4"></textarea>
-                                        <h5 class="page-header"></h5>
-                                        <button type="button" class="layui-btn layui-btn-primary autoCodeMerge">验证通过
-                                        </button>
-                                    {% else %}
-                                        <p id="p1">
-                                            <br>执行人：{{ task.checkUser.last_name }}{{ task.checkUser.first_name }}
-                                            <br>执行日期：{{ task.checkDate }}
-                                            <br>备注：{{ task.remark }}
-                                        </p>
-                                    {% endif %}
+                                    <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+                                        <ul class="layui-tab-title">
+                                            <li class="layui-this">任务验收</li>
+                                            <li>代码合并</li>
+                                        </ul>
+                                        <div class="layui-tab-content">
+                                            <div class="layui-tab-item layui-show">
+                                                <div class="site-demo-button" id="step{{ lastNum }}"
+                                                     style="margin-top: 20px; margin-bottom: 0;">
+                                                    <div class="alert alert-success" role="alert">
+                                                        <h4 class="alert-heading">说明</h4>
+                                                        <hr>
+                                                        <p>1-在输入框中输入验收细节情况</p>
+                                                        <p>2-验收通过则点击“通过”</p>
+                                                        <p>3-验收不通过则点击“不通过”</p>
+                                                    </div>
+                                                    {% if task_obj.checked == 0 %}
+                                                        <p id="p1" class="fade"></p>
+                                                        <textarea class="form-control" name="remark" id="remark"
+                                                                  placeholder="请输入验收结果" rows="4"></textarea>
+                                                        <h5 class="page-header"></h5>
+                                                        <button type="button"
+                                                                class="layui-btn layui-btn-primary checkSuccess">通过
+                                                        </button>
+                                                        <button type="button"
+                                                                class="layui-btn layui-btn-primary checkFail">不通过
+                                                        </button>
+                                                    {% else %}
+                                                        <p id="p1">
+                                                            <br>验收人：{{ task_obj.checkUser.name }}
+                                                            <br>验收日期：{{ task_obj.checkDate }}
+                                                            <br>备注：{{ task_obj.remark }}
+                                                            {% if task_obj.checked == 1 %}
+                                                                <br>结果：通过
+                                                            {% else %}
+                                                                <br>结果：不通过
+                                                            {% endif %}
+                                                        </p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="layui-tab-item">
+                                                <div class="site-demo-button"
+                                                     style="margin-top: 20px; margin-bottom: 0;">
+                                                    <div class="alert alert-success" role="alert">
+                                                        <h4 class="alert-heading">说明</h4>
+                                                        <hr>
+                                                        <p>1-当验收通过后，会出现“合并代码”的按钮</p>
+                                                        <p>2-点击“合并代码”按钮，将代码合并入master</p>
+                                                        <p>3-进度条显示的是所有项目的总进度</p>
+                                                    </div>
+                                                    <div class="text" style="text-align:center;">
+                                                        <p id="codeMergeText"></p>
+                                                    </div>
+                                                    <div class="progress mb-2 codeMergeProgress fade">
+                                                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                                             id="codeMerge" role="progressbar"
+                                                             style="width: 0%"
+                                                             aria-valuenow="55" aria-valuemin="0"
+                                                             aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    {% if mergeStatus %}
+                                                        {% for project_plan in project_plans %}
+                                                            <h5 class="page-header"></h5>
+                                                            <p>项目：{{ project_plan.project.name }}</p>
+                                                            {% if project_plan.mergeStatus == 1 %}
+                                                                <br>合并结果：成功
+                                                            {% else %}
+                                                                <br>合并结果：冲突
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        {% if task_obj.checked == 1 %}
+                                                            <button class="layui-btn layui-btn-primary startCodeMerge"
+                                                                    data-type="loading">合并代码
+                                                            </button>
+                                                            <h5 class="page-header"></h5>
+                                                            <div class="layui-col-md12">
+                                                                <div class="layui-card">
+                                                                    <div class="layui-card-header fade"
+                                                                         id="codeMergeOpt">
+                                                                        <strong>合并进度</strong></div>
+                                                                    <div class="layui-card-body codeMergeResult"></div>
+                                                                </div>
+                                                            </div>
+                                                        {% else %}
+                                                            <p>任务没有验收完成，请先确认验收！</p>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

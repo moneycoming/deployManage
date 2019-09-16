@@ -82,7 +82,7 @@ class branch:
                 git.checkout(mergeTo)
             try:
                 git.merge(mergeFrom)
-                origin.push(mergeTo)
+                # origin.push(mergeTo)
                 logger.info("分支%s合并成功！" % mergeFrom)
             except:
                 past_branch = repo.create_head(mergeTo, 'HEAD')
