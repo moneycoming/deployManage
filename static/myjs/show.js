@@ -534,7 +534,7 @@ layui.use(['element', 'layer'], function () {
                             var widthTemp = (realPoints / sumPoints) * 100;
                             $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
                             html += "<a href='http://127.0.0.1:8000/single_console_opt/"
-                                + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
+                                + received_msg[i] + "' target='_blank'>查看控制台信息</a>";
                         } else if (received_msg[i] === 'no_reversion') {
                             layer.open({
                                 type: 1
@@ -744,7 +744,7 @@ layui.use(['element', 'layer'], function () {
                         layer.closeAll();
                     }
                 });
-                if (arg[1].length > 0){
+                if (arg[1].length > 0) {
                     $('#createUatBranchText').html("分支创建完成");
                     $(`#uatBranch`).html(arg[1]);
                 }
@@ -763,79 +763,88 @@ layui.use(['element', 'layer'], function () {
 
     function uatBuild() {
         $('.uatBuild').hide();
+        $('#uatConsoleOpt').removeClass('fade');
         var myDate = nowtime(new Date().getTime());
         var type = $(this).data('type');
-        var postData = {};
         var projectId = getQueryVariable("prjId");
         var planId = getQueryVariable("pid");
-        postData['prjId'] = projectId;
-        postData['pid'] = planId;
-        postData['time'] = myDate;
-        postData['envSort'] = 'uat';
-        if (timer) {
-            getBuildResult(postData);
-        } else {
-            timer = setInterval(() => {
-                getBuildResult(postData)
-            }, 3000)
+        var combination = projectId + '-' + planId + '-' + myDate;
+
+        if ("WebSocket" in window) {
+            console.log("您的浏览器支持 WebSocket!");
+
+            // 打开一个 web socket
+            var ws = new WebSocket("ws:" + window.location.host + "/ws_uatDeploy");
+
+            ws.onopen = function () {
+                ws.send(combination);
+                // ws.send(planId);
+                console.log("数据已发送...");
+            };
+
+            ws.onmessage = function (evt) {
+                var received_msg = JSON.parse(evt.data);
+                var html = "";
+                console.log("数据已接收...");
+                if (received_msg[0] === 'no_role') {
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布结果'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + "你没有合并分支的权限！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                } else if (received_msg[0] === 'no_branch') {
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布结果'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + "没有预发分支，请先创建！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                } else {
+                    for (var i = 0; i < received_msg.length; i++) {
+                        console.log(received_msg[i]);
+                        if (received_msg[i] === 'success') {
+                            html += "<pre>" + received_msg[i + 1] + "</pre>";
+                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                + received_msg[i + 2] + "' target='_blank'>查看控制台信息</a>";
+                        } else if (received_msg[i] === 'fail') {
+                            html += "<pre>" + received_msg[i + 1] + "</pre>";
+                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                + received_msg[i + 2] + "' target='_blank'>查看控制台信息</a>";
+                        } else if (received_msg[i] === 'deploy'){
+                             html += "<pre>" + received_msg[i + 1] + "</pre>";
+                        }
+                    }
+                }
+                $(`.uatBuildResult`).html(html);
+            };
+
+            ws.onclose = function () {
+                // 关闭 websocket
+                console.log("连接已关闭...");
+            };
         }
 
-        $.ajax({
-            url: '/ajax_uatBuild',
-            type: 'POST',
-            data: postData,
-
-            success: function (arg) {
-                layer.open({
-                    type: 1
-                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                    , title: '部署结果'
-                    , id: 'layerDemo' + type//防止重复弹出
-                    , content: '<div style="padding: 20px 100px;">' + arg + '</div>'
-                    , btn: '关闭'
-                    , btnAlign: 'c' //按钮居中
-                    , area: '500px;'
-                    , shade: 0.5 //不显示遮罩
-                    , yes: function () {
-                        layer.closeAll();
-                    }
-                });
-                // if (arg) {
-                //                 //     layer.open({
-                //                 //         type: 1
-                //                 //         , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                //                 //         , title: '发布成功'
-                //                 //         , id: 'layerDemo' + type//防止重复弹出
-                //                 //         , content: '<div style="padding: 20px 100px;">' + "部署成功！" + '</div>'
-                //                 //         , btn: '关闭'
-                //                 //         , btnAlign: 'c' //按钮居中
-                //                 //         , area: '500px;'
-                //                 //         , shade: 0.5 //不显示遮罩
-                //                 //         , yes: function () {
-                //                 //             layer.closeAll();
-                //                 //         }
-                //                 //     });
-                //                 // } else {
-                //                 //     layer.open({
-                //                 //         type: 1
-                //                 //         , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                //                 //         , title: '发布异常'
-                //                 //         , id: 'layerDemo' + type//防止重复弹出
-                //                 //         , content: '<div style="padding: 20px 100px;">' + "部署失败！" + '</div>'
-                //                 //         , btn: '关闭'
-                //                 //         , btnAlign: 'c' //按钮居中
-                //                 //         , area: '500px;'
-                //                 //         , shade: 0.5 //不显示遮罩
-                //                 //         , yes: function () {
-                //                 //             layer.closeAll();
-                //                 //         }
-                //                 //     });
-                //                 // }
-            },
-            error: function () {
-                console.log('error');
-            }
-        })
+        else {
+            // 浏览器不支持 WebSocket
+            console.alert("您的浏览器不支持 WebSocket!");
+        }
     }
 });
 //面板
@@ -1044,13 +1053,13 @@ layui.use(['element', 'layer'], function () {
                             $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
                             var widthTemp = (realPoints / sumPoints) * 100;
                             $('#codeMerge').width(widthTemp + '%').text(widthTemp + '%');
-                            html += "<br>" + received_msg[i+1]
+                            html += "<br>" + received_msg[i + 1]
                         } else if (received_msg[i] === 'conflict') {
                             realPoints++;
                             $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
                             var widthTemp2 = (realPoints / sumPoints) * 100;
                             $('#codeMerge').width(widthTemp2 + '%').text(widthTemp2 + '%');
-                            html += "<br>" + received_msg[i+1]
+                            html += "<br>" + received_msg[i + 1]
                         }
                         else if (received_msg[i] === 'success') {
                             layer.open({

@@ -88,7 +88,8 @@ class consoleOpt_admin(object):
                     'uniqueKey', 'uniteKey']
     search_fields = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime',
                      'deployUser', 'uniqueKey', 'uniteKey']
-    list_filter = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime', 'deployUser']
+    list_filter = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
+                   'uniqueKey', 'uniteKey']
 
 
 class project_server_admin(object):
