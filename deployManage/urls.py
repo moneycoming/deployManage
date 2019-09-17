@@ -58,4 +58,6 @@ urlpatterns = [
     url(r'^ws_rollbackOne', views.ws_rollbackOne, name='rollbackOne'),
     url(r'^ws_rollbackAll', views.ws_rollbackAll, name='rollbackOne'),
     url(r'^ws_codeMerge', views.ws_codeMerge, name='codeMerge'),
+    url(r'^ws_proConsoleOptRefresh', views.ws_proConsoleOptRefresh, name='proConsoleOptRefresh'),
+    url(r'^ws_uatConsoleOptRefresh', views.ws_uatConsoleOptRefresh, name='uatConsoleOptRefresh'),
 ]

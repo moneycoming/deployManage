@@ -6,7 +6,7 @@ from django.template.loader import get_template
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import connection, connections
-from mysite.functions import TimeChange, fileObj, branch
+from mysite.functions import TimeChange, fileObj, branch, DateEncoder
 from mysite import models
 import datetime
 from mysite.jenkinsUse import pythonJenkins, projectBean
@@ -252,7 +252,8 @@ def uatDeploy(request):
         project_obj = models.project.objects.get(id=projectId)
         plan_obj = models.plan.objects.get(id=planId)
         project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
-        consoleOpts = models.consoleOpt.objects.filter(project=project_obj, plan=plan_obj)
+        consoleOpts = models.consoleOpt.objects.filter(project=project_obj, plan=plan_obj, type=0).order_by(
+            'deployTime')
 
     template = get_template('uatDeploy.html')
     html = template.render(context=locals(), request=request)
@@ -317,7 +318,7 @@ def taskDetail(request):
         project_plans = models.project_plan.objects.filter(plan=task_obj.plan).order_by('order')
         sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
         lastNum = len(sequences) + 1
-        consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan)
+        consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
         show = False
         mergeStatus = True
         for i in range(len(project_plans)):
@@ -537,10 +538,10 @@ def ws_startDeploy(request):
                                         request.websocket.send(json.dumps(buildMessages))
                                         request.websocket.close()
                                         consoleOpt_obj = models.consoleOpt(type=1, category=0, plan=task_obj.plan,
-                                                                           project=project_obj, content=consoleOpt,
-                                                                           packageId=relVersion, result=False,
-                                                                           deployUser=member_obj, uniqueKey=uniqueKey,
-                                                                           uniteKey=uniteKey)
+                                                                           project=project_obj,
+                                                                           content=consoleOpt, packageId=relVersion,
+                                                                           result=False, deployUser=member_obj,
+                                                                           uniqueKey=uniqueKey, uniteKey=uniteKey)
                                         consoleOpt_obj.save()
                                         cursor.append(project_obj.id)
                                         break
@@ -658,8 +659,8 @@ def ws_restartDeploy(request):
                                         buildMessages.append('deploy_failed')
                                         request.websocket.send(json.dumps(buildMessages))
                                         request.websocket.close()
-                                        consoleOpt_obj = models.consoleOpt(type=1, category=0, plan=task_obj.plan,
-                                                                           project=project_obj,
+                                        consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
+                                                                           project=project_obj, category=0,
                                                                            content=consoleOpt, packageId=relVersion,
                                                                            result=False, deployUser=member_obj,
                                                                            uniqueKey=uniqueKey, uniteKey=uniteKey)
@@ -1196,6 +1197,7 @@ def pro_console_opt(request, uid):
 
 
 # 单个控制台信息查看
+@login_required
 def single_console_opt(request, uid):
     if uid:
         consoleOpt_obj = models.consoleOpt.objects.get(uniqueKey=uid)
@@ -1203,3 +1205,46 @@ def single_console_opt(request, uid):
     template = get_template('single_console_opt.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
+
+
+# 刷新生产发布记录
+@login_required
+@accept_websocket
+def ws_proConsoleOptRefresh(request):
+    if request.is_websocket():
+        for taskId in request.websocket:
+            if taskId:
+                task_obj = models.task.objects.get(id=taskId)
+                consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
+                consoleMessages = []
+                for i in range(len(consoleOpts)):
+                    consoleMessages.append("console")
+                    consoleMessages.append(consoleOpts[i].deployTime)
+                    consoleMessages.append(consoleOpts[i].category)
+                    consoleMessages.append(consoleOpts[i].deployUser.name)
+                    consoleMessages.append(consoleOpts[i].uniteKey)
+                    request.websocket.send(json.dumps(consoleMessages, cls=DateEncoder))
+                request.websocket.close()
+
+
+# 刷新预发发布记录
+@login_required
+@accept_websocket
+def ws_uatConsoleOptRefresh(request):
+    if request.is_websocket():
+        for combination in request.websocket:
+            if combination:
+                projectId = str(combination, encoding="utf-8").split('-')[0]
+                planId = str(combination, encoding="utf-8").split('-')[1]
+                project_obj = models.project.objects.get(id=projectId)
+                plan_obj = models.plan.objects.get(id=planId)
+                consoleOpts = models.consoleOpt.objects.filter(plan=plan_obj, project=project_obj, type=0).order_by(
+                    'deployTime')
+                consoleMessages = []
+                for i in range(len(consoleOpts)):
+                    consoleMessages.append("console")
+                    consoleMessages.append(consoleOpts[i].deployTime)
+                    consoleMessages.append(consoleOpts[i].deployUser.name)
+                    consoleMessages.append(consoleOpts[i].uniteKey)
+                    request.websocket.send(json.dumps(consoleMessages, cls=DateEncoder))
+                request.websocket.close()

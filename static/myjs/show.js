@@ -755,10 +755,9 @@ layui.use(['element', 'layer'], function () {
         })
     });
 });
-//预发构建执行
+//预发部署
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
-    var timer;
     $("body").on("click", ".uatBuild", uatBuild);
 
     function uatBuild() {
@@ -827,8 +826,8 @@ layui.use(['element', 'layer'], function () {
                             html += "<pre>" + received_msg[i + 1] + "</pre>";
                             html += "<a href='http://127.0.0.1:8000/single_console_opt/"
                                 + received_msg[i + 2] + "' target='_blank'>查看控制台信息</a>";
-                        } else if (received_msg[i] === 'deploy'){
-                             html += "<pre>" + received_msg[i + 1] + "</pre>";
+                        } else if (received_msg[i] === 'deploy') {
+                            html += "<pre>" + received_msg[i + 1] + "</pre>";
                         }
                     }
                 }
@@ -1083,6 +1082,113 @@ layui.use(['element', 'layer'], function () {
                         $('#codeMergeText').text("合并完成");
                     }
                 }
+            };
+
+            ws.onclose = function () {
+                // 关闭 websocket
+                console.log("连接已关闭...");
+            };
+        }
+
+        else {
+            // 浏览器不支持 WebSocket
+            console.alert("您的浏览器不支持 WebSocket!");
+        }
+    }
+});
+//生产发布历史刷新
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery;
+    $("body").on("click", "#proConsoleOptRefresh", proConsoleOptRefresh);
+
+    function proConsoleOptRefresh() {
+        var taskId = getQueryVariable("tid");
+        if ("WebSocket" in window) {
+            console.log("您的浏览器支持 WebSocket!");
+
+            // 打开一个 web socket
+            var ws = new WebSocket("ws:" + window.location.host + "/ws_proConsoleOptRefresh");
+
+            ws.onopen = function () {
+                ws.send(taskId);
+                console.log("数据已发送...");
+            };
+
+            ws.onmessage = function (evt) {
+                var received_msg = JSON.parse(evt.data);
+                var html = "";
+                console.log("数据已接收...");
+                for (var i = 0; i < received_msg.length; i++) {
+                    if (received_msg[i] === 'console') {
+                        html += "<li class=\"layui-timeline-item\">\n" +
+                            "                                                                        <i class=\"layui-icon layui-timeline-axis\">&#xe63f;</i>\n" +
+                            "                                                                        <div class=\"layui-timeline-content layui-text\">\n" +
+                            "                                                                            <h3 class=\"layui-timeline-title\">"
+                        html += received_msg[i + 1];
+                        html += "<h3><p>";
+                        if (received_msg[i + 2] === 0) {
+                            html += "操作：发布";
+                        } else {
+                            html += "操作：回滚";
+                        }
+                        html += "<br>执行人：" + received_msg[i + 3];
+                        html += "<br><a href='/pro_console_opt/" + received_msg[i + 4] + "'>查看控制台信息</a>"
+                        html += "</p></div></li>"
+                    }
+                }
+                $('.proConsoleOptRefresh').html(html);
+            };
+
+            ws.onclose = function () {
+                // 关闭 websocket
+                console.log("连接已关闭...");
+            };
+        }
+
+        else {
+            // 浏览器不支持 WebSocket
+            console.alert("您的浏览器不支持 WebSocket!");
+        }
+    }
+});
+//预发发布历史刷新
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery;
+    $("body").on("click", "#uatConsoleOptRefresh", uatConsoleOptRefresh);
+
+    function uatConsoleOptRefresh() {
+        var projectId = getQueryVariable("prjId");
+        var planId = getQueryVariable("pid");
+        var combination = projectId + '-' + planId;
+        if ("WebSocket" in window) {
+            console.log("您的浏览器支持 WebSocket!");
+
+            // 打开一个 web socket
+            var ws = new WebSocket("ws:" + window.location.host + "/ws_uatConsoleOptRefresh");
+
+            ws.onopen = function () {
+                ws.send(combination);
+                console.log("数据已发送...");
+            };
+
+            ws.onmessage = function (evt) {
+                var received_msg = JSON.parse(evt.data);
+                var html = "";
+                console.log("数据已接收...");
+                for (var i = 0; i < received_msg.length; i++) {
+                    if (received_msg[i] === 'console') {
+                        html += "<li class=\"layui-timeline-item\">\n" +
+                            "                                                                        <i class=\"layui-icon layui-timeline-axis\">&#xe63f;</i>\n" +
+                            "                                                                        <div class=\"layui-timeline-content layui-text\">\n" +
+                            "                                                                            <h3 class=\"layui-timeline-title\">"
+                        html += received_msg[i + 1];
+                        html += "<h3><p>";
+                        html += "<br>执行人：" + received_msg[i + 2];
+                        html += "<br><a href='/pro_console_opt/" + received_msg[i + 3] + "'>查看控制台信息</a>"
+                        html += "</p></div></li>"
+                    }
+                }
+                $('.uatConsoleOptRefresh').html(html);
             };
 
             ws.onclose = function () {

@@ -4,9 +4,21 @@ from django.db import models
 from git import Repo
 import logging
 import subprocess
+import json
+import datetime
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
+
+
+class DateEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(obj, datetime.date):
+            return obj.strftime("%Y-%m-%d")
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 
 class TimeChange:
@@ -122,4 +134,3 @@ class branch:
         hopeBranch = repo.create_head(hopeBranch, 'HEAD')
         origin.push(hopeBranch)
         repo.delete_head(hopeBranch)
-

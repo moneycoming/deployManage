@@ -37,22 +37,15 @@
                             <h4>预发部署</h4>
                         </div>
                         <div class="card-body">
-                            <div class="default-tab">
-                                <nav>
-                                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                                        <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab"
-                                           href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">创建分支</a>
-                                        <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab"
-                                           href="#nav-profile" role="tab" aria-controls="nav-profile"
-                                           aria-selected="false">部署环境</a>
-                                        <a class="nav-item nav-link" id="nav-contact-tab" data-toggle="tab"
-                                           href="#nav-contact" role="tab" aria-controls="nav-contact"
-                                           aria-selected="false">控制台显示</a>
-                                    </div>
-                                </nav>
-                                <div class="tab-content pl-3 pt-2" id="nav-tabContent">
-                                    <div class="tab-pane fade show active" id="nav-home" role="tabpanel"
-                                         aria-labelledby="nav-home-tab">
+{#                            <h5 class="page-header"></h5>#}
+                            <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+                                <ul class="layui-tab-title">
+                                    <li class="layui-this">创建分支</li>
+                                    <li>部署环境</li>
+                                    <li>控制台显示</li>
+                                </ul>
+                                <div class="layui-tab-content">
+                                    <div class="layui-tab-item layui-show">
                                         <div class="alert alert-success" role="alert">
                                             <h4 class="alert-heading">说明</h4>
                                             <hr>
@@ -101,8 +94,7 @@
                                             <p id="uatBranch">无</p>
                                         {% endif %}
                                     </div>
-                                    <div class="tab-pane fade" id="nav-profile" role="tabpanel"
-                                         aria-labelledby="nav-profile-tab">
+                                    <div class="layui-tab-item">
                                         <div class="alert alert-success" role="alert">
                                             <h4 class="alert-heading">说明</h4>
                                             <hr>
@@ -122,20 +114,26 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="tab-pane fade" id="nav-contact" role="tabpanel"
-                                         aria-labelledby="nav-contact-tab">
-                                        {% for consoleOpt in consoleOpts %}
-                                            <li class="layui-timeline-item">
-                                                <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-                                                <div class="layui-timeline-content layui-text">
-                                                    <h3 class="layui-timeline-title">{{ consoleOpt.deployTime }}</h3>
-                                                    <p>
-                                                        <br>执行人：{{ consoleOpt.deployUser.name }}
-                                                        <br><a href="/uat_console_opt/{{ consoleOpt.uniteKey }}">查看控制台信息</a>
-                                                    </p>
-                                                </div>
-                                            </li>
-                                        {% endfor %}
+                                    <div class="layui-tab-item">
+                                        <button type="button" id="uatConsoleOptRefresh"
+                                                class="layui-btn layui-btn-primary" style="float: right">刷新
+                                        </button>
+                                        <h5 class="page-header"></h5>
+                                        <ul class="layui-timeline uatConsoleOptRefresh">
+                                            {% for consoleOpt in consoleOpts %}
+                                                <li class="layui-timeline-item">
+                                                    <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                                                    <div class="layui-timeline-content layui-text">
+                                                        <h3 class="layui-timeline-title">{{ consoleOpt.deployTime }}</h3>
+                                                        <p>
+                                                            <br>执行人：{{ consoleOpt.deployUser.name }}
+                                                            <br><a
+                                                                href="/uat_console_opt/{{ consoleOpt.uniteKey }}">查看控制台信息</a>
+                                                        </p>
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
                                     </div>
                                 </div>
                             </div>

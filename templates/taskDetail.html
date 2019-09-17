@@ -187,6 +187,12 @@
                                         {% else %}
                                             <div id="step1" class="tab-pane active">
                                                 <h5 class="page-header"></h5>
+                                                <div class="alert alert-success" role="alert">
+                                                    <h4 class="alert-heading">说明</h4>
+                                                    <hr>
+                                                    <p>1-在文本框中填写操作的相关备注</p>
+                                                    <p>2-完成后点击“执行”，进入下一环节</p>
+                                                </div>
                                                 {% if sequence.implemented == 0 %}
                                                     <p id="p1" class="fade"></p>
                                                     <textarea class="form-control" name="desc" id="remark"
@@ -297,13 +303,12 @@
                                                             </div>
                                                         </div>
                                                         <div class="layui-tab-item">
-                                                            <ul class="layui-timeline">
-                                                                <button type="button"
-                                                                        class="layui-btn layui-btn-primary"
-                                                                        style="float: right"
-                                                                        onclick="window.location.reload()">刷新
-                                                                </button>
-                                                                <h5 class="page-header"></h5>
+                                                            <button type="button" id="proConsoleOptRefresh"
+                                                                    class="layui-btn layui-btn-primary"
+                                                                    style="float: right">刷新
+                                                            </button>
+                                                            <h5 class="page-header"></h5>
+                                                            <ul class="layui-timeline proConsoleOptRefresh">
                                                                 {% for consoleOpt in consoleOpts %}
                                                                     <li class="layui-timeline-item">
                                                                         <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
@@ -335,6 +340,12 @@
                                         {% else %}
                                             <div id="step{{ sequence.priority }}" class="tab-pane fade">
                                                 <h5 class="page-header"></h5>
+                                                <div class="alert alert-success" role="alert">
+                                                    <h4 class="alert-heading">说明</h4>
+                                                    <hr>
+                                                    <p>1-在文本框中填写操作的相关备注</p>
+                                                    <p>2-完成后点击“执行”，进入下一环节</p>
+                                                </div>
                                                 {% if sequence.implemented == 0 %}
                                                     <p id="p1" class="fade"></p>
                                                     <textarea class="form-control" name="desc" id="remark"
