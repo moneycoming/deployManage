@@ -49,12 +49,6 @@
                             <pre><br>{{ plan_obj.description }}</pre>
                             </p>
                             <h5 class="page-header"></h5>
-{#                            <h3>项目列表</h3>#}
-{#                            {% for project_plan in project_plans %}#}
-{#                                 <p><br><a href="/uatDeploy?tid={{ task.id }}">项目编号：{{ project_plan.project.id }} --#}
-{#                                    项目名：{{ project_plan.project.name }}</a></p>#}
-{#                            {% endfor %}#}
-{#                            <h5 class="page-header"></h5>#}
                             <h3>关联任务</h3>
                             {% for task in tasks %}
                                 <p><br><a href="/taskDetail?tid={{ task.id }}">编号：{{ task.id }} --

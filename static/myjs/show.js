@@ -794,6 +794,7 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
+                    $('#uatConsoleOpt').hide();
                 } else if (received_msg[0] === 'no_branch') {
                     layer.open({
                         type: 1
