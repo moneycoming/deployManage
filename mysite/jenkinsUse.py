@@ -5,7 +5,7 @@ import time
 import logging
 import os
 import subprocess
-
+import re
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -59,9 +59,13 @@ class projectBean:
         branches = branch_str.split('\n')
         branch_list = []
         for branch in branches[1: -1]:
-            branch_list.append(branch.lstrip('* origin').lstrip('/'))
-            if 'master' in branch_list:
-                branch_list.remove('master')
+            match = re.match(r"uat", branch.lstrip('* origin').lstrip('/'))
+            if not match:
+                branch_list.append(branch.lstrip('* origin').lstrip('/'))
+
+        if 'master' in branch_list:
+            branch_list.remove('master')
+
         return branch_list
 
     def countDeploySum(self, flag, order):

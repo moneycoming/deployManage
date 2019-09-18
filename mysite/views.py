@@ -26,7 +26,7 @@ from django.contrib.auth.models import User
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
 
-# 定时获取uat_build_number
+# 定时获取dev_branch
 scheduler = BackgroundScheduler()
 scheduler.add_jobstore(DjangoJobStore(), "default")
 try:
@@ -128,38 +128,41 @@ def showPlan(request):
 def createPlan(request):
     productions = models.production.objects.all()
     kinds = models.kind.objects.all()
-    members = models.member.objects.all()
     projects = models.project.objects.all()
     if request.method == 'POST':
-        title = request.POST.get('title')
-        desc = request.POST.get('desc')
         production = request.POST.get('production')
-        kind = request.POST.get('kind')
-        memberList = request.POST.getlist('member')
-        projectList = request.POST.getlist('project')
-        devBranchList = request.POST.getlist('devBranch')
-        createDate = datetime.datetime.now()
-        createUser = request.user
         member_obj = models.member.objects.get(user=request.user)
-        productionObj = models.production.objects.get(name=production)
-        kindObj = models.kind.objects.get(name=kind)
+        production_obj = models.production.objects.get(name=production)
+        production_members = models.production_member.objects.filter(production=production_obj)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+        if isMember and member_obj.user.has_perm('can_deploy_project'):
+            title = request.POST.get('title')
+            desc = request.POST.get('desc')
+            kind = request.POST.get('kind')
+            projectList = request.POST.getlist('project')
+            devBranchList = request.POST.getlist('devBranch')
+            createDate = datetime.datetime.now()
+            kind_obj = models.kind.objects.get(name=kind)
+            plan_obj = models.plan(name=title, description=desc, kind=kind_obj, production=production_obj,
+                                   createUser=member_obj, createDate=createDate)
+            plan_obj.save()
 
-        plan_obj = models.plan(name=title, description=desc, kind=kindObj, production=productionObj,
-                               createUser=member_obj, createDate=createDate)
-        plan_obj.save()
+            for j in range(len(projectList)):
+                project_obj = models.project.objects.get(name=projectList[j])
+                dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
+                project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=dev_branch_obj,
+                                                       order=j)
+                project_plan_obj.save()
+                project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)
+                for i in range(len(project_servers)):
+                    deployDetail_obj = models.deployDetail(project_plan=project_plan_obj,
+                                                           server=project_servers[i].server)
+                    deployDetail_obj.save()
 
-        for j in range(len(projectList)):
-            project_obj = models.project.objects.get(name=projectList[j])
-            dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
-            project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=dev_branch_obj,
-                                                   order=j)
-            project_plan_obj.save()
-            project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)
-            for i in range(len(project_servers)):
-                deployDetail_obj = models.deployDetail(project_plan=project_plan_obj, server=project_servers[i].server)
-                deployDetail_obj.save()
-
-        return HttpResponseRedirect('/showPlan')
+            return HttpResponseRedirect('/showPlan')
 
     template = get_template('createPlan.html')
     html = template.render(context=locals(), request=request)
@@ -319,11 +322,11 @@ def taskDetail(request):
         sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
         lastNum = len(sequences) + 1
         consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
-        show = False
+        uncompleted = False
         mergeStatus = True
         for i in range(len(project_plans)):
             if project_plans[i].buildStatus != 1:
-                show = True
+                uncompleted = True
                 break
 
         for j in range(len(project_plans)):
@@ -389,6 +392,10 @@ def ajax_checkSuccess(request):
             task_obj.checked = 1
             task_obj.remark = remark
             task_obj.save()
+            project_plans = models.project_plan.objects.filter(plan=task_obj.plan)
+            for i in range(len(project_plans)):
+                project_plans[i].exclusiveKey = 0
+                project_plans[i].save()
             res = "发布任务%s验证通过，请合并代码！" % task_obj.name
             send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
 
@@ -698,7 +705,7 @@ def ws_restartDeploy(request):
                                     break
                     if len(cursor) == 0:
                         sequence_obj.implemented = True
-                        sequence_obj.executor = member_obj.name
+                        sequence_obj.executor = member_obj
                         sequence_obj.executeDate = datetime.datetime.now()
                         sequence_obj.remarks = "已部署"
                         sequence_obj.save()
@@ -878,7 +885,6 @@ def ws_rollbackOne(request):
                             params = {}
                             params.update(param)
                             relVersion = consoleOpt_obj.packageId
-                            print(relVersion)
                             server_obj = deployDetails[i].server
                             uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                             params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
@@ -920,12 +926,12 @@ def ws_rollbackOne(request):
                                 consoleOpt_obj.save()
                                 deployDetails[i].buildStatus = 1
                                 deployDetails[i].save()
-                        if len(cursor) == 0:
-                            res = "任务：%s，部署完成！" % task_obj.name
-                            buildMessages.append(res)
-                            buildMessages.append('deploy_success')
-                            request.websocket.send(json.dumps(buildMessages))
-                            request.websocket.close()
+                        # if len(cursor) == 0:
+                        res = "任务：%s，回滚结束！" % task_obj.name
+                        buildMessages.append(res)
+                        buildMessages.append('deploy_success')
+                        request.websocket.send(json.dumps(buildMessages))
+                        request.websocket.close()
                     except IndexError:
                         logger.info("项目：%s，已是最初版本，无法回滚！" % project_obj.name)
                         res = "项目：%s，已是最初版本，无法回滚！" % project_obj.name
@@ -1060,57 +1066,73 @@ def ws_uatDeploy(request):
             for m in range(len(production_members)):
                 if member_obj == production_members[m].member:
                     isMember = True
-            if isMember and member_obj.user.has_perm("can_deploy_project"):
-                if project_plan_obj.uatBranch:
-                    param = eval(jenkinsUat_obj.param)
-                    for i in range(len(project_servers)):
-                        params = {}
-                        params.update(param)
-                        server_obj = project_servers[i].server
-                        if server_obj.type == 0:
-                            uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
-                            params.update(SERVER_IP=server_obj.ip, BRANCH=project_plan_obj.uatBranch)
-                            logger.info("param：%s" % params)
-                            pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, params)
-                            logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
-                            buildMessage.append("deploy")
-                            buildMessage.append("分支%s执行部署" % project_plan_obj.uatBranch)
-                            request.websocket.send(json.dumps(buildMessage))
-                            info = pythonJenkins_obj.deploy()
-                            if info:
-                                consoleOpt = info['consoleOpt']
-                                buildId = info['buildId']
-                                isSuccess = consoleOpt.find("Finished: SUCCESS")
-                                if isSuccess != -1:
-                                    result = True
-                                    project_plan_obj.lastPackageId = buildId
-                                    project_plan_obj.save()
-                                    res = "分支%s部署成功" % project_plan_obj.uatBranch
-                                    logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
-                                    buildMessage.append("success")
-                                    buildMessage.append(res)
-                                    buildMessage.append(uniqueKey)
-                                    request.websocket.send(json.dumps(buildMessage))
-                                    request.websocket.close()
-                                else:
-                                    result = False
-                                    res = "分支%s部署失败" % project_plan_obj.uatBranch
-                                    logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
-                                    buildMessage.append("fail")
-                                    buildMessage.append(res)
-                                    buildMessage.append(uniqueKey)
-                                    request.websocket.send(json.dumps(buildMessage))
-                                    request.websocket.close()
-                                consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj,
-                                                                   content=consoleOpt, packageId=buildId, result=result,
-                                                                   deployTime=deployTime, deployUser=member_obj,
-                                                                   uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                consoleOpt_obj.save()
-
+            if isMember and member_obj.user.has_perm("can_check_project"):
+                # uatExclusiveManages = models.uatExclusiveManage.objects.filter(project=project_obj)
+                project_plans = models.project_plan.objects.filter(project=project_obj)
+                exclusivePlan = []
+                for k in range(len(project_plans)):
+                    if project_plans[k].exclusiveKey == 1:
+                        exclusivePlan.append(project_plans[k].plan.name)
+                        break
+                if project_plan_obj.exclusiveKey == 1 or len(exclusivePlan) == 0:
+                    if project_plan_obj.uatBranch:
+                        for i in range(len(project_servers)):
+                            params = {}
+                            param = eval(jenkinsUat_obj.param)
+                            params.update(param)
+                            server_obj = project_servers[i].server
+                            if server_obj.type == 0:
+                                project_plan_obj.exclusiveKey = 1
+                                project_plan_obj.save()
+                                uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
+                                params.update(SERVER_IP=server_obj.ip, BRANCH=project_plan_obj.uatBranch)
+                                logger.info("param：%s" % params)
+                                pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, params)
+                                logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
+                                buildMessage.append("deploy")
+                                buildMessage.append("分支%s执行部署" % project_plan_obj.uatBranch)
+                                request.websocket.send(json.dumps(buildMessage))
+                                info = pythonJenkins_obj.deploy()
+                                if info:
+                                    consoleOpt = info['consoleOpt']
+                                    buildId = info['buildId']
+                                    isSuccess = consoleOpt.find("Finished: SUCCESS")
+                                    if isSuccess != -1:
+                                        result = True
+                                        project_plan_obj.lastPackageId = buildId
+                                        project_plan_obj.save()
+                                        res = "分支%s部署成功" % project_plan_obj.uatBranch
+                                        logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
+                                        buildMessage.append("success")
+                                        buildMessage.append(res)
+                                        buildMessage.append(uniqueKey)
+                                        request.websocket.send(json.dumps(buildMessage))
+                                        request.websocket.close()
+                                    else:
+                                        result = False
+                                        res = "分支%s部署失败" % project_plan_obj.uatBranch
+                                        logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
+                                        buildMessage.append("fail")
+                                        buildMessage.append(res)
+                                        buildMessage.append(uniqueKey)
+                                        request.websocket.send(json.dumps(buildMessage))
+                                        request.websocket.close()
+                                    consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj,
+                                                                       content=consoleOpt, packageId=buildId, result=result,
+                                                                       deployTime=deployTime, deployUser=member_obj,
+                                                                       uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                    consoleOpt_obj.save()
+                    else:
+                        logger.info("没有预发分支，请先创建！")
+                        res = "没有预发分支，请先创建！"
+                        buildMessage.append("no_branch")
+                        buildMessage.append(res)
+                        request.websocket.send(json.dumps(buildMessage))
+                        request.websocket.close()
                 else:
-                    logger.info("没有预发分支，请先创建！")
-                    res = "没有预发分支，请先创建！"
-                    buildMessage.append("no_branch")
+                    res = "该项目已经被发布计划%s占用，无法部署" % exclusivePlan[0]
+                    logger.info(res)
+                    buildMessage.append("exclusive")
                     buildMessage.append(res)
                     request.websocket.send(json.dumps(buildMessage))
                     request.websocket.close()

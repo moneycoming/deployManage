@@ -100,11 +100,11 @@ class project_server_admin(object):
 
 class project_plan_admin(object):
     list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus',
-                    'mergeStatus']
+                    'mergeStatus', 'exclusiveKey']
     search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus',
-                     'mergeStatus']
+                     'mergeStatus', 'exclusiveKey']
     list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus',
-                   'mergeStatus']
+                   'mergeStatus', 'exclusiveKey']
 
 
 class segment_admin(object):

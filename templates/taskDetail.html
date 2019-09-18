@@ -274,23 +274,14 @@
                                                                          aria-valuemax="100">
                                                                     </div>
                                                                 </div>
-                                                                {% if show %}
+                                                                {% if uncompleted %}
                                                                     <button class="layui-btn layui-btn-primary startDeploy"
                                                                             data-type="loading">立即执行
                                                                     </button>
+                                                                    <div class="btn-toolbar" id="proDeployBarList" role="toolbar"></div>
+                                                                {% else %}
+                                                                    <p>所有项目发布完成</p>
                                                                 {% endif %}
-                                                                <button class="layui-btn layui-btn-primary restartDeploy fade"
-                                                                        data-type="loading">重新发布
-                                                                </button>
-                                                                <button class="layui-btn layui-btn-primary continueDeploy fade"
-                                                                        data-type="loading">跳过继续下一个发布
-                                                                </button>
-                                                                <button class="layui-btn layui-btn-primary rollbackOne fade"
-                                                                        data-type="loading">回滚当前项目
-                                                                </button>
-                                                                <button class="layui-btn layui-btn-primary rollbackAll fade"
-                                                                        data-type="loading">回滚所有项目
-                                                                </button>
                                                                 <h5 class="page-header"></h5>
                                                                 <div class="layui-col-md12">
                                                                     <div class="layui-card">

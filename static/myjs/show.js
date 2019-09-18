@@ -24,48 +24,6 @@ function getQueryVariable(variable) {
     return (false);
 }
 
-// 实时显示预发/生产控制台信息
-function getBuildResult(arg) {
-    $.ajax({
-        url: '/getBuildResult',
-        type: 'GET',
-        data: arg,
-
-        success: function (data) {
-            html = "";
-            console.log(data[0]);
-            if (data.length > 1) {
-                for (var i = 1; i < data.length; i++) {
-                    html += "<div class=\"layui-colla-item\">\n" +
-                        "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
-                        "                                        <div class=\"layui-colla-content layui-show\">\n" +
-                        "                                            <p><pre>" + data[i] + "</pre></p>\n" +
-                        "                                        </div>\n" +
-                        "                                    </div>"
-                }
-
-            }
-            else {
-                html += "<div class=\"layui-colla-item\">\n" +
-                    "                                        <h2 class=\"layui-colla-title\">项目详情</h2>\n" +
-                    "                                        <div class=\"layui-colla-content layui-show\">\n" +
-                    "                                            <p><pre>项目正在构建中，请等待。。。</pre></p>\n" +
-                    "                                        </div>\n" +
-                    "                                    </div>"
-            }
-            if (data[0] === 'uat') {
-                $(`.uatBuildResult`).html(html);
-            } else {
-                $(`.proBuildResult`).html(html);
-            }
-
-        },
-        error: function () {
-            console.log('error');
-        }
-    })
-}
-
 //任务执行
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
@@ -77,7 +35,7 @@ layui.use(['element', 'layer'], function () {
         $('#proDeployText').text("发布进行中，请等待...");
         $('.proDeployProgress').removeClass('fade');
         $('#proBuildProgress').width(5 + '%').text('5%');
-        $('.startDeploy').addClass('fade');
+        $('.startDeploy').hide();
         $('#proConsoleOpt').removeClass('fade');
         if ("WebSocket" in window) {
             console.log("您的浏览器支持 WebSocket!");
@@ -108,11 +66,12 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
-                    $('#proDeployText').addClass('fade');
-                    $('.proDeployProgress').addClass('fade');
-                    $('#proConsoleOpt').addClass('fade');
+                    $('#proDeployText').hide();
+                    $('.proDeployProgress').hide();
+                    $('#proConsoleOpt').hide();
                 } else {
                     var html = "";
+                    var html2 = "";
                     var sumPoints = received_msg[0];
                     var realPoints = 0;
                     for (var i = 1; i < received_msg.length; i++) {
@@ -124,10 +83,6 @@ layui.use(['element', 'layer'], function () {
                             html += "<a href='http://127.0.0.1:8000/single_console_opt/"
                                 + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                         } else if (received_msg[i] === 'deploy_failed') {
-                            $('.restartDeploy').removeClass('fade');
-                            $('.continueDeploy').removeClass('fade');
-                            $('.rollbackOne').removeClass('fade');
-                            $('.rollbackAll').removeClass('fade');
                             layer.open({
                                 type: 1
                                 , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
@@ -142,6 +97,20 @@ layui.use(['element', 'layer'], function () {
                                     layer.closeAll();
                                 }
                             });
+                            html2 = "<div class=\"btn-group\">\n" +
+                                "    <button type=\"button\"\n" +
+                                "        class=\"layui-btn layui-btn-primary restartDeploy\">重新发布\n" +
+                                "    </button>\n" +
+                                "    <button type=\"button\"\n" +
+                                "        class=\"layui-btn layui-btn-primary continueDeploy\">跳过继续下一个发布\n" +
+                                "    </button>\n" +
+                                "    <button type=\"button\"\n" +
+                                "        class=\"layui-btn layui-btn-primary rollbackOne\">回滚当前项目\n" +
+                                "    </button>\n" +
+                                "     <button type=\"button\"\n" +
+                                "        class=\"layui-btn layui-btn-primary rollbackAll\">回滚所有项目\n" +
+                                "    </button>\n" +
+                                "</div>";
                         } else if (received_msg[i] === 'no_reversion') {
                             layer.open({
                                 type: 1
@@ -178,6 +147,7 @@ layui.use(['element', 'layer'], function () {
                         }
                     }
                     $(`.proBuildResult`).html(html);
+                    $('#proDeployBarList').html(html2);
                     if (realPoints === sumPoints) {
                         $('#proDeployText').text("发布完成");
                     }
@@ -207,9 +177,12 @@ layui.use(['element', 'layer'], function () {
         $('#proDeployText').text("发布进行中，请等待...");
         $('.proDeployProgress').removeClass('fade');
         $('#proBuildProgress').width('5%').text('5%');
-        $('.restartDeploy').addClass('fade');
-        $('.continueDeploy').addClass('fade');
         $('#proConsoleOpt').removeClass('fade');
+        $('.restartDeploy').hide();
+        $('.continueDeploy').hide();
+        $('.rollbackOne').hide();
+        $('.rollbackAll').hide();
+
         if ("WebSocket" in window) {
             console.log("您的浏览器支持 WebSocket!");
 
@@ -255,8 +228,10 @@ layui.use(['element', 'layer'], function () {
                             html += "<a href='http://127.0.0.1:8000/single_console_opt/"
                                 + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                         } else if (received_msg[i] === 'deploy_failed') {
-                            $('.restartDeploy').removeClass('fade');
-                            $('.continueDeploy').removeClass('fade');
+                            $('.restartDeploy').show();
+                            $('.continueDeploy').show();
+                            $('.rollbackOne').show();
+                            $('.rollbackAll').show();
                             layer.open({
                                 type: 1
                                 , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
@@ -336,9 +311,12 @@ layui.use(['element', 'layer'], function () {
         $('#proDeployText').text("发布进行中，请等待...");
         $('.proDeployProgress').removeClass('fade');
         $('#proBuildProgress').width('5%').text('5%');
-        $('.restartDeploy').addClass('fade');
-        $('.continueDeploy').addClass('fade');
         $('#proConsoleOpt').removeClass('fade');
+        $('.restartDeploy').hide();
+        $('.continueDeploy').hide();
+        $('.rollbackOne').hide();
+        $('.rollbackAll').hide();
+
         if ("WebSocket" in window) {
             console.log("您的浏览器支持 WebSocket!");
 
@@ -386,11 +364,9 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
-                    $('#proDeployText').addClass('fade');
-                    $('.proDeployProgress').addClass('fade');
-                    $('#proConsoleOpt').addClass('fade');
-                    $('.proBuildResult').addClass('fade');
-                    $('.restartDeploy').removeClass('fade');
+                    $('.restartDeploy').show();
+                    $('.rollbackOne').show();
+                    $('.rollbackAll').show();
                 }
                 else {
                     var html = "";
@@ -405,8 +381,6 @@ layui.use(['element', 'layer'], function () {
                             html += "<a href='http://127.0.0.1:8000/single_console_opt/"
                                 + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                         } else if (received_msg[i] === 'deploy_failed') {
-                            $('.restartDeploy').removeClass('fade');
-                            $('.continueDeploy').removeClass('fade');
                             layer.open({
                                 type: 1
                                 , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
@@ -421,6 +395,10 @@ layui.use(['element', 'layer'], function () {
                                     layer.closeAll();
                                 }
                             });
+                            $('.restartDeploy').show();
+                            $('.continueDeploy').show();
+                            $('.rollbackOne').show();
+                            $('.rollbackAll').show();
                         } else if (received_msg[i] === 'no_reversion') {
                             layer.open({
                                 type: 1
@@ -486,11 +464,12 @@ layui.use(['element', 'layer'], function () {
         $('#proDeployText').text("回滚进行中，请等待...");
         $('.proDeployProgress').removeClass('fade');
         $('#proBuildProgress').width(5 + '%').text('5%');
-        $('.restartDeploy').addClass('fade');
-        $('.continueDeploy').addClass('fade');
-        $('.rollbackOne').addClass('fade');
-        $('.rollbackAll').addClass('fade');
         $('#proConsoleOpt').removeClass('fade');
+        $('.restartDeploy').hide();
+        $('.continueDeploy').hide();
+        $('.rollbackOne').hide();
+        $('.rollbackAll').hide();
+
         if ("WebSocket" in window) {
             console.log("您的浏览器支持 WebSocket!");
 
@@ -552,17 +531,17 @@ layui.use(['element', 'layer'], function () {
                             });
                             $('#proDeployText').addClass('fade');
                             $('.proDeployProgress').addClass('fade');
-                            $('.restartDeploy').removeClass('fade');
-                            $('.continueDeploy').removeClass('fade');
-                            $('.rollbackOne').removeClass('fade');
-                            $('.rollbackAll').removeClass('fade');
+                            $('.restartDeploy').show();
+                            $('.continueDeploy').show();
+                            $('.rollbackOne').show();
+                            $('.rollbackAll').show();
                         } else if (received_msg[i] === 'deploy_success') {
                             layer.open({
                                 type: 1
                                 , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
                                 , title: '发布结果'
                                 , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "发布完成！" + '</div>'
+                                , content: '<div style="padding: 20px 100px;">' + "回滚结束！" + '</div>'
                                 , btn: '关闭'
                                 , btnAlign: 'c' //按钮居中
                                 , area: '500px;'
@@ -606,11 +585,12 @@ layui.use(['element', 'layer'], function () {
         $('#proDeployText').text("回滚进行中，请等待...");
         $('.proDeployProgress').removeClass('fade');
         $('#proBuildProgress').width(5 + '%').text('5%');
-        $('.restartDeploy').addClass('fade');
-        $('.continueDeploy').addClass('fade');
-        $('.rollbackOne').addClass('fade');
-        $('.rollbackAll').addClass('fade');
         $('#proConsoleOpt').removeClass('fade');
+        $('.restartDeploy').hide();
+        $('.continueDeploy').hide();
+        $('.rollbackOne').hide();
+        $('.rollbackAll').hide();
+
         if ("WebSocket" in window) {
             console.log("您的浏览器支持 WebSocket!");
 
@@ -666,7 +646,7 @@ layui.use(['element', 'layer'], function () {
                                 , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
                                 , title: '发布结果'
                                 , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "所有节点都已回滚！" + '</div>'
+                                , content: '<div style="padding: 20px 100px;">' + "回滚结束！" + '</div>'
                                 , btn: '关闭'
                                 , btnAlign: 'c' //按钮居中
                                 , area: '500px;'
@@ -675,8 +655,7 @@ layui.use(['element', 'layer'], function () {
                                     layer.closeAll();
                                 }
                             });
-                            $('.restartDeploy').removeClass('fade');
-                            $('.continueDeploy').removeClass('fade');
+                            $('.startDeploy').show();
                         }
                         else {
                             html += "<pre>" + received_msg[i] + "</pre>"
@@ -791,7 +770,22 @@ layui.use(['element', 'layer'], function () {
                         , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
                         , title: '发布结果'
                         , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "你没有合并分支的权限！" + '</div>'
+                        , content: '<div style="padding: 20px 100px;">' + "你没有部署预发的权限！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                } else if (received_msg[0] === 'exclusive'){
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布结果'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + received_msg[1] + '</div>'
                         , btn: '关闭'
                         , btnAlign: 'c' //按钮居中
                         , area: '500px;'

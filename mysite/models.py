@@ -107,13 +107,13 @@ class plan(models.Model):
         return self.name
 
 
-# 分支表
+# 开发分支表
 class devBranch(models.Model):
     name = models.CharField(max_length=100, verbose_name="分支名称")
     project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="所属项目")
 
     class Meta:
-        verbose_name = u'预发分支管理'
+        verbose_name = u'开发分支管理'
         verbose_name_plural = verbose_name
 
     def __str__(self):
@@ -188,6 +188,7 @@ class project_plan(models.Model):
     cursor = models.BooleanField(default=False, verbose_name="发布游标")
     buildStatus = models.IntegerField(default=0, verbose_name="0：未发布，1；发布成功，2：发布失败")
     mergeStatus = models.IntegerField(default=0, verbose_name="0：未合并，1；合并完成，2：合并冲突")
+    exclusiveKey = models.IntegerField(default=0, verbose_name="项目预发环境使用情况，0：未占用， 1：已占用")
 
     class Meta:
         verbose_name = u'发布计划和项目管理'
@@ -221,7 +222,8 @@ class task(models.Model):
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(member, on_delete=models.CASCADE, verbose_name="由谁创建", related_name='taskCreateUser')
-    checkUser = models.ForeignKey(member, on_delete=models.CASCADE, null=True, verbose_name="由谁验证", related_name='checkUser')
+    checkUser = models.ForeignKey(member, on_delete=models.CASCADE, null=True, verbose_name="由谁验证",
+                                  related_name='checkUser')
     checkDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="验证日期")
     onOff = models.IntegerField(verbose_name="关闭/重启")
     checked = models.IntegerField(default=0, verbose_name="0：未验证，1：通过，2：不通过")
