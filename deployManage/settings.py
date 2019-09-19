@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'mysite',
+    'zentao',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
