@@ -31,139 +31,151 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".startDeploy", startDeploy);
 
     function startDeploy() {
-        var taskId = getQueryVariable("tid");
-        $('#proDeployText').text("发布进行中，请等待...");
-        $('.proDeployProgress').removeClass('fade');
-        $('#proBuildProgress').width(5 + '%').text('5%');
-        $('.startDeploy').hide();
-        $('#proConsoleOpt').removeClass('fade');
-        if ("WebSocket" in window) {
-            console.log("您的浏览器支持 WebSocket!");
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
 
-            // 打开一个 web socket
-            var ws = new WebSocket("ws:" + window.location.host + "/ws_startDeploy");
+        function ok() {
+            var taskId = getQueryVariable("tid");
+            $('#proDeployText').text("发布进行中，请等待...");
+            $('.proDeployProgress').removeClass('fade');
+            $('#proBuildProgress').width(5 + '%').text('5%');
+            $('.startDeploy').hide();
+            $('#proConsoleOpt').removeClass('fade');
+            if ("WebSocket" in window) {
+                console.log("您的浏览器支持 WebSocket!");
 
-            ws.onopen = function () {
-                ws.send(taskId);
-                console.log("数据已发送...");
-            };
+                // 打开一个 web socket
+                var ws = new WebSocket("ws:" + window.location.host + "/ws_startDeploy");
 
-            ws.onmessage = function (evt) {
-                var received_msg = JSON.parse(evt.data);
-                console.log("数据已接收...");
-                if (received_msg[0] === 'no_role') {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布结果'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
+                ws.onopen = function () {
+                    ws.send(taskId);
+                    console.log("数据已发送...");
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = JSON.parse(evt.data);
+                    console.log("数据已接收...");
+                    if (received_msg[0] === 'no_role') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('#proDeployText').hide();
+                        $('.proDeployProgress').hide();
+                        $('#proConsoleOpt').hide();
+                    } else {
+                        var html = "";
+                        var html2 = "";
+                        var sumPoints = received_msg[0];
+                        var realPoints = 0;
+                        for (var i = 1; i < received_msg.length; i++) {
+                            if (received_msg[i].length === 10) {
+                                realPoints++;
+                                $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                var widthTemp = (realPoints / sumPoints) * 100;
+                                $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
+                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                    + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
+                            } else if (received_msg[i] === 'deploy_failed') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "发布失败！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                                html2 = "<div class=\"btn-group\">\n" +
+                                    "    <button type=\"button\"\n" +
+                                    "        class=\"layui-btn layui-btn-primary restartDeploy\">重新发布\n" +
+                                    "    </button>\n" +
+                                    "    <button type=\"button\"\n" +
+                                    "        class=\"layui-btn layui-btn-primary continueDeploy\">跳过继续下一个发布\n" +
+                                    "    </button>\n" +
+                                    "    <button type=\"button\"\n" +
+                                    "        class=\"layui-btn layui-btn-primary rollbackOne\">回滚当前项目\n" +
+                                    "    </button>\n" +
+                                    "     <button type=\"button\"\n" +
+                                    "        class=\"layui-btn layui-btn-primary rollbackAll\">回滚所有项目\n" +
+                                    "    </button>\n" +
+                                    "</div>";
+                            } else if (received_msg[i] === 'no_reversion') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "项目没有发布版本！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                            } else if (received_msg[i] === 'deploy_success') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "发布完成！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
+                            else {
+                                html += "<pre>" + received_msg[i] + "</pre>"
+                            }
                         }
-                    });
-                    $('#proDeployText').hide();
-                    $('.proDeployProgress').hide();
-                    $('#proConsoleOpt').hide();
-                } else {
-                    var html = "";
-                    var html2 = "";
-                    var sumPoints = received_msg[0];
-                    var realPoints = 0;
-                    for (var i = 1; i < received_msg.length; i++) {
-                        if (received_msg[i].length === 10) {
-                            realPoints++;
-                            $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                            var widthTemp = (realPoints / sumPoints) * 100;
-                            $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
-                                + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
-                        } else if (received_msg[i] === 'deploy_failed') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "发布失败！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                            html2 = "<div class=\"btn-group\">\n" +
-                                "    <button type=\"button\"\n" +
-                                "        class=\"layui-btn layui-btn-primary restartDeploy\">重新发布\n" +
-                                "    </button>\n" +
-                                "    <button type=\"button\"\n" +
-                                "        class=\"layui-btn layui-btn-primary continueDeploy\">跳过继续下一个发布\n" +
-                                "    </button>\n" +
-                                "    <button type=\"button\"\n" +
-                                "        class=\"layui-btn layui-btn-primary rollbackOne\">回滚当前项目\n" +
-                                "    </button>\n" +
-                                "     <button type=\"button\"\n" +
-                                "        class=\"layui-btn layui-btn-primary rollbackAll\">回滚所有项目\n" +
-                                "    </button>\n" +
-                                "</div>";
-                        } else if (received_msg[i] === 'no_reversion') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "项目没有发布版本！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                        } else if (received_msg[i] === 'deploy_success') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "发布完成！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                        }
-                        else {
-                            html += "<pre>" + received_msg[i] + "</pre>"
+                        $(`.proBuildResult`).html(html);
+                        $('#proDeployBarList').html(html2);
+                        if (realPoints === sumPoints) {
+                            $('#proDeployText').text("发布完成");
                         }
                     }
-                    $(`.proBuildResult`).html(html);
-                    $('#proDeployBarList').html(html2);
-                    if (realPoints === sumPoints) {
-                        $('#proDeployText').text("发布完成");
-                    }
-                }
-            };
+                };
 
-            ws.onclose = function () {
-                // 关闭 websocket
-                console.log("连接已关闭...");
-            };
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    console.log("连接已关闭...");
+                };
+            }
+
+            else {
+                // 浏览器不支持 WebSocket
+                console.alert("您的浏览器不支持 WebSocket!");
+            }
         }
 
-        else {
-            // 浏览器不支持 WebSocket
-            console.alert("您的浏览器不支持 WebSocket!");
-        }
     }
 });
 //重新发布
@@ -173,131 +185,143 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".restartDeploy", restartDeploy);
 
     function restartDeploy() {
-        var taskId = getQueryVariable("tid");
-        $('#proDeployText').text("发布进行中，请等待...");
-        $('.proDeployProgress').removeClass('fade');
-        $('#proBuildProgress').width('5%').text('5%');
-        $('#proConsoleOpt').removeClass('fade');
-        $('.restartDeploy').hide();
-        $('.continueDeploy').hide();
-        $('.rollbackOne').hide();
-        $('.rollbackAll').hide();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
 
-        if ("WebSocket" in window) {
-            console.log("您的浏览器支持 WebSocket!");
+        function ok() {
+            var taskId = getQueryVariable("tid");
+            $('#proDeployText').text("发布进行中，请等待...");
+            $('.proDeployProgress').removeClass('fade');
+            $('#proBuildProgress').width('5%').text('5%');
+            $('#proConsoleOpt').removeClass('fade');
+            $('.restartDeploy').hide();
+            $('.continueDeploy').hide();
+            $('.rollbackOne').hide();
+            $('.rollbackAll').hide();
 
-            // 打开一个 web socket
-            var ws = new WebSocket("ws:" + window.location.host + "/ws_restartDeploy");
+            if ("WebSocket" in window) {
+                console.log("您的浏览器支持 WebSocket!");
 
-            ws.onopen = function () {
-                ws.send(taskId);
-                console.log("数据已发送...");
-            };
+                // 打开一个 web socket
+                var ws = new WebSocket("ws:" + window.location.host + "/ws_restartDeploy");
 
-            ws.onmessage = function (evt) {
-                var received_msg = JSON.parse(evt.data);
-                console.log("数据已接收...");
-                if (received_msg[0] === 'no_role') {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布结果'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
+                ws.onopen = function () {
+                    ws.send(taskId);
+                    console.log("数据已发送...");
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = JSON.parse(evt.data);
+                    console.log("数据已接收...");
+                    if (received_msg[0] === 'no_role') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('#proDeployText').addClass('fade');
+                        $('.proDeployProgress').addClass('fade');
+                        $('#proConsoleOpt').addClass('fade');
+                    } else {
+                        var html = "";
+                        var sumPoints = received_msg[0];
+                        var realPoints = 0;
+                        for (var i = 1; i < received_msg.length; i++) {
+                            if (received_msg[i].length === 10) {
+                                realPoints++;
+                                $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                var widthTemp = (realPoints / sumPoints) * 100;
+                                $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
+                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                    + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
+                            } else if (received_msg[i] === 'deploy_failed') {
+                                $('.restartDeploy').show();
+                                $('.continueDeploy').show();
+                                $('.rollbackOne').show();
+                                $('.rollbackAll').show();
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "发布失败！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                            } else if (received_msg[i] === 'no_reversion') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "项目没有发布版本！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                            } else if (received_msg[i] === 'deploy_success') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "发布完成！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
+                            else {
+                                html += "<pre>" + received_msg[i] + "</pre>"
+                            }
                         }
-                    });
-                    $('#proDeployText').addClass('fade');
-                    $('.proDeployProgress').addClass('fade');
-                    $('#proConsoleOpt').addClass('fade');
-                } else {
-                    var html = "";
-                    var sumPoints = received_msg[0];
-                    var realPoints = 0;
-                    for (var i = 1; i < received_msg.length; i++) {
-                        if (received_msg[i].length === 10) {
-                            realPoints++;
-                            $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                            var widthTemp = (realPoints / sumPoints) * 100;
-                            $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
-                                + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
-                        } else if (received_msg[i] === 'deploy_failed') {
-                            $('.restartDeploy').show();
-                            $('.continueDeploy').show();
-                            $('.rollbackOne').show();
-                            $('.rollbackAll').show();
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "发布失败！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                        } else if (received_msg[i] === 'no_reversion') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "项目没有发布版本！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                        } else if (received_msg[i] === 'deploy_success') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "发布完成！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                        }
-                        else {
-                            html += "<pre>" + received_msg[i] + "</pre>"
+                        $(`.proBuildResult`).html(html);
+                        if (realPoints === sumPoints) {
+                            $('#proDeployText').text("发布完成");
                         }
                     }
-                    $(`.proBuildResult`).html(html);
-                    if (realPoints === sumPoints) {
-                        $('#proDeployText').text("发布完成");
-                    }
-                }
-            };
+                };
 
-            ws.onclose = function () {
-                // 关闭 websocket
-                console.log("连接已关闭...");
-            };
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    console.log("连接已关闭...");
+                };
+            }
+
+            else {
+                // 浏览器不支持 WebSocket
+                console.alert("您的浏览器不支持 WebSocket!");
+            }
         }
 
-        else {
-            // 浏览器不支持 WebSocket
-            console.alert("您的浏览器不支持 WebSocket!");
-        }
     }
 });
 //跳过继续下一个发布
@@ -307,149 +331,160 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".continueDeploy", continueDeploy);
 
     function continueDeploy() {
-        var taskId = getQueryVariable("tid");
-        $('#proDeployText').text("发布进行中，请等待...");
-        $('.proDeployProgress').removeClass('fade');
-        $('#proBuildProgress').width('5%').text('5%');
-        $('#proConsoleOpt').removeClass('fade');
-        $('.restartDeploy').hide();
-        $('.continueDeploy').hide();
-        $('.rollbackOne').hide();
-        $('.rollbackAll').hide();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
 
-        if ("WebSocket" in window) {
-            console.log("您的浏览器支持 WebSocket!");
+        function ok() {
+            var taskId = getQueryVariable("tid");
+            $('#proDeployText').text("发布进行中，请等待...");
+            $('.proDeployProgress').removeClass('fade');
+            $('#proBuildProgress').width('5%').text('5%');
+            $('#proConsoleOpt').removeClass('fade');
+            $('.restartDeploy').hide();
+            $('.continueDeploy').hide();
+            $('.rollbackOne').hide();
+            $('.rollbackAll').hide();
 
-            // 打开一个 web socket
-            var ws = new WebSocket("ws:" + window.location.host + "/ws_continueDeploy");
+            if ("WebSocket" in window) {
+                console.log("您的浏览器支持 WebSocket!");
 
-            ws.onopen = function () {
-                ws.send(taskId);
-                console.log("数据已发送...");
-            };
+                // 打开一个 web socket
+                var ws = new WebSocket("ws:" + window.location.host + "/ws_continueDeploy");
 
-            ws.onmessage = function (evt) {
-                var received_msg = JSON.parse(evt.data);
-                console.log("数据已接收...");
-                if (received_msg[0] === 'no_role') {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布结果'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
+                ws.onopen = function () {
+                    ws.send(taskId);
+                    console.log("数据已发送...");
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = JSON.parse(evt.data);
+                    console.log("数据已接收...");
+                    if (received_msg[0] === 'no_role') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('#proDeployText').addClass('fade');
+                        $('.proDeployProgress').addClass('fade');
+                        $('#proConsoleOpt').addClass('fade');
+                    } else if (received_msg[0] === 'last_one') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "已经是最后一个项目，无法跳过！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('.restartDeploy').show();
+                        $('.rollbackOne').show();
+                        $('.rollbackAll').show();
+                    }
+                    else {
+                        var html = "";
+                        var sumPoints = received_msg[0];
+                        var realPoints = 0;
+                        for (var i = 1; i < received_msg.length; i++) {
+                            if (received_msg[i].length === 10) {
+                                realPoints++;
+                                $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                var widthTemp = (realPoints / sumPoints) * 100;
+                                $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
+                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                    + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
+                            } else if (received_msg[i] === 'deploy_failed') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "发布失败！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                                $('.restartDeploy').show();
+                                $('.continueDeploy').show();
+                                $('.rollbackOne').show();
+                                $('.rollbackAll').show();
+                            } else if (received_msg[i] === 'no_reversion') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "项目没有发布版本！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                            } else if (received_msg[i] === 'deploy_success') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "发布完成！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
+                            else {
+                                html += "<pre>" + received_msg[i] + "</pre>"
+                            }
                         }
-                    });
-                    $('#proDeployText').addClass('fade');
-                    $('.proDeployProgress').addClass('fade');
-                    $('#proConsoleOpt').addClass('fade');
-                } else if (received_msg[0] === 'last_one') {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布结果'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "已经是最后一个项目，无法跳过！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
-                        }
-                    });
-                    $('.restartDeploy').show();
-                    $('.rollbackOne').show();
-                    $('.rollbackAll').show();
-                }
-                else {
-                    var html = "";
-                    var sumPoints = received_msg[0];
-                    var realPoints = 0;
-                    for (var i = 1; i < received_msg.length; i++) {
-                        if (received_msg[i].length === 10) {
-                            realPoints++;
-                            $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                            var widthTemp = (realPoints / sumPoints) * 100;
-                            $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
-                                + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
-                        } else if (received_msg[i] === 'deploy_failed') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "发布失败！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                            $('.restartDeploy').show();
-                            $('.continueDeploy').show();
-                            $('.rollbackOne').show();
-                            $('.rollbackAll').show();
-                        } else if (received_msg[i] === 'no_reversion') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "项目没有发布版本！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                        } else if (received_msg[i] === 'deploy_success') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "发布完成！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                        }
-                        else {
-                            html += "<pre>" + received_msg[i] + "</pre>"
+                        $(`.proBuildResult`).html(html);
+                        if (realPoints === sumPoints) {
+                            $('#proDeployText').text("发布完成");
                         }
                     }
-                    $(`.proBuildResult`).html(html);
-                    if (realPoints === sumPoints) {
-                        $('#proDeployText').text("发布完成");
-                    }
-                }
-            };
+                };
 
-            ws.onclose = function () {
-                // 关闭 websocket
-                console.log("连接已关闭...");
-            };
-        }
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    console.log("连接已关闭...");
+                };
+            }
 
-        else {
-            // 浏览器不支持 WebSocket
-            console.alert("您的浏览器不支持 WebSocket!");
+            else {
+                // 浏览器不支持 WebSocket
+                console.alert("您的浏览器不支持 WebSocket!");
+            }
         }
     }
 });
@@ -460,117 +495,130 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".rollbackOne", rollbackOne);
 
     function rollbackOne() {
-        var taskId = getQueryVariable("tid");
-        $('#proDeployText').text("回滚进行中，请等待...");
-        $('.proDeployProgress').removeClass('fade');
-        $('#proBuildProgress').width(5 + '%').text('5%');
-        $('#proConsoleOpt').removeClass('fade');
-        $('.restartDeploy').hide();
-        $('.continueDeploy').hide();
-        $('.rollbackOne').hide();
-        $('.rollbackAll').hide();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
 
-        if ("WebSocket" in window) {
-            console.log("您的浏览器支持 WebSocket!");
+        function ok() {
+            var taskId = getQueryVariable("tid");
+            $('#proDeployText').text("回滚进行中，请等待...");
+            $('.proDeployProgress').removeClass('fade');
+            $('#proBuildProgress').width(5 + '%').text('5%');
+            $('#proConsoleOpt').removeClass('fade');
+            $('.restartDeploy').hide();
+            $('.continueDeploy').hide();
+            $('.rollbackOne').hide();
+            $('.rollbackAll').hide();
 
-            // 打开一个 web socket
-            var ws = new WebSocket("ws:" + window.location.host + "/ws_rollbackOne");
+            if ("WebSocket" in window) {
+                console.log("您的浏览器支持 WebSocket!");
 
-            ws.onopen = function () {
-                ws.send(taskId);
-                console.log("数据已发送...");
-            };
+                // 打开一个 web socket
+                var ws = new WebSocket("ws:" + window.location.host + "/ws_rollbackOne");
 
-            ws.onmessage = function (evt) {
-                var received_msg = JSON.parse(evt.data);
-                console.log("数据已接收...");
-                if (received_msg[0] === 'no_role') {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布结果'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
+                ws.onopen = function () {
+                    ws.send(taskId);
+                    console.log("数据已发送...");
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = JSON.parse(evt.data);
+                    console.log("数据已接收...");
+                    if (received_msg[0] === 'no_role') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('#proDeployText').addClass('fade');
+                        $('.proDeployProgress').addClass('fade');
+                        $('#proConsoleOpt').addClass('fade');
+                    } else {
+                        var html = "";
+                        var sumPoints = received_msg[0];
+                        var realPoints = 0;
+                        for (var i = 1; i < received_msg.length; i++) {
+                            if (received_msg[i].length === 10) {
+                                realPoints++;
+                                $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                var widthTemp = (realPoints / sumPoints) * 100;
+                                $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
+                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                    + received_msg[i] + "' target='_blank'>查看控制台信息</a>";
+                            } else if (received_msg[i] === 'no_reversion') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "已是最初版本，无法回滚！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                                $('#proDeployText').addClass('fade');
+                                $('.proDeployProgress').addClass('fade');
+                                $('.restartDeploy').show();
+                                $('.continueDeploy').show();
+                                $('.rollbackOne').show();
+                                $('.rollbackAll').show();
+                            } else if (received_msg[i] === 'deploy_success') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "回滚结束！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                                $('.restartDeploy').show();
+                                $('.continueDeploy').show();
+                            }
+                            else {
+                                html += "<pre>" + received_msg[i] + "</pre>"
+                            }
                         }
-                    });
-                    $('#proDeployText').addClass('fade');
-                    $('.proDeployProgress').addClass('fade');
-                    $('#proConsoleOpt').addClass('fade');
-                } else {
-                    var html = "";
-                    var sumPoints = received_msg[0];
-                    var realPoints = 0;
-                    for (var i = 1; i < received_msg.length; i++) {
-                        if (received_msg[i].length === 10) {
-                            realPoints++;
-                            $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                            var widthTemp = (realPoints / sumPoints) * 100;
-                            $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
-                                + received_msg[i] + "' target='_blank'>查看控制台信息</a>";
-                        } else if (received_msg[i] === 'no_reversion') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "已是最初版本，无法回滚！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                            $('#proDeployText').addClass('fade');
-                            $('.proDeployProgress').addClass('fade');
-                            $('.restartDeploy').show();
-                            $('.continueDeploy').show();
-                            $('.rollbackOne').show();
-                            $('.rollbackAll').show();
-                        } else if (received_msg[i] === 'deploy_success') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "回滚结束！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                        }
-                        else {
-                            html += "<pre>" + received_msg[i] + "</pre>"
+                        $(`.proBuildResult`).html(html);
+                        if (realPoints === sumPoints) {
+                            $('#proDeployText').text("回滚完成");
                         }
                     }
-                    $(`.proBuildResult`).html(html);
-                    if (realPoints === sumPoints) {
-                        $('#proDeployText').text("回滚完成");
-                    }
-                }
-            };
+                };
 
-            ws.onclose = function () {
-                // 关闭 websocket
-                console.log("连接已关闭...");
-            };
-        }
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    console.log("连接已关闭...");
+                };
+            }
 
-        else {
-            // 浏览器不支持 WebSocket
-            console.alert("您的浏览器不支持 WebSocket!");
+            else {
+                // 浏览器不支持 WebSocket
+                console.alert("您的浏览器不支持 WebSocket!");
+            }
         }
     }
 });
@@ -581,105 +629,117 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".rollbackAll", rollbackAll);
 
     function rollbackAll() {
-        var taskId = getQueryVariable("tid");
-        $('#proDeployText').text("回滚进行中，请等待...");
-        $('.proDeployProgress').removeClass('fade');
-        $('#proBuildProgress').width(5 + '%').text('5%');
-        $('#proConsoleOpt').removeClass('fade');
-        $('.restartDeploy').hide();
-        $('.continueDeploy').hide();
-        $('.rollbackOne').hide();
-        $('.rollbackAll').hide();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
 
-        if ("WebSocket" in window) {
-            console.log("您的浏览器支持 WebSocket!");
+        function ok() {
+            var taskId = getQueryVariable("tid");
+            $('#proDeployText').text("回滚进行中，请等待...");
+            $('.proDeployProgress').removeClass('fade');
+            $('#proBuildProgress').width(5 + '%').text('5%');
+            $('#proConsoleOpt').removeClass('fade');
+            $('.restartDeploy').hide();
+            $('.continueDeploy').hide();
+            $('.rollbackOne').hide();
+            $('.rollbackAll').hide();
 
-            // 打开一个 web socket
-            var ws = new WebSocket("ws:" + window.location.host + "/ws_rollbackAll");
+            if ("WebSocket" in window) {
+                console.log("您的浏览器支持 WebSocket!");
 
-            ws.onopen = function () {
-                ws.send(taskId);
-                console.log("数据已发送...");
-            };
+                // 打开一个 web socket
+                var ws = new WebSocket("ws:" + window.location.host + "/ws_rollbackAll");
 
-            ws.onmessage = function (evt) {
-                var received_msg = JSON.parse(evt.data);
-                console.log("数据已接收...");
-                if (received_msg[0] === 'no_role') {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布结果'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
+                ws.onopen = function () {
+                    ws.send(taskId);
+                    console.log("数据已发送...");
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = JSON.parse(evt.data);
+                    console.log("数据已接收...");
+                    if (received_msg[0] === 'no_role') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('#proDeployText').addClass('fade');
+                        $('.proDeployProgress').addClass('fade');
+                        $('#proConsoleOpt').addClass('fade');
+                    } else {
+                        var html = "";
+                        var sumPoints = received_msg[0];
+                        var realPoints = 0;
+                        for (var i = 1; i < received_msg.length; i++) {
+                            if (received_msg[i].length === 10) {
+                                realPoints++;
+                                $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                var widthTemp = (realPoints / sumPoints) * 100;
+                                $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
+                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                    + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
+                            } else if (received_msg[i] === 'no_reversion') {
+                                realPoints += received_msg[i + 1];
+                                $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                var widthTemp2 = (realPoints / sumPoints) * 100;
+                                $('#proBuildProgress').width(widthTemp2 + '%').text(widthTemp2 + '%');
+                            } else if (received_msg[i] === 'deploy_success') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "回滚结束！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                                $('.startDeploy').show();
+                            }
+                            else {
+                                html += "<pre>" + received_msg[i] + "</pre>"
+                            }
                         }
-                    });
-                    $('#proDeployText').addClass('fade');
-                    $('.proDeployProgress').addClass('fade');
-                    $('#proConsoleOpt').addClass('fade');
-                } else {
-                    var html = "";
-                    var sumPoints = received_msg[0];
-                    var realPoints = 0;
-                    for (var i = 1; i < received_msg.length; i++) {
-                        if (received_msg[i].length === 10) {
-                            realPoints++;
-                            $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                            var widthTemp = (realPoints / sumPoints) * 100;
-                            $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
-                                + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
-                        } else if (received_msg[i] === 'no_reversion') {
-                            realPoints += received_msg[i + 1];
-                            $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                            var widthTemp2 = (realPoints / sumPoints) * 100;
-                            $('#proBuildProgress').width(widthTemp2 + '%').text(widthTemp2 + '%');
-                        } else if (received_msg[i] === 'deploy_success') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '发布结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "回滚结束！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
-                            $('.startDeploy').show();
-                        }
-                        else {
-                            html += "<pre>" + received_msg[i] + "</pre>"
+                        $(`.proBuildResult`).html(html);
+                        if (realPoints === sumPoints) {
+                            $('#proDeployText').text("回滚完成");
+                            $('.restartDeploy').removeClass('fade');
+                            $('.continueDeploy').removeClass('fade');
                         }
                     }
-                    $(`.proBuildResult`).html(html);
-                    if (realPoints === sumPoints) {
-                        $('#proDeployText').text("回滚完成");
-                        $('.restartDeploy').removeClass('fade');
-                        $('.continueDeploy').removeClass('fade');
-                    }
-                }
-            };
+                };
 
-            ws.onclose = function () {
-                // 关闭 websocket
-                console.log("连接已关闭...");
-            };
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    console.log("连接已关闭...");
+                };
+            }
+
+            else {
+                // 浏览器不支持 WebSocket
+                console.alert("您的浏览器不支持 WebSocket!");
+            }
         }
 
-        else {
-            // 浏览器不支持 WebSocket
-            console.alert("您的浏览器不支持 WebSocket!");
-        }
     }
 });
 //创建预发分支
@@ -779,7 +839,7 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
-                } else if (received_msg[0] === 'exclusive'){
+                } else if (received_msg[0] === 'exclusive') {
                     layer.open({
                         type: 1
                         , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
@@ -940,56 +1000,67 @@ layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
 
     $("body").on("click", ".checkSuccess", function () {
-        var step = $(this).parent().attr('id');
-        var postData = {};
-        var taskId = getQueryVariable("tid");
-        var remark = $(this).siblings("#remark").val();
-        postData['taskId'] = taskId;
-        postData['remark'] = remark;
-        $('.checkSuccess').hide();
-        $('.checkFail').hide();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
 
-        $.ajax({
-            url: '/ajax_checkSuccess',
-            type: 'POST',
-            data: postData,
+        function ok() {
+            var step = $(this).parent().attr('id');
+            var postData = {};
+            var taskId = getQueryVariable("tid");
+            var remark = $(this).siblings("#remark").val();
+            postData['taskId'] = taskId;
+            postData['remark'] = remark;
+            $('.checkSuccess').hide();
+            $('.checkFail').hide();
 
-            success: function (arg) {
-                if (arg === "no_role") {
-                    layer.open({
-                        type: 1
-                        , title: '警告'
-                        , content: '<div style="padding: 20px 100px;">' + "你没有验收任务的权限" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
-                        }
-                    });
-                } else {
-                    layer.open({
-                        type: 1
-                        , title: '合并结果'
-                        , content: '<div style="padding: 20px 100px;">' + "验收通过！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
-                        }
-                    });
-                    $(`#${step} .checkSuccess`).hide();
-                    $(`#${step} #remark`).hide();
-                    $(`#${step} #p1`).removeClass("fade").html(arg);
+            $.ajax({
+                url: '/ajax_checkSuccess',
+                type: 'POST',
+                data: postData,
+
+                success: function (arg) {
+                    if (arg === "no_role") {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "你没有验收任务的权限" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else {
+                        layer.open({
+                            type: 1
+                            , title: '合并结果'
+                            , content: '<div style="padding: 20px 100px;">' + "验收通过！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $(`#${step} .checkSuccess`).hide();
+                        $(`#${step} #remark`).hide();
+                        $(`#${step} #p1`).removeClass("fade").html(arg);
+                    }
+                },
+                error: function () {
+                    console.log("error");
                 }
-            },
-            error: function () {
-                console.log("error");
-            }
-        })
+            })
+        }
     });
 });
 //合并代码
@@ -999,95 +1070,106 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".startCodeMerge", startCodeMerge);
 
     function startCodeMerge() {
-        var taskId = getQueryVariable("tid");
-        $('#codeMergeText').text("代码合并进行中，请等待...");
-        $('.codeMergeProgress').removeClass('fade');
-        $('#codeMerge').width(5 + '%').text('5%');
-        $('#codeMergeOpt').removeClass('fade');
-        $('.startCodeMerge').hide();
-        if ("WebSocket" in window) {
-            console.log("您的浏览器支持 WebSocket!");
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
 
-            // 打开一个 web socket
-            var ws = new WebSocket("ws:" + window.location.host + "/ws_codeMerge");
+        function ok() {
+            var taskId = getQueryVariable("tid");
+            $('#codeMergeText').text("代码合并进行中，请等待...");
+            $('.codeMergeProgress').removeClass('fade');
+            $('#codeMerge').width(5 + '%').text('5%');
+            $('#codeMergeOpt').removeClass('fade');
+            $('.startCodeMerge').hide();
+            if ("WebSocket" in window) {
+                console.log("您的浏览器支持 WebSocket!");
 
-            ws.onopen = function () {
-                ws.send(taskId);
-                console.log("数据已发送...");
-            };
+                // 打开一个 web socket
+                var ws = new WebSocket("ws:" + window.location.host + "/ws_codeMerge");
 
-            ws.onmessage = function (evt) {
-                var received_msg = JSON.parse(evt.data);
-                console.log("数据已接收...");
-                if (received_msg[0] === 'no_role') {
-                    layer.open({
-                        type: 1
-                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '发布结果'
-                        , id: 'layerDemo' + type//防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "你没有合并分支的权限！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
+                ws.onopen = function () {
+                    ws.send(taskId);
+                    console.log("数据已发送...");
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = JSON.parse(evt.data);
+                    console.log("数据已接收...");
+                    if (received_msg[0] === 'no_role') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "你没有合并分支的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('#codeMergeText').hide();
+                        $('.codeMergeProgress').hide();
+                        $('#codeMergeOpt').hide();
+                    } else {
+                        var html = "";
+                        var sumPoints = received_msg[0];
+                        var realPoints = 0;
+                        for (var i = 1; i < received_msg.length; i++) {
+                            if (received_msg[i] === 'ok') {
+                                realPoints++;
+                                $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                var widthTemp = (realPoints / sumPoints) * 100;
+                                $('#codeMerge').width(widthTemp + '%').text(widthTemp + '%');
+                                html += "<br>" + received_msg[i + 1]
+                            } else if (received_msg[i] === 'conflict') {
+                                realPoints++;
+                                $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                var widthTemp2 = (realPoints / sumPoints) * 100;
+                                $('#codeMerge').width(widthTemp2 + '%').text(widthTemp2 + '%');
+                                html += "<br>" + received_msg[i + 1]
+                            }
+                            else if (received_msg[i] === 'success') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '合并结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + "合并结束！" + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                            }
                         }
-                    });
-                    $('#codeMergeText').hide();
-                    $('.codeMergeProgress').hide();
-                    $('#codeMergeOpt').hide();
-                } else {
-                    var html = "";
-                    var sumPoints = received_msg[0];
-                    var realPoints = 0;
-                    for (var i = 1; i < received_msg.length; i++) {
-                        if (received_msg[i] === 'ok') {
-                            realPoints++;
-                            $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                            var widthTemp = (realPoints / sumPoints) * 100;
-                            $('#codeMerge').width(widthTemp + '%').text(widthTemp + '%');
-                            html += "<br>" + received_msg[i + 1]
-                        } else if (received_msg[i] === 'conflict') {
-                            realPoints++;
-                            $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                            var widthTemp2 = (realPoints / sumPoints) * 100;
-                            $('#codeMerge').width(widthTemp2 + '%').text(widthTemp2 + '%');
-                            html += "<br>" + received_msg[i + 1]
-                        }
-                        else if (received_msg[i] === 'success') {
-                            layer.open({
-                                type: 1
-                                , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                                , title: '合并结果'
-                                , id: 'layerDemo' + type//防止重复弹出
-                                , content: '<div style="padding: 20px 100px;">' + "合并结束！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
-                                    layer.closeAll();
-                                }
-                            });
+                        $(`.codeMergeResult`).html(html);
+                        if (realPoints === sumPoints) {
+                            $('#codeMergeText').text("合并完成");
                         }
                     }
-                    $(`.codeMergeResult`).html(html);
-                    if (realPoints === sumPoints) {
-                        $('#codeMergeText').text("合并完成");
-                    }
-                }
-            };
+                };
 
-            ws.onclose = function () {
-                // 关闭 websocket
-                console.log("连接已关闭...");
-            };
-        }
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    console.log("连接已关闭...");
+                };
+            }
 
-        else {
-            // 浏览器不支持 WebSocket
-            console.alert("您的浏览器不支持 WebSocket!");
+            else {
+                // 浏览器不支持 WebSocket
+                console.alert("您的浏览器不支持 WebSocket!");
+            }
         }
     }
 });
