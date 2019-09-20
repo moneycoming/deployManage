@@ -147,14 +147,23 @@ DATABASES = {
         },
     },
 
-    # 'jlb-app': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'jlbapp',
-    #     'USER': 'jlb-test',
-    #     'PASSWORD': 'jlb#123#test',
-    #     'HOST': '120.132.8.41',
-    #     'PORT': '3306',
-    # }
+    'jlb-app': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'jlbapp',
+        'USER': 'jlb-test',
+        'PASSWORD': 'jlb#123#test',
+        'HOST': '120.132.8.41',
+        'PORT': '3306',
+    },
+
+    'zentao': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'zentao',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '10.10.10.29',
+        'PORT': '3307',
+    }
 }
 
 # email
