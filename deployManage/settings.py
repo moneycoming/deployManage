@@ -33,6 +33,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+if DEBUG:
+    CORS_ORIGIN_ALLOW_ALL = True
+else:
+    CORS_ORIGIN_WHITELIST = (
+        'okr.bestjlb.cn',
+    )
+
 # Application definition
 
 INSTALLED_APPS = (
@@ -54,6 +61,7 @@ INSTALLED_APPS = (
     'crispy_forms',
     'django_apscheduler',
     'dwebsocket',
+    'corsheaders',
 )
 # form美化
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -94,6 +102,7 @@ ACCOUNT_USERNAME_MIN_LENGTH = 6
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -108,7 +117,7 @@ MIDDLEWARE_CLASSES = (
 WEBSOCKET_ACCEPT_ALL = True
 
 # 使用uwsgi
-#WEBSOCKET_FACTORY_CLASS = 'dwebsocket.backends.uwsgi.factory.uWsgiWebSocketFactory'
+# WEBSOCKET_FACTORY_CLASS = 'dwebsocket.backends.uwsgi.factory.uWsgiWebSocketFactory'
 
 ROOT_URLCONF = 'deployManage.urls'
 
@@ -174,7 +183,6 @@ EMAIL_HOST = 'smtp.qiye.aliyun.com'
 EMAIL_PORT = 465
 EMAIL_HOST_USER = 'zhumingjie@zhixuezhen.com'
 EMAIL_HOST_PASSWORD = 'Zhu8335466'
-
 
 # log
 cur_path = os.path.dirname(os.path.realpath(__file__))  # log_path是存放日志的路径
