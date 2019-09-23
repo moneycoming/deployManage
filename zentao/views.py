@@ -89,7 +89,6 @@ def get_productTaskPercent(request):
         actualQuantity = list(allData2[0])[1]
 
     cursor3 = connections['zentao'].cursor()
-    # query3 = "select 'TargetQuantity',count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0'"
     query3 = "select 'TargetQuantity',count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and deadline<DATE_FORMAT(NOW(),'%%Y-%%m-%%d')"
     cursor3.execute(query3, productId)
     allData3 = cursor3.fetchall()

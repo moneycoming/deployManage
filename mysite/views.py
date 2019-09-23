@@ -162,6 +162,8 @@ def createPlan(request):
                                                            server=project_servers[i].server)
                     deployDetail_obj.save()
 
+            # send_mail("发布计划%s" % plan_obj.name, str(buildMessages), mail_from, mail_to,
+            #           fail_silently=False)
             return HttpResponseRedirect('/showPlan')
 
     template = get_template('createPlan.html')

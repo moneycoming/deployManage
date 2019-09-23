@@ -49,14 +49,22 @@
                             <pre><br>{{ plan_obj.description }}</pre>
                             </p>
                             <h5 class="page-header"></h5>
+                            <h3>关联项目</h3>
+                            <p>
+                                {% for project_plan in project_plans %}
+                                    <br>{{ project_plan.project }}：{{ project_plan.devBranch }}
+                                {% endfor %}
+                            </p>
+                            <h5 class="page-header"></h5>
+                            <h3>预发部署</h3>
+                            <p><br><a href="/uatDetail?pid={{ plan_obj.id }}" style="color: #ff3e03">点击此处进入预发部署页面</a>
+                            </p>
+                            <h5 class="page-header"></h5>
                             <h3>关联任务</h3>
                             {% for task in tasks %}
                                 <p><br><a href="/taskDetail?tid={{ task.id }}">编号：{{ task.id }} --
                                     标题：{{ task.name }}</a></p>
                             {% endfor %}
-                            <h5 class="page-header"></h5>
-                            <h3>预发部署</h3>
-                                <p><br><a href="/uatDetail?pid={{ plan_obj.id }}" style="color: #ff3e03">点击此处进入预发部署页面</a></p>
                         </div>
                     </div>
                 </div>
