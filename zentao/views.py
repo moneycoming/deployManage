@@ -151,7 +151,7 @@ def get_productScorePercent(request):
     query = "select product,sum(keywords) as nowScore from `zt_bug` where deleted = '0' and type = 'bugonline' and product = %s"
     cursor.execute(query, productId)
     allData = cursor.fetchall()
-    if len(allData) > 0:
+    if allData[0][1] != 'NULL':
         nowScore = allData[0][1]
 
     cursor2 = connections['zentao'].cursor()
