@@ -40,8 +40,8 @@ def __get_productScorePercent_response_json_dict(result, productID, now, total, 
     ret = {
         'result': result,
         'productID': productID,
-        'now': now,
-        'all': total,
+        'nowScore': now,
+        'allScore': total,
         'message': message
     }
 
