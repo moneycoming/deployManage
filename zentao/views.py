@@ -145,6 +145,20 @@ def get_productTaskStatusPercent(request):
 # 根据项目id查看故障分（固定项目）
 def get_productScorePercent(request):
     productId = request.GET['productId']
+    nowScore = allScore = 0
+    cursor = connections['zentao'].cursor()
+    query = "select product,sum(keywords) as nowScore from `zt_bug` where deleted = '0' and type = 'bugonline' and product = %s"
+    cursor.execute(query, productId)
+    allData = cursor.fetchall()
+    if allData[0][1]:
+        nowScore = allData[0][1]
+
+    cursor2 = connections['zentao'].cursor()
+    query2 = "select productID,onlineScore as 'allScore' from `zt_productScore` where productID = %s"
+    cursor2.execute(query2, productId)
+    allData2 = cursor2.fetchall()
+    if (len(allData2)) > 0:
+        allScore = allData2[0][1]
 
     if productId:
         result = "true"
@@ -153,4 +167,4 @@ def get_productScorePercent(request):
         result = "false"
         message = "服务器开小差了"
 
-    return JsonResponse(__get_productScorePercent_response_json_dict(result, productId, 100, 150, message))
+    return JsonResponse(__get_productScorePercent_response_json_dict(result, productId, int(nowScore), allScore, message))
