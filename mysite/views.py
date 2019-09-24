@@ -12,7 +12,6 @@ import datetime
 from mysite.jenkinsUse import pythonJenkins, projectBean
 from django.views.decorators.csrf import csrf_exempt
 import uuid
-import time
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
@@ -21,7 +20,7 @@ from mysite.dataAnalysis import DataAnalysis
 from django.core.mail import send_mail
 from dwebsocket.decorators import accept_websocket
 from django.db.models import Q
-from django.contrib.auth.models import User
+from mysite.multiEmail import email_createPlan
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -58,8 +57,7 @@ except ConflictingIdError as e:
     scheduler.start()
 
 # 添加全局变量，邮件功能
-mail_to = ['hepengchong@zhixuezhen.com']
-mail_from = 'zhumingjie@zhixuezhen.com'
+mail_cc = ['hepengchong@zhixuezhen.com']
 
 
 # 首页及任务信息展示
@@ -162,8 +160,12 @@ def createPlan(request):
                                                            server=project_servers[i].server)
                     deployDetail_obj.save()
 
-            # send_mail("发布计划%s" % plan_obj.name, str(buildMessages), mail_from, mail_to,
-            #           fail_silently=False)
+            project_plans = models.project_plan.objects.filter(plan=plan_obj)
+            mail_from = member_obj.user.email
+            mail_to = []
+            for k in range(len(production_members)):
+                mail_to.append(production_members[k].member.user.email)
+            email_createPlan(project_plans, mail_from, mail_to, mail_cc)
             return HttpResponseRedirect('/showPlan')
 
     template = get_template('createPlan.html')
@@ -1120,7 +1122,8 @@ def ws_uatDeploy(request):
                                         request.websocket.send(json.dumps(buildMessage))
                                         request.websocket.close()
                                     consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj,
-                                                                       content=consoleOpt, packageId=buildId, result=result,
+                                                                       content=consoleOpt, packageId=buildId,
+                                                                       result=result,
                                                                        deployTime=deployTime, deployUser=member_obj,
                                                                        uniqueKey=uniqueKey, uniteKey=uniteKey)
                                     consoleOpt_obj.save()
