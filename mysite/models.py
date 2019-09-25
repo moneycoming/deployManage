@@ -98,6 +98,10 @@ class plan(models.Model):
     production = models.ForeignKey(production, on_delete=models.CASCADE, verbose_name="所属产品")
     createUser = models.ForeignKey(member, verbose_name="由谁创建")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
+    uatCheck = models.BooleanField(default=False, verbose_name="验证通过？")
+    uatRemark = models.TextField(null=True, verbose_name="备注")
+    uatCheckMember = models.ForeignKey(member, null=True, related_name="uatCheckMember", verbose_name="由谁验收")
+    uatCheckDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="验收日期")
 
     class Meta:
         verbose_name = u'发布计划列表'

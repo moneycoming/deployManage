@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 import json
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template.loader import get_template
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -17,10 +17,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore, register_events, register_job
 from apscheduler.jobstores.base import ConflictingIdError
 from mysite.dataAnalysis import DataAnalysis
-from django.core.mail import send_mail
 from dwebsocket.decorators import accept_websocket
 from django.db.models import Q
-from mysite.multiEmail import email_createPlan
+from mysite.multiEmail import email_createPlan, email_uatCheck
+from django.views.decorators.http import require_http_methods
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -267,6 +267,55 @@ def uatDeploy(request):
     return HttpResponse(html)
 
 
+# 预发验收
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def ajax_uatCheck(request):
+    planId = request.POST.get('planId')
+    if planId:
+        member_obj = models.member.objects.get(user=request.user)
+        plan_obj = models.plan.objects.get(id=planId)
+        production_members = models.production_member.objects.filter(production=plan_obj.production)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+        if isMember and member_obj.user.has_perm('can_deploy_project'):
+            remark = request.POST.get('remark')
+            plan_obj.uatCheck = True
+            plan_obj.uatRemark = remark
+            plan_obj.uatCheckMember = member_obj
+            plan_obj.uatCheckDate = datetime.datetime.now()
+            plan_obj.save()
+            ret = {
+                'role': 1,
+                'uatRemark': plan_obj.uatRemark,
+                'uatCheckMember': plan_obj.uatCheckMember.name,
+                'uatCheckDate': plan_obj.uatCheckDate
+            }
+            project_plans = models.project_plan.objects.filter(plan=plan_obj)
+            for i in range(len(project_plans)):
+                project_plans[i].exclusiveKey = 0
+                project_plans[i].save()
+
+            mail_from = member_obj.user.email
+            mail_to = []
+            for k in range(len(production_members)):
+                mail_to.append(production_members[k].member.user.email)
+            email_uatCheck(plan_obj, mail_from, mail_to, mail_cc)
+
+        else:
+            ret = {
+                'role': 0,
+                'uatRemark': None,
+                'uatCheckMember': None,
+                'uatCheckDate': None
+            }
+
+        return HttpResponse(json.dumps(ret, cls=DateEncoder), content_type='application/json')
+
+
 # 创建预发分支
 @login_required
 @csrf_exempt
@@ -396,12 +445,8 @@ def ajax_checkSuccess(request):
             task_obj.checked = 1
             task_obj.remark = remark
             task_obj.save()
-            project_plans = models.project_plan.objects.filter(plan=task_obj.plan)
-            for i in range(len(project_plans)):
-                project_plans[i].exclusiveKey = 0
-                project_plans[i].save()
             res = "发布任务%s验证通过，请合并代码！" % task_obj.name
-            send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
+            # send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
 
             return HttpResponse(json.dumps(remark), "application/json")
         else:
@@ -1190,8 +1235,8 @@ def ws_codeMerge(request):
                     buildMessages.append("success")
                     request.websocket.send(json.dumps(buildMessages))
                     request.websocket.close()
-                    send_mail("发布任务%s分支合并结果" % task_obj.name, str(buildMessages), mail_from, mail_to,
-                              fail_silently=False)
+                    # send_mail("发布任务%s分支合并结果" % task_obj.name, str(buildMessages), mail_from, mail_to,
+                    #           fail_silently=False)
                 else:
                     buildMessages.append("no_role")
                     request.websocket.send(json.dumps(buildMessages))

@@ -901,6 +901,63 @@ layui.use(['element', 'layer'], function () {
         }
     }
 });
+//预发验收通过
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", ".uatCheckBtn", function () {
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok() {
+            var postData = {};
+            var planId = getQueryVariable("pid");
+            var uatRemark = $('#uatRemark').val();
+            postData['planId'] = planId;
+            postData['remark'] = uatRemark;
+
+            $.ajax({
+                url: '/ajax_uatCheck',
+                type: 'POST',
+                data: postData,
+
+                success: function (data) {
+                    if (data.role === 0) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "你没有预发验收的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else {
+                        console.log(data);
+                        $('#uatForm').hide();
+                        var html = "<br>验收通过\n" +
+                            "<br>验收人：" + data.uatCheckMember + "\n" +
+                            "<br>验收日期：" + data.uatCheckDate + "\n" +
+                            "<br>备注：" + data.uatRemark;
+                        $("#uatP1").show().html(html);
+                    }
+                },
+                error: function () {
+                    console.log("error");
+                }
+            })
+        }
+    });
+});
 //面板
 layui.use(['element', 'layer'], function () {
     var element = layui.element;
