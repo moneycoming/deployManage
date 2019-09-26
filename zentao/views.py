@@ -76,25 +76,19 @@ def get_productTaskPercent(request):
     query = "select 'taskCount',count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0'"
     cursor.execute(query, productId)
     allData = cursor.fetchall()
-    count = 0
-    if len(allData) > 0:
-        count = list(allData[0])[1]
+    count = list(allData[0])[1]
 
     cursor2 = connections['zentao'].cursor()
-    query2 = "select 'ActualQuantity',count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and `status` = 'done'"
+    query2 = "select 'ActualQuantity',count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and `status` in ('done','closed')"
     cursor2.execute(query2, productId)
     allData2 = cursor2.fetchall()
-    actualQuantity = 0
-    if len(allData2) > 0:
-        actualQuantity = list(allData2[0])[1]
+    actualQuantity = list(allData2[0])[1]
 
     cursor3 = connections['zentao'].cursor()
-    query3 = "select 'TargetQuantity',count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and deadline<DATE_FORMAT(NOW(),'%%Y-%%m-%%d')"
+    query3 = "select 'TargetQuantity',count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and deadline<DATE_FORMAT(NOW(),'%%Y-%%m-%%d') and `status` != 'cancel'"
     cursor3.execute(query3, productId)
     allData3 = cursor3.fetchall()
-    targetQuantity = 0
-    if len(allData3) > 0:
-        targetQuantity = list(allData3[0])[1]
+    targetQuantity = list(allData3[0])[1]
 
     if productId:
         result = "true"
@@ -119,10 +113,10 @@ def get_productTaskStatusPercent(request):
         count = list(allData[0])[1]
 
     cursor2 = connections['zentao'].cursor()
-    query2 = "select `status`,count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and `status` in ('wait','doing','done') group by `status`"
+    query2 = "select `status`,count(*) as Count from `zt_task` where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' group by `status`"
     cursor2.execute(query2, productId)
     allData2 = cursor2.fetchall()
-    wait = done = doing = 0
+    wait = done = doing = pause = cancel = closed = 0
     for i in range(len(allData2)):
         if allData2[i][0] == 'wait':
             wait = allData2[i][1]
@@ -130,6 +124,12 @@ def get_productTaskStatusPercent(request):
             done = allData2[i][1]
         elif allData2[i][0] == 'doing':
             doing = allData2[i][1]
+        elif allData2[i][0] == 'pause':
+            pause = allData2[i][1]
+        elif allData2[i][0] == 'cancel':
+            cancel = allData2[i][1]
+        elif allData2[i][0] == 'closed':
+            closed = allData2[i][1]
 
     if productId:
         result = "true"
@@ -139,7 +139,8 @@ def get_productTaskStatusPercent(request):
         message = "服务器开小差了"
 
     return JsonResponse(
-        __get_productTaskStatusPercent_response_json_dict(result, productId, count, wait, doing, done, message))
+        __get_productTaskStatusPercent_response_json_dict(result, productId, count, wait, doing, done, pause, cancel,
+                                                          closed, message))
 
 
 # 根据项目id查看故障分（固定项目）
@@ -167,4 +168,5 @@ def get_productScorePercent(request):
         result = "false"
         message = "服务器开小差了"
 
-    return JsonResponse(__get_productScorePercent_response_json_dict(result, productId, int(nowScore), allScore, message))
+    return JsonResponse(
+        __get_productScorePercent_response_json_dict(result, productId, int(nowScore), allScore, message))

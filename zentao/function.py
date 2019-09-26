@@ -22,7 +22,8 @@ def __get_productTaskPercent_response_json_dict(result, productID, count, actual
     return ret
 
 
-def __get_productTaskStatusPercent_response_json_dict(result, productID, count, wait, doing, done, message):
+def __get_productTaskStatusPercent_response_json_dict(result, productID, count, wait, doing, done, pause, cancel,
+                                                      closed, message):
     ret = {
         'result': result,
         'productID': productID,
@@ -30,6 +31,9 @@ def __get_productTaskStatusPercent_response_json_dict(result, productID, count, 
         'wait': wait,
         'doing': doing,
         'done': done,
+        'pause': pause,
+        'cancel': cancel,
+        'closed': closed,
         'message': message
     }
 
