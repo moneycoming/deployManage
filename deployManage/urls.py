@@ -37,7 +37,7 @@ urlpatterns = [
     url(r'productionKindChart', views.productionKindChart, name='productionKindChart'),
     url(r'^taskDetail', views.taskDetail, name='taskDetail'),
     url(r'^planDetail', views.planDetail, name='planDetail'),
-    url(r'^createTask$', views.createTask, name='createTask'),
+    url(r'^createTask', views.createTask, name='createTask'),
     url(r'^createPlan$', views.createPlan, name='createPlan'),
     url(r'^ajax_showTask$', views.ajax_showTask),
     url(r'^ajax_deleteTask$', views.ajax_deleteTask),

@@ -19,7 +19,7 @@ from apscheduler.jobstores.base import ConflictingIdError
 from mysite.dataAnalysis import DataAnalysis
 from dwebsocket.decorators import accept_websocket
 from django.db.models import Q
-from mysite.multiEmail import email_createPlan, email_uatCheck
+from mysite.multiEmail import email_createPlan, email_uatCheck, email_createTask
 from django.views.decorators.http import require_http_methods
 
 # 添加全局变量，记录日志
@@ -114,7 +114,10 @@ def productionKindChart(request):
 # 计划主页
 @login_required
 def showPlan(request):
-    plans = models.plan.objects.all()
+    member_obj = models.member.objects.get(user=request.user)
+    productions = models.production.objects.filter(member=member_obj)
+    for i in range(len(productions)):
+        plans = models.plan.objects.filter(production=productions[i])
 
     template = get_template('showPlan.html')
     html = template.render(context=locals(), request=request)
@@ -231,6 +234,12 @@ def planDetail(request):
         plan_obj = models.plan.objects.get(id=planId)
         tasks = models.task.objects.filter(plan__id=planId)
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
+        production_members = models.production_member.objects.filter(production=plan_obj.production)
+        member_obj = models.member.objects.get(user=request.user)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
 
     template = get_template('planDetail.html')
     html = template.render(context=locals(), request=request)
@@ -456,17 +465,22 @@ def ajax_checkSuccess(request):
 # 创建任务
 @login_required
 def createTask(request):
-    user = request.user
-    if user.has_perm('add_task'):
-        plans = models.plan.objects.all()
-        segments = models.segment.objects.all()
-        if request.method == 'POST':
+    segments = models.segment.objects.all()
+    member_obj = models.member.objects.get(user=request.user)
+    plan_obj = models.plan.objects.get(id=request.GET['pid'])
+    if request.method == 'POST':
+        post_plan_obj = models.plan.objects.get(name=request.POST['plan'])
+        production_members = models.production_member.objects.filter(production=post_plan_obj.production)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+        if isMember and member_obj.user.has_perm('can_deploy_project'):
             title = request.POST.get('title')
-            plan_obj = models.plan.objects.get(name=request.POST.get('plan'))
             segmentList = request.POST.getlist('segment')
             createDate = datetime.datetime.now()
-            member_obj = models.member.objects.get(user=request.user)
-            task_obj = models.task(name=title, plan=plan_obj, createUser=member_obj, createDate=createDate, onOff=1)
+            task_obj = models.task(name=title, plan=post_plan_obj, createUser=member_obj, createDate=createDate,
+                                   onOff=1)
             task_obj.save()
             for i in range(len(segmentList)):
                 segment_obj = models.segment.objects.get(name=segmentList[i])
@@ -474,7 +488,14 @@ def createTask(request):
                                                priority=i + 1)
                 sequence_obj.save()
 
-            return HttpResponseRedirect('/showTask')
+            sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
+            mail_from = member_obj.user.email
+            mail_to = []
+            for k in range(len(production_members)):
+                mail_to.append(production_members[k].member.user.email)
+            email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc)
+
+            return HttpResponseRedirect('/planDetail?pid=%s' % post_plan_obj.id)
 
     template = get_template('createTask.html')
     html = template.render(context=locals(), request=request)

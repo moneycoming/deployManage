@@ -1,0 +1,44 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<head>
+    <title>上线申请邮件</title>
+</head>
+<body>
+<div class="content">
+    <div class="animated fadeIn">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>标题</h3>
+                        <p class="text-muted m-b-15"><br>{{ plan.name }}</p>
+{#                        <h5 class="page-header"></h5>#}
+{#                        <h3>所属产品</h3>#}
+{#                        <p class="text-muted m-b-15"><br>{{ plan.production.name }}</p>#}
+{#                        <h5 class="page-header"></h5>#}
+{#                        <h3>发布类型</h3>#}
+{#                        <p class="text-muted m-b-15"><br>{{ plan.kind.name }}</p>#}
+{#                        <h5 class="page-header"></h5>#}
+{#                        <h3>说明</h3>#}
+{#                        <p>#}
+{#                        <pre><br>{{ plan.description }}</pre>#}
+{#                        </p>#}
+                        <h5 class="page-header"></h5>
+                        <h3>包含步骤</h3>
+                        <p>
+                            {% for sequence in sequences %}
+                                <br>{{ sequence.segment.name }}
+                            {% endfor %}
+                        </p>
+                        <h3>链接</h3>
+                        <p><a href={{ url }}>{{ url }}</a></p>
+                    </div>
+                </div>
+            </div>
+        </div><!-- .animated -->
+    </div><!-- .content -->
+</div>
+</body>
+</html>

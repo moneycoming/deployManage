@@ -63,13 +63,15 @@
                                 <h5 class="page-header"></h5>
                                 <h3>关联任务</h3>
                                 <h5 class="page-header"></h5>
-                                {% if task %}
+                                {% if tasks %}
                                     {% for task in tasks %}
                                         <p><br><a href="/taskDetail?tid={{ task.id }}">编号：{{ task.id }} --
                                             标题：{{ task.name }}</a></p>
                                     {% endfor %}
                                 {% else %}
-                                    <p><a href="http://127.0.0.1:8000/showTask" style="color: #ff3e03">点此创建任务</a></p>
+                                    {% if perms.mysite.can_deploy_project %}
+                                        <p><a href="/createTask?pid={{ plan_obj.id }}" style="color: #ff3e03">点此创建任务</a></p>
+                                    {% endif %}
                                 {% endif %}
                             {% else %}
                                 <p><br><a href="/uatDetail?pid={{ plan_obj.id }}"

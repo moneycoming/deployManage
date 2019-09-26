@@ -31,3 +31,19 @@ def email_uatCheck(plan, mail_from, mail_to, mail_cc):
     msg = EmailMultiAlternatives(title, html_content, mail_from, mail_to, mail_cc, headers={"Cc": ",".join(mail_cc)})
     msg.attach_alternative(html_content, "text/html")
     msg.send()
+
+
+# 上线申请邮件
+def email_createTask(plan, sequences, mail_from, mail_to, mail_cc):
+    title = "【上线申请】：%s" % plan.name
+    context = {
+        'plan': plan,
+        'sequences': sequences,
+        'url': 'http://127.0.0.1:8000/planDetail?pid=%s' % plan.id
+    }
+
+    template = loader.get_template("email_createTask.html")
+    html_content = template.render(context)
+    msg = EmailMultiAlternatives(title, html_content, mail_from, mail_to, mail_cc, headers={"Cc": ",".join(mail_cc)})
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
