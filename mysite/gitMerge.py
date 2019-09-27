@@ -4,7 +4,14 @@ import subprocess
 
 
 project_dir = "D:\codes\zxz-app-service"
-# repo = Repo(project_dir)
+repo = Repo(project_dir)
+branch = "uat-66dfd06d18"
+os.chdir(project_dir)
+subprocess.check_output(["git", "remote", "update", "--prune"])
+try:
+    subprocess.check_output(["git", "push", "origin", "--delete", branch])
+except subprocess.CalledProcessError:
+    print('hhhhh')
 # curBranch = repo.head.reference
 # origin = repo.remotes.origin
 # remote = repo.remote()
@@ -14,21 +21,21 @@ project_dir = "D:\codes\zxz-app-service"
 
 # project = self.project
 # project_dir = project.project_dir
-os.chdir(project_dir)
-branch_byte = subprocess.check_output(["git", "branch", "-r"])
-# print(branch_byte)
-# branch_byte = subprocess.check_output(["git", "remote", "update", "--prune"])
-branch_str = str(branch_byte, 'utf-8')
-# print(branch_str)
-branches = branch_str.split('\n')
-branch_list = []
-for branch in branches[1: -1]:
-    branch_list.append(branch.lstrip('* origin').lstrip('/').lstrip('uat-*'))
-    # branch_list.append(branch.lstrip('* origin'))
-    if 'master' in branch_list:
-        branch_list.remove('master')
-    # branch_list.lstrip('/')
-    print(branch_list)
+# os.chdir(project_dir)
+# branch_byte = subprocess.check_output(["git", "branch", "-r"])
+# # print(branch_byte)
+# # branch_byte = subprocess.check_output(["git", "remote", "update", "--prune"])
+# branch_str = str(branch_byte, 'utf-8')
+# # print(branch_str)
+# branches = branch_str.split('\n')
+# branch_list = []
+# for branch in branches[1: -1]:
+#     branch_list.append(branch.lstrip('* origin').lstrip('/').lstrip('uat-*'))
+#     # branch_list.append(branch.lstrip('* origin'))
+#     if 'master' in branch_list:
+#         branch_list.remove('master')
+#     # branch_list.lstrip('/')
+#     print(branch_list)
 # print(git.update(remote))
 # heads = repo.heads
 # master = heads.master

@@ -1119,7 +1119,8 @@ def ws_rollbackAll(request):
 @accept_websocket
 def ws_uatDeploy(request):
     if request.is_websocket:
-        for combination in request.websocket:
+        combination = request.websocket.wait()
+        if combination:
             projectId = str(combination, encoding="utf-8").split('-')[0]
             planId = str(combination, encoding="utf-8").split('-')[1]
             deployTime = str(combination, encoding="utf-8").split('-')[2]
@@ -1137,7 +1138,6 @@ def ws_uatDeploy(request):
                 if member_obj == production_members[m].member:
                     isMember = True
             if isMember and member_obj.user.has_perm("can_check_project"):
-                # uatExclusiveManages = models.uatExclusiveManage.objects.filter(project=project_obj)
                 project_plans = models.project_plan.objects.filter(project=project_obj)
                 exclusivePlan = []
                 for k in range(len(project_plans)):
@@ -1193,6 +1193,13 @@ def ws_uatDeploy(request):
                                                                        deployTime=deployTime, deployUser=member_obj,
                                                                        uniqueKey=uniqueKey, uniteKey=uniteKey)
                                     consoleOpt_obj.save()
+                        branch_obj = branch(project_obj.project_dir)
+                        branchDelStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
+                        if not branchDelStatus:
+                            logger.error(
+                                '计划：%s，项目：%s，分支：%s删除失败, 请手工删除！' % (plan_obj, project_obj, project_plan_obj.uatBranch))
+                        project_plan_obj.uatBranch = None
+                        project_plan_obj.save()
                     else:
                         logger.info("没有预发分支，请先创建！")
                         res = "没有预发分支，请先创建！"

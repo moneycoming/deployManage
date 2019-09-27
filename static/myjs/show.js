@@ -808,6 +808,7 @@ layui.use(['element', 'layer'], function () {
         var planId = getQueryVariable("pid");
         var combination = projectId + '-' + planId + '-' + myDate;
 
+
         if ("WebSocket" in window) {
             console.log("您的浏览器支持 WebSocket!");
 

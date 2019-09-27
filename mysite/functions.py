@@ -6,6 +6,7 @@ import logging
 import subprocess
 import json
 import datetime
+import os
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
@@ -59,6 +60,7 @@ class branch:
         origin = repo.remotes.origin
         curBranch = repo.head.reference
         master = repo.heads.master
+        os.chdir(repoPath)
         subprocess.check_output(["git", "remote", "update", "--prune"])
         status = True
         try:
@@ -115,6 +117,7 @@ class branch:
         origin = repo.remotes.origin
         master = repo.heads.master
         curBranch = repo.head.reference
+        os.chdir(repoPath)
         subprocess.check_output(["git", "remote", "update", "--prune"])
         try:
             assert curBranch == master
@@ -134,3 +137,15 @@ class branch:
         hopeBranch = repo.create_head(hopeBranch, 'HEAD')
         origin.push(hopeBranch)
         repo.delete_head(hopeBranch)
+
+    def delete_branch(self, hopeBranch):
+        repoPath = self.url
+        os.chdir(repoPath)
+        subprocess.check_output(["git", "remote", "update", "--prune"])
+        status = True
+        try:
+            subprocess.check_output(["git", "push", "origin", "--delete", hopeBranch])
+        except subprocess.CalledProcessError:
+            status = False
+
+        return status
