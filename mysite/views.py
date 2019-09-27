@@ -19,7 +19,7 @@ from apscheduler.jobstores.base import ConflictingIdError
 from mysite.dataAnalysis import DataAnalysis
 from dwebsocket.decorators import accept_websocket
 from django.db.models import Q
-from mysite.multiEmail import email_createPlan, email_uatCheck, email_createTask
+from mysite.multiEmail import email_createPlan, email_uatCheck, email_createTask, email_proCheck
 from django.views.decorators.http import require_http_methods
 
 # 添加全局变量，记录日志
@@ -456,8 +456,11 @@ def ajax_checkSuccess(request):
                 'role': 1,
                 'remark': remark
             }
-            res = "发布任务%s验证通过，请合并代码！" % task_obj.name
-            # send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
+            mail_from = member_obj.user.email
+            mail_to = []
+            for k in range(len(production_members)):
+                mail_to.append(production_members[k].member.user.email)
+            email_proCheck(task_obj, mail_from, mail_to, mail_cc)
         else:
             ret = {
                 'role': 0
