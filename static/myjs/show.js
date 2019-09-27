@@ -943,13 +943,28 @@ layui.use(['element', 'layer'], function () {
                             }
                         });
                     } else {
-                        console.log(data);
-                        $('#uatForm').hide();
-                        var html = "<br>验收通过\n" +
-                            "<br>验收人：" + data.uatCheckMember + "\n" +
-                            "<br>验收日期：" + data.uatCheckDate + "\n" +
-                            "<br>备注：" + data.uatRemark;
-                        $("#uatP1").show().html(html);
+                        if (data.deployed === 0) {
+                            layer.open({
+                                type: 1
+                                , title: '警告'
+                                , content: '<div style="padding: 20px 100px;">' + "预发项目" + data.projects + "还没有部署！" + '</div>'
+                                , btn: '关闭'
+                                , btnAlign: 'c' //按钮居中
+                                , area: '500px;'
+                                , shade: 0.5 //不显示遮罩
+                                , yes: function () {
+                                    layer.closeAll();
+                                }
+                            });
+                        } else {
+                            console.log(data);
+                            $('#uatForm').hide();
+                            var html = "<br>验收通过\n" +
+                                "<br>验收人：" + data.uatCheckMember + "\n" +
+                                "<br>验收日期：" + data.uatCheckDate + "\n" +
+                                "<br>备注：" + data.uatRemark;
+                            $("#uatP1").show().html(html);
+                        }
                     }
                 },
                 error: function () {
@@ -1082,8 +1097,8 @@ layui.use(['element', 'layer'], function () {
                 type: 'POST',
                 data: postData,
 
-                success: function (arg) {
-                    if (arg === "no_role") {
+                success: function (data) {
+                    if (data.role === 0) {
                         layer.open({
                             type: 1
                             , title: '警告'
@@ -1111,7 +1126,7 @@ layui.use(['element', 'layer'], function () {
                         });
                         $(`#${step} .checkSuccess`).hide();
                         $(`#${step} #remark`).hide();
-                        $(`#${step} #p1`).removeClass("fade").html(arg);
+                        $(`#${step} #p1`).removeClass("fade").html(data.remark);
                     }
                 },
                 error: function () {

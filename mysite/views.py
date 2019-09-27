@@ -114,10 +114,7 @@ def productionKindChart(request):
 # 计划主页
 @login_required
 def showPlan(request):
-    member_obj = models.member.objects.get(user=request.user)
-    productions = models.production.objects.filter(member=member_obj)
-    for i in range(len(productions)):
-        plans = models.plan.objects.filter(production=productions[i])
+    plans = models.plan.objects.all()
 
     template = get_template('showPlan.html')
     html = template.render(context=locals(), request=request)
@@ -127,49 +124,38 @@ def showPlan(request):
 # 创建计划
 @login_required
 def createPlan(request):
-    productions = models.production.objects.all()
     kinds = models.kind.objects.all()
     projects = models.project.objects.all()
-    if request.method == 'POST':
-        production = request.POST.get('production')
-        member_obj = models.member.objects.get(user=request.user)
-        production_obj = models.production.objects.get(name=production)
-        production_members = models.production_member.objects.filter(production=production_obj)
-        isMember = False
-        for m in range(len(production_members)):
-            if member_obj == production_members[m].member:
-                isMember = True
-        if isMember and member_obj.user.has_perm('can_deploy_project'):
-            title = request.POST.get('title')
-            desc = request.POST.get('desc')
-            kind = request.POST.get('kind')
-            projectList = request.POST.getlist('project')
-            devBranchList = request.POST.getlist('devBranch')
-            createDate = datetime.datetime.now()
-            kind_obj = models.kind.objects.get(name=kind)
-            plan_obj = models.plan(name=title, description=desc, kind=kind_obj, production=production_obj,
-                                   createUser=member_obj, createDate=createDate)
-            plan_obj.save()
+    member_obj = models.member.objects.get(user=request.user)
+    production_members = models.production_member.objects.filter(member=member_obj)
+    if request.method == 'POST' and member_obj.user.has_perm('can_deploy_project'):
+        production_obj = models.production.objects.get(name=request.POST['production'])
+        projectList = request.POST.getlist('project')
+        devBranchList = request.POST.getlist('devBranch')
+        kind_obj = models.kind.objects.get(name=request.POST['kind'])
+        plan_obj = models.plan(name=request.POST['title'], description=request.POST['desc'], kind=kind_obj,
+                               production=production_obj, createUser=member_obj, createDate=datetime.datetime.now())
+        plan_obj.save()
 
-            for j in range(len(projectList)):
-                project_obj = models.project.objects.get(name=projectList[j])
-                dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
-                project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=dev_branch_obj,
-                                                       order=j)
-                project_plan_obj.save()
-                project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)
-                for i in range(len(project_servers)):
-                    deployDetail_obj = models.deployDetail(project_plan=project_plan_obj,
-                                                           server=project_servers[i].server)
-                    deployDetail_obj.save()
+        for j in range(len(projectList)):
+            project_obj = models.project.objects.get(name=projectList[j])
+            dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
+            project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=dev_branch_obj,
+                                                   order=j)
+            project_plan_obj.save()
+            project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)
+            for i in range(len(project_servers)):
+                deployDetail_obj = models.deployDetail(project_plan=project_plan_obj,
+                                                       server=project_servers[i].server)
+                deployDetail_obj.save()
 
-            project_plans = models.project_plan.objects.filter(plan=plan_obj)
-            mail_from = member_obj.user.email
-            mail_to = []
-            for k in range(len(production_members)):
-                mail_to.append(production_members[k].member.user.email)
-            email_createPlan(project_plans, mail_from, mail_to, mail_cc)
-            return HttpResponseRedirect('/showPlan')
+        project_plans = models.project_plan.objects.filter(plan=plan_obj)
+        mail_from = member_obj.user.email
+        mail_to = []
+        for k in range(len(production_members)):
+            mail_to.append(production_members[k].member.user.email)
+        email_createPlan(project_plans, mail_from, mail_to, mail_cc)
+        return HttpResponseRedirect('/showPlan')
 
     template = get_template('createPlan.html')
     html = template.render(context=locals(), request=request)
@@ -291,29 +277,41 @@ def ajax_uatCheck(request):
             if member_obj == production_members[m].member:
                 isMember = True
         if isMember and member_obj.user.has_perm('can_deploy_project'):
-            remark = request.POST.get('remark')
-            plan_obj.uatCheck = True
-            plan_obj.uatRemark = remark
-            plan_obj.uatCheckMember = member_obj
-            plan_obj.uatCheckDate = datetime.datetime.now()
-            plan_obj.save()
-            ret = {
-                'role': 1,
-                'uatRemark': plan_obj.uatRemark,
-                'uatCheckMember': plan_obj.uatCheckMember.name,
-                'uatCheckDate': plan_obj.uatCheckDate
-            }
             project_plans = models.project_plan.objects.filter(plan=plan_obj)
-            for i in range(len(project_plans)):
-                project_plans[i].exclusiveKey = 0
-                project_plans[i].save()
+            unDeployedProject = []
+            for j in range(len(project_plans)):
+                if not project_plans[j].lastPackageId:
+                    unDeployedProject.append(project_plans[j].project.name)
+            if len(unDeployedProject) == 0:
+                remark = request.POST.get('remark')
+                plan_obj.uatCheck = True
+                plan_obj.uatRemark = remark
+                plan_obj.uatCheckMember = member_obj
+                plan_obj.uatCheckDate = datetime.datetime.now()
+                plan_obj.save()
+                ret = {
+                    'role': 1,
+                    'uatRemark': plan_obj.uatRemark,
+                    'uatCheckMember': plan_obj.uatCheckMember.name,
+                    'uatCheckDate': plan_obj.uatCheckDate,
+                    'deploy': 1
+                }
+                project_plans = models.project_plan.objects.filter(plan=plan_obj)
+                for i in range(len(project_plans)):
+                    project_plans[i].exclusiveKey = 0
+                    project_plans[i].save()
 
-            mail_from = member_obj.user.email
-            mail_to = []
-            for k in range(len(production_members)):
-                mail_to.append(production_members[k].member.user.email)
-            email_uatCheck(plan_obj, mail_from, mail_to, mail_cc)
-
+                mail_from = member_obj.user.email
+                mail_to = []
+                for k in range(len(production_members)):
+                    mail_to.append(production_members[k].member.user.email)
+                email_uatCheck(plan_obj, mail_from, mail_to, mail_cc)
+            else:
+                ret = {
+                    'role:': 1,
+                    'deployed': 0,
+                    'projects': unDeployedProject
+                }
         else:
             ret = {
                 'role': 0,
@@ -454,12 +452,17 @@ def ajax_checkSuccess(request):
             task_obj.checked = 1
             task_obj.remark = remark
             task_obj.save()
+            ret = {
+                'role': 1,
+                'remark': remark
+            }
             res = "发布任务%s验证通过，请合并代码！" % task_obj.name
             # send_mail(task_obj.name, res, mail_from, mail_to, fail_silently=False)
-
-            return HttpResponse(json.dumps(remark), "application/json")
         else:
-            return HttpResponse("no_role")
+            ret = {
+                'role': 0
+            }
+        return HttpResponse(json.dumps(ret), "application/json")
 
 
 # 创建任务

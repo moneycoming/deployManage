@@ -99,8 +99,8 @@
                                                                 name="production">
                                                             <optgroup label="产品列表">
                                                                 <option value="" label="default"></option>
-                                                                {% for production in productions %}
-                                                                    <option>{{ production.name }}</option>
+                                                                {% for production_member in production_members %}
+                                                                    <option>{{ production_member.production.name }}</option>
                                                                 {% endfor %}
                                                             </optgroup>
                                                         </select>
@@ -118,7 +118,7 @@
                                         <div class="form-group">
                                             <h5 class="page-header"></h5>
                                             <div class="form-group">
-                                                <div class="col-lg-6">
+                                                <div class="layui-btn-group">
                                                     <!-- col-lg-6 start here -->
                                                     <button type="button" class="layui-btn layui-btn-primary"
                                                             id="add-btn"
@@ -128,6 +128,8 @@
                                                             id="add-btn"
                                                             onclick="del_div()">删除项目
                                                     </button>
+                                                    <input type="submit" class="layui-btn layui-btn-primary"
+                                                           value="创建计划">
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -147,15 +149,16 @@
                                                             <select title="选择项目" class="form-control" name="project"
                                                                     onchange="change(this,this[selectedIndex].value)">
                                                                 <optgroup label="project">
-                                                                {% for project in projects %}
-                                                                    <option>{{ project.name }}</option>
-                                                                {% endfor %}
+                                                                    {% for project in projects %}
+                                                                        <option>{{ project.name }}</option>
+                                                                    {% endfor %}
                                                                 </optgroup>
                                                             </select>
                                                             <span class="help-block">项目名</span>
                                                         </div>
                                                         <div class="col-lg-3 col-md-6">
-                                                            <select title="选择分支" class="form-control" id="branch" name="devBranch">
+                                                            <select title="选择分支" class="form-control" id="branch"
+                                                                    name="devBranch">
                                                                 <optgroup label="branch">
                                                                     <option id="default">请选择</option>
                                                                 </optgroup>
@@ -166,8 +169,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <input type="submit" class="layui-btn layui-btn-primary" value="创建"
-                                               style="float: right">
                                     </div>
                                 </div>
                             </form>
