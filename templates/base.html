@@ -267,57 +267,7 @@
         });
     });
 </script>
-<!--任务删除 -->
-<script>
-    function deleteTask(obj) {
-        var tr = $(obj).parent().parent();
-        var taskId = tr.children("td#taskId").text();
-        var postData = {};
-        postData['id'] = taskId;
-        console.log(taskId);
-
-        $.ajax({
-            url: '/ajax_deleteTask',
-            type: 'POST',
-            data: postData,
-
-            success: function (arg) {
-                if (arg.length > 0) {
-                    tr.remove();
-                }
-            },
-            error: function () {
-                console.log("error");
-            }
-        })
-    }
-</script>
-<!--计划删除 -->
-<script>
-    function deletePlan(obj) {
-        var tr = $(obj).parent().parent();
-        var planId = tr.children("td#planId").text();
-        var postData = {};
-        postData['id'] = planId;
-        console.log(planId);
-
-        $.ajax({
-            url: '/ajax_deletePlan',
-            type: 'POST',
-            data: postData,
-
-            success: function (arg) {
-                if (arg.length > 0) {
-                    tr.remove();
-                }
-            },
-            error: function () {
-                console.log("error");
-            }
-        })
-    }
-</script>
-<!--表单验证-->
+<!--计划创建表单验证-->
 <script>
     $().ready(function () {
         $("#validate").validate({
@@ -334,13 +284,10 @@
                 production: {
                     required: true,
                 },
-                plan: {
+                devBranch: {
                     required: true,
                 },
-                jenkinsJob: {
-                    required: true,
-                },
-                buildId: {
+                kind: {
                     required: true,
                 }
             },
@@ -356,14 +303,31 @@
                 production: {
                     required: "请选择所属产品",
                 },
-                plan: {
-                    required: "请选择所属计划",
+                kind: {
+                    required: "请选择发布类型",
                 },
-                jenkinsJob: {
-                    required: "请选择Jenkins项目",
-                },
-                buildId: {
-                    required: "请选择构建号",
+                devBranch: {
+                    required: "请选择开发分支",
+                }
+            }
+        });
+    });
+</script>
+<!--任务创建表单验证-->
+<script>
+    $().ready(function () {
+        $("#taskValidate").validate({
+            ignore: "",
+            rules: {
+                title: {
+                    required: true,
+                    minlength: 5
+                }
+            },
+            messages: {
+                title: {
+                    required: "请输入标题",
+                    minlength: "标题必需由五个字母组成",
                 }
             }
         });

@@ -50,12 +50,13 @@ def email_createTask(plan, sequences, mail_from, mail_to, mail_cc):
 
 
 # 线上验收邮件
-def email_proCheck(task, mail_from, mail_to, mail_cc):
-    title = "【上线验收】：%s" % task.plan.name
+def email_proCheck(sequence, mail_from, mail_to, mail_cc):
+    title = "【上线验收】：%s" % sequence.task.plan.name
     context = {
-        'task': task,
-        'plan': task.plan,
-        'url': 'http://127.0.0.1:8000/taskDetail?tid=%s' % task.id
+        'sequence': sequence,
+        'task': sequence.task,
+        'plan': sequence.task.plan,
+        'url': 'http://127.0.0.1:8000/taskDetail?tid=%s' % sequence.task.id
     }
 
     template = loader.get_template("email_proCheck.html")

@@ -128,7 +128,7 @@ def createPlan(request):
     projects = models.project.objects.all()
     member_obj = models.member.objects.get(user=request.user)
     production_members = models.production_member.objects.filter(member=member_obj)
-    if request.method == 'POST' and member_obj.user.has_perm('can_deploy_project'):
+    if request.method == 'POST' and member_obj.user.has_perm('add_plan'):
         production_obj = models.production.objects.get(name=request.POST['production'])
         projectList = request.POST.getlist('project')
         devBranchList = request.POST.getlist('devBranch')
@@ -162,6 +162,54 @@ def createPlan(request):
     return HttpResponse(html)
 
 
+# 计划详情
+@login_required
+def planDetail(request):
+    planId = request.GET.get('pid')
+    if planId:
+        plan_obj = models.plan.objects.get(id=planId)
+        tasks = models.task.objects.filter(plan__id=planId)
+        project_plans = models.project_plan.objects.filter(plan=plan_obj)
+        # production_members = models.production_member.objects.filter(production=plan_obj.production)
+        # member_obj = models.member.objects.get(user=request.user)
+        # isMember = False
+        # for m in range(len(production_members)):
+        #     if member_obj == production_members[m].member:
+        #         isMember = True
+
+    template = get_template('planDetail.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+# 计划删除
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def ajax_deletePlan(request):
+    planId = request.POST.get('id')
+    if planId:
+        plan_obj = models.plan.objects.get(id=planId)
+        member_obj = models.member.objects.get(user=request.user)
+        production_members = models.production_member.objects.filter(production=plan_obj.production)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+                break
+        if isMember and member_obj.user.has_perm('delete_plan'):
+            plan_obj.delete()
+            ret = {
+                'role': 1
+            }
+        else:
+            ret = {
+                'role': 0
+            }
+
+        return HttpResponse(json.dumps(ret), "application/json")
+
+
 # 任务主页
 @login_required
 def showTask(request):
@@ -171,6 +219,126 @@ def showTask(request):
     template = get_template('showTask.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
+
+
+# 创建任务
+@login_required
+def createTask(request):
+    deploySegment_obj = models.segment.objects.get(isDeploy=1)
+    checkSegment_obj = models.segment.objects.get(isCheck=1)
+    mergeSegment_obj = models.segment.objects.get(isMerge=1)
+    beforeDeploySegments = models.segment.objects.filter(order__lt=deploySegment_obj.order)
+    afterDeploySegments = models.segment.objects.filter(order__gt=deploySegment_obj.order).filter(
+        ~Q(order=checkSegment_obj.order)).filter(~Q(order=mergeSegment_obj.order))
+    member_obj = models.member.objects.get(user=request.user)
+    plan_obj = models.plan.objects.get(id=request.GET['pid'])
+    if request.method == 'POST':
+        post_plan_obj = models.plan.objects.get(name=request.POST['plan'])
+        production_members = models.production_member.objects.filter(production=post_plan_obj.production)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+        if isMember and member_obj.user.has_perm('add_task'):
+            title = request.POST.get('title')
+            beforeDeployList = request.POST.getlist('beforeDeploy')
+            afterDeployList = request.POST.getlist('afterDeploy')
+            createDate = datetime.datetime.now()
+            task_obj = models.task(name=title, plan=post_plan_obj, createUser=member_obj, createDate=createDate,
+                                   onOff=1)
+            task_obj.save()
+            for i in range(len(beforeDeployList)):
+                segment_obj = models.segment.objects.get(name=beforeDeployList[i])
+                sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
+                sequence_obj.save()
+            for j in range(len(afterDeployList)):
+                segment_obj = models.segment.objects.get(name=afterDeployList[j])
+                sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
+                sequence_obj.save()
+            sequence_deploy_obj = models.sequence(segment=deploySegment_obj, task=task_obj)
+            sequence_deploy_obj.save()
+            sequence_check_obj = models.sequence(segment=checkSegment_obj, task=task_obj)
+            sequence_check_obj.save()
+            sequence_merge_obj = models.sequence(segment=mergeSegment_obj, task=task_obj)
+            sequence_merge_obj.save()
+            sequences = models.sequence.objects.filter(task=task_obj).order_by('segment__order')
+
+            for n in range(len(sequences)):
+                sequences[n].pre_segment = n
+                sequences[n].next_segment = n + 2
+                sequences[n].priority = n + 1
+                sequences[n].save()
+
+            sequences[0].executeCursor = 1
+            sequences[0].save()
+
+            mail_from = member_obj.user.email
+            mail_to = []
+            for k in range(len(production_members)):
+                mail_to.append(production_members[k].member.user.email)
+            email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc)
+
+            return HttpResponseRedirect('/planDetail?pid=%s' % post_plan_obj.id)
+
+    template = get_template('createTask.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+# 任务详情
+@login_required
+def taskDetail(request):
+    taskId = request.GET.get('tid')
+    if taskId:
+        task_obj = models.task.objects.get(id=taskId)
+        project_plans = models.project_plan.objects.filter(plan=task_obj.plan).order_by('order')
+        upToImplementSequence = models.sequence.objects.filter(task=task_obj).get(executeCursor=1)
+        unimplementedSequences = models.sequence.objects.filter(task=task_obj,
+                                                                priority__gt=upToImplementSequence.priority).order_by(
+            'priority')
+        blueBlueSequences = models.sequence.objects.filter(task=task_obj,
+                                                           priority__lte=upToImplementSequence.priority).order_by(
+            'priority')
+        try:
+            blueGraySequence = unimplementedSequences[0]
+            grayGraySequences = unimplementedSequences[1:]
+        except IndexError:
+            logger.info("%s已是最后一个环节" % upToImplementSequence.segment.name)
+
+        sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
+        consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
+
+    template = get_template('taskDetail.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+# 任务删除
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def ajax_deleteTask(request):
+    taskId = request.POST.get('id')
+    if taskId:
+        member_obj = models.member.objects.get(user=request.user)
+        task_obj = models.task.objects.get(id=taskId)
+        production_members = models.production_member.objects.filter(production=task_obj.plan.production)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+                break
+        if isMember and member_obj.user.has_perm('delete_task'):
+            task_obj.delete()
+            ret = {
+                'role': 1
+            }
+        else:
+            ret = {
+                'role': 0
+            }
+
+        return HttpResponse(json.dumps(ret), "application/json")
 
 
 # 控制任务启用开关
@@ -186,50 +354,6 @@ def ajax_showTask(request):
         task.save()
 
         return HttpResponse(task)
-
-
-# 任务删除
-@login_required
-@csrf_exempt
-def ajax_deleteTask(request):
-    taskId = request.POST.get('id')
-    if taskId:
-        task = models.task.objects.get(id=taskId)
-        task.delete()
-
-        return HttpResponse("success")
-
-
-# 计划删除
-@login_required
-@csrf_exempt
-def ajax_deletePlan(request):
-    planId = request.POST.get('id')
-    if planId:
-        plan = models.plan.objects.get(id=planId)
-        plan.delete()
-
-        return HttpResponse("success")
-
-
-# 计划详情
-@login_required
-def planDetail(request):
-    planId = request.GET.get('pid')
-    if planId:
-        plan_obj = models.plan.objects.get(id=planId)
-        tasks = models.task.objects.filter(plan__id=planId)
-        project_plans = models.project_plan.objects.filter(plan=plan_obj)
-        production_members = models.production_member.objects.filter(production=plan_obj.production)
-        member_obj = models.member.objects.get(user=request.user)
-        isMember = False
-        for m in range(len(production_members)):
-            if member_obj == production_members[m].member:
-                isMember = True
-
-    template = get_template('planDetail.html')
-    html = template.render(context=locals(), request=request)
-    return HttpResponse(html)
 
 
 # 预发详情
@@ -326,78 +450,58 @@ def ajax_uatCheck(request):
 # 创建预发分支
 @login_required
 @csrf_exempt
+@require_http_methods(["POST"])
 def ajax_createUatBranch(request):
-    if request.method == 'POST':
-        planId = request.POST.get('pid')
-        projectId = request.POST.get('prjId')
-        option = request.POST.get('radio')
+    planId = request.POST.get('pid')
+    projectId = request.POST.get('prjId')
+    if projectId and planId:
+        project_obj = models.project.objects.get(id=projectId)
+        plan_obj = models.plan.objects.get(id=planId)
+        project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
+        production_members = models.production_member.objects.filter(production=plan_obj.production)
         member_obj = models.member.objects.get(user=request.user)
-        if projectId and planId:
-            project_obj = models.project.objects.get(id=projectId)
-            plan_obj = models.plan.objects.get(id=planId)
-            project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
-            production_members = models.production_member.objects.filter(production=plan_obj.production)
-            isMember = False
-            for m in range(len(production_members)):
-                if member_obj == production_members[m].member:
-                    isMember = True
-            result = []
-            if isMember and member_obj.user.has_perm("can_deploy_project"):
-                if option == "option1":
-                    uatBranch = request.POST.get('uatBranch')
-                    status = True
-                else:
-                    uid = str(uuid.uuid4())
-                    branchCode = ''.join(uid.split('-'))[0:10]
-                    uatBranch = "uat-"
-                    uatBranch += branchCode
-                    devBranch = project_plan_obj.devBranch
-                    branch_obj = branch(project_obj.project_dir)
-                    branch_obj.create_branch(uatBranch)
-                    status = branch_obj.merge_branch(devBranch.name, uatBranch)
-
-                if status:
-                    project_plan_obj.uatBranch = uatBranch
-                    project_plan_obj.save()
-                    res = "预发分支：%s创建成功！" % uatBranch
-                    result.append(res)
-                    result.append(uatBranch)
-                else:
-                    res = "预发分支创建失败！"
-                    result.append(res)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+        if isMember and member_obj.user.has_perm("can_deploy_project"):
+            option = request.POST.get('radio')
+            if option == "option1":
+                uatBranch = request.POST.get('uatBranch')
+                status = True
             else:
-                res = "你没有创建预发分支的权限！"
-                result.append(res)
+                uid = str(uuid.uuid4())
+                branchCode = ''.join(uid.split('-'))[0:10]
+                uatBranch = "uat-"
+                uatBranch += branchCode
+                devBranch = project_plan_obj.devBranch
+                branch_obj = branch(project_obj.project_dir)
+                branch_obj.create_branch(uatBranch)
+                status = branch_obj.merge_branch(devBranch.name, uatBranch)
 
-            return HttpResponse(json.dumps(result), "application/json")
+            if status:
+                project_plan_obj.uatBranch = uatBranch
+                project_plan_obj.save()
+                res = "预发分支：%s创建成功！" % uatBranch
+                ret = {
+                    'role': 1,
+                    'result': 1,
+                    'res': res,
+                    'uatBranch': uatBranch
+                }
+            else:
+                res = "预发分支：%s创建失败！" % uatBranch
+                ret = {
+                    'role': 1,
+                    'result': 0,
+                    'res': res
+                }
+        else:
+            ret = {
+                'role': 0
+            }
 
-
-# 任务详情
-@login_required
-def taskDetail(request):
-    taskId = request.GET.get('tid')
-    if taskId:
-        task_obj = models.task.objects.get(id=taskId)
-        project_plans = models.project_plan.objects.filter(plan=task_obj.plan).order_by('order')
-        upToImplementSequence = models.sequence.objects.filter(task=task_obj).get(executeCursor=1)
-        unimplementedSequences = models.sequence.objects.filter(task=task_obj,
-                                                                priority__gt=upToImplementSequence.priority).order_by(
-            'priority')
-        blueBlueSequences = models.sequence.objects.filter(task=task_obj,
-                                                           priority__lte=upToImplementSequence.priority).order_by(
-            'priority')
-        try:
-            blueGraySequence = unimplementedSequences[0]
-            grayGraySequences = unimplementedSequences[1:]
-        except IndexError:
-            logger.info("%s已是最后一个环节" % upToImplementSequence.segment.name)
-
-        sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
-        consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
-
-    template = get_template('taskDetail.html')
-    html = template.render(context=locals(), request=request)
-    return HttpResponse(html)
+        return HttpResponse(json.dumps(ret), "application/json")
 
 
 # 任务队列是否执行完成
@@ -405,7 +509,6 @@ def taskDetail(request):
 @csrf_exempt
 def ajax_taskImplement(request):
     sequenceId = request.POST.get('id')
-    print(sequenceId)
     task_obj = models.task.objects.get(id=request.POST['taskId'])
     production_members = models.production_member.objects.filter(production=task_obj.plan.production)
     member_obj = models.member.objects.get(user=request.user)
@@ -430,7 +533,6 @@ def ajax_taskImplement(request):
                 'role': 1,
                 'remark': sequence_obj.remarks
             }
-            print('11111')
         else:
             ret = {
                 'role': 0
@@ -475,7 +577,7 @@ def ajax_checkSuccess(request):
             mail_to = []
             for k in range(len(production_members)):
                 mail_to.append(production_members[k].member.user.email)
-            email_proCheck(sequence_obj.task, mail_from, mail_to, mail_cc)
+            email_proCheck(sequence_obj, mail_from, mail_to, mail_cc)
         else:
             ret = {
                 'role': 0
@@ -483,82 +585,18 @@ def ajax_checkSuccess(request):
         return HttpResponse(json.dumps(ret), "application/json")
 
 
-# 创建任务
-@login_required
-def createTask(request):
-    deploySegment_obj = models.segment.objects.get(isDeploy=1)
-    checkSegment_obj = models.segment.objects.get(isCheck=1)
-    mergeSegment_obj = models.segment.objects.get(isMerge=1)
-    beforeDeploySegments = models.segment.objects.filter(order__lt=deploySegment_obj.order)
-    afterDeploySegments = models.segment.objects.filter(order__gt=deploySegment_obj.order).filter(
-        ~Q(order=checkSegment_obj.order)).filter(~Q(order=mergeSegment_obj.order))
-    member_obj = models.member.objects.get(user=request.user)
-    plan_obj = models.plan.objects.get(id=request.GET['pid'])
-    if request.method == 'POST':
-        post_plan_obj = models.plan.objects.get(name=request.POST['plan'])
-        production_members = models.production_member.objects.filter(production=post_plan_obj.production)
-        isMember = False
-        for m in range(len(production_members)):
-            if member_obj == production_members[m].member:
-                isMember = True
-        if isMember and member_obj.user.has_perm('can_deploy_project'):
-            title = request.POST.get('title')
-            beforeDeployList = request.POST.getlist('beforeDeploy')
-            afterDeployList = request.POST.getlist('afterDeploy')
-            createDate = datetime.datetime.now()
-            task_obj = models.task(name=title, plan=post_plan_obj, createUser=member_obj, createDate=createDate,
-                                   onOff=1)
-            task_obj.save()
-            for i in range(len(beforeDeployList)):
-                segment_obj = models.segment.objects.get(name=beforeDeployList[i])
-                sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
-                sequence_obj.save()
-            for j in range(len(afterDeployList)):
-                segment_obj = models.segment.objects.get(name=afterDeployList[j])
-                sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
-                sequence_obj.save()
-            sequence_deploy_obj = models.sequence(segment=deploySegment_obj, task=task_obj)
-            sequence_deploy_obj.save()
-            sequence_check_obj = models.sequence(segment=checkSegment_obj, task=task_obj)
-            sequence_check_obj.save()
-            sequence_merge_obj = models.sequence(segment=mergeSegment_obj, task=task_obj)
-            sequence_merge_obj.save()
-            sequences = models.sequence.objects.filter(task=task_obj).order_by('segment__order')
-
-            for n in range(len(sequences)):
-                sequences[n].pre_segment = n
-                sequences[n].next_segment = n + 2
-                sequences[n].priority = n + 1
-                sequences[n].save()
-
-            sequences[0].executeCursor = 1
-            sequences[0].save()
-
-            mail_from = member_obj.user.email
-            mail_to = []
-            for k in range(len(production_members)):
-                mail_to.append(production_members[k].member.user.email)
-            email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc)
-
-            return HttpResponseRedirect('/planDetail?pid=%s' % post_plan_obj.id)
-
-    template = get_template('createTask.html')
-    html = template.render(context=locals(), request=request)
-    return HttpResponse(html)
-
-
 # 获取项目的所有分支
 @login_required
+@require_http_methods(["GET"])
 def ajax_load_info(request):
-    if request.method == 'GET':
-        jenkins_job_name = request.GET.get('jenkins_job_name')
-        if jenkins_job_name:
-            project = models.project.objects.get(name=jenkins_job_name)
-            branches = models.devBranch.objects.filter(project=project)
-            branchList = list(branches.values("name"))
-            branchListJson = json.dumps(branchList)
+    jenkins_job_name = request.GET.get('jenkins_job_name')
+    if jenkins_job_name:
+        project = models.project.objects.get(name=jenkins_job_name)
+        branches = models.devBranch.objects.filter(project=project)
+        branchList = list(branches.values("name"))
+        branchListJson = json.dumps(branchList)
 
-            return HttpResponse(branchListJson, "application/json")
+        return HttpResponse(branchListJson, "application/json")
 
 
 @login_required

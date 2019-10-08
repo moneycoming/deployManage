@@ -36,8 +36,8 @@
                             <strong class="card-title">创建任务</strong>
                         </div>
                         <div class="card-body">
-                            <form class="form-horizontal group-border hover-stripped" role="form" method="post"
-                                  action="/createTask?pid={{ plan_obj.id }}">
+                            <form class="form-horizontal group-border hover-stripped" role="form" id="taskValidate"
+                                  method="post" action="/createTask?pid={{ plan_obj.id }}">
                                 {% csrf_token %}
                                 <div class="form-group">
                                     <label class="col-lg-2 control-label">任务标题</label>

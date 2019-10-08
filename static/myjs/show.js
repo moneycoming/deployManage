@@ -774,23 +774,41 @@ layui.use(['element', 'layer'], function () {
             type: 'POST',
             data: postData,
 
-            success: function (arg) {
-                layer.open({
-                    type: 1
-                    , title: '结果'
-                    , content: '<div style="padding: 20px 100px;">' + arg[0] + '</div>'
-                    , btn: '关闭'
-                    , btnAlign: 'c' //按钮居中
-                    , area: '500px;'
-                    , shade: 0.5 //不显示遮罩
-                    , yes: function () {
-                        layer.closeAll();
+            success: function (data) {
+                if (data.role === 1) {
+                    layer.open({
+                        type: 1
+                        , title: '结果'
+                        , content: '<div style="padding: 20px 100px;">' + data.res + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                    if (data.result === 1) {
+                        $('#createUatBranchText').html("分支创建完成");
+                        $(`#uatBranch`).html(data.uatBranch);
+                    } else {
+                        $('#createUatBranchText').html("分支创建失败");
                     }
-                });
-                if (arg[1].length > 0) {
-                    $('#createUatBranchText').html("分支创建完成");
-                    $(`#uatBranch`).html(arg[1]);
+                } else {
+                    layer.open({
+                        type: 1
+                        , title: '结果'
+                        , content: '<div style="padding: 20px 100px;">' + "你没有创建预发分支的权限！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
                 }
+
             },
             error: function () {
                 console.log("error");
@@ -1355,4 +1373,104 @@ layui.use(['element', 'layer'], function () {
             console.alert("您的浏览器不支持 WebSocket!");
         }
     }
+});
+//任务删除
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", ".deleteTask", function () {
+        var tr = $(this).parent().parent();
+        var taskId = tr.children("td#taskId").text();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok(tr, taskId);
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok(tr, taskId) {
+            var postData = {};
+            postData['id'] = taskId;
+
+            $.ajax({
+                url: '/ajax_deleteTask',
+                type: 'POST',
+                data: postData,
+
+                success: function (data) {
+                    if (data.role === 0) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "你没有删除任务的权限" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else {
+                        tr.remove();
+                    }
+                },
+                error: function () {
+                    console.log("error");
+                }
+            })
+        }
+    });
+});
+//计划删除
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", ".deletePlan", function () {
+        var tr = $(this).parent().parent();
+        var planId = tr.children("td#planId").text();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok(tr, planId);
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok(tr, planId) {
+            var postData = {};
+            postData['id'] = planId;
+
+            $.ajax({
+                url: '/ajax_deletePlan',
+                type: 'POST',
+                data: postData,
+
+                success: function (data) {
+                    if (data.role === 0) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "你没有删除计划的权限" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else {
+                        tr.remove();
+                    }
+                },
+                error: function () {
+                    console.log("error");
+                }
+            })
+        }
+    });
 });
