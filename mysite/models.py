@@ -209,7 +209,10 @@ class deployDetail(models.Model):
 class segment(models.Model):
     name = models.CharField(max_length=20, verbose_name="任务执行环节")
     description = models.CharField(max_length=200, verbose_name="描述")
+    order = models.IntegerField(verbose_name="环节自带执行顺序")
     isDeploy = models.BooleanField(default=False, verbose_name="是否为项目部署环节")
+    isCheck = models.BooleanField(default=False, verbose_name="是否为验收环节")
+    isMerge = models.BooleanField(default=False, verbose_name="是否为分支合并环节")
 
     class Meta:
         verbose_name = u'任务执行环节列表'
@@ -226,12 +229,7 @@ class task(models.Model):
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(member, on_delete=models.CASCADE, verbose_name="由谁创建", related_name='taskCreateUser')
-    checkUser = models.ForeignKey(member, on_delete=models.CASCADE, null=True, verbose_name="由谁验证",
-                                  related_name='checkUser')
-    checkDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="验证日期")
     onOff = models.IntegerField(verbose_name="关闭/重启")
-    checked = models.IntegerField(default=0, verbose_name="0：未验证，1：通过，2：不通过")
-    remark = models.TextField(null=True, verbose_name="备注")
 
     class Meta:
         verbose_name = u'任务列表'
@@ -245,13 +243,14 @@ class task(models.Model):
 class sequence(models.Model):
     segment = models.ForeignKey(segment, on_delete=models.CASCADE, verbose_name="执行环节")
     task = models.ForeignKey(task, on_delete=models.CASCADE, verbose_name="所属任务")
-    pre_segment = models.IntegerField(verbose_name="上个节点序号")
-    next_segment = models.IntegerField(verbose_name="下个节点序号")
+    pre_segment = models.IntegerField(null=True, verbose_name="上个节点序号")
+    next_segment = models.IntegerField(null=True, verbose_name="下个节点序号")
     executeDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="最新操作日期")
     executor = models.ForeignKey(member, null=True, verbose_name="最新执行者")
-    priority = models.IntegerField(verbose_name="执行顺序")
+    priority = models.IntegerField(null=True, verbose_name="执行顺序")
     implemented = models.BooleanField(default=False, verbose_name="是否已执行")
     remarks = models.CharField(max_length=200, null=True, verbose_name="备注")
+    executeCursor = models.BooleanField(default=False, verbose_name="执行环节记录点")
 
     class Meta:
         verbose_name = u'任务队列管理'

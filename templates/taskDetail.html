@@ -36,21 +36,34 @@
                         </div>
                         <div class="card-body">
                             <ul id="myTab" role="tablist">
-                                {% for sequence in sequences %}
+                                {% for sequence in blueBlueSequences %}
                                     {% if sequence.priority == 1 %}
-                                        <li id="step1Li" class="active blue">
+                                        <li id="step{{ sequence.priority }}Li" class="active blue">
                                             <a href="#" role="tab" data-toggle="tab">
-                                                1.{{ sequence.segment.name }}
-                                            </a>
-                                        </li>
-                                    {% elif sequence.priority == 2 %}
-                                        <li id="step2Li" class="gray">
-                                            <img id="step2Img" src="{% static "images/blue_gray.png" %}"/>
-                                            <a href="#" role="tab" data-toggle="tab">
-                                                2.{{ sequence.segment.name }}
+                                                {{ sequence.priority }}.{{ sequence.segment.name }}
                                             </a>
                                         </li>
                                     {% else %}
+                                        <li id="step{{ sequence.priority }}Li" class="active blue">
+                                            <img id="step{{ sequence.priority }}Img"
+                                                 src="{% static "images/blue_blue.png" %}"/>
+                                            <a href="#" role="tab" data-toggle="tab">
+                                                {{ sequence.priority }}.{{ sequence.segment.name }}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if blueGraySequence %}
+                                    <li id="step{{ blueGraySequence.priority }}Li" class="gray">
+                                        <img id="step{{ blueGraySequence.priority }}Img"
+                                             src="{% static "images/blue_gray.png" %}"/>
+                                        <a href="#" role="tab" data-toggle="tab">
+                                            {{ blueGraySequence.priority }}.{{ blueGraySequence.segment.name }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                {% if grayGraySequences %}
+                                    {% for sequence in grayGraySequences %}
                                         <li id="step{{ sequence.priority }}Li" class="gray">
                                             <img id="step{{ sequence.priority }}Img"
                                                  src="{% static "images/gray_gray.png" %}"/>
@@ -58,20 +71,14 @@
                                                 {{ sequence.priority }}.{{ sequence.segment.name }}
                                             </a>
                                         </li>
-                                    {% endif %}
-                                {% endfor %}
-                                <li id="step{{ lastNum }}Li" class="gray">
-                                    <img id="step{{ lastNum }}Img" src="{% static "images/gray_gray.png" %}"/>
-                                    <a href="#" role="tab" data-toggle="tab">
-                                        上线后验证
-                                    </a>
-                                </li>
+                                    {% endfor %}
+                                {% endif %}
                             </ul>
                             <div id="myTabContent" class="tab-content">
                                 {% for sequence in sequences %}
-                                    {% if sequence.priority == 1 %}
+                                    {% if sequence.executeCursor == 1 %}
                                         {% if sequence.segment.isDeploy == 1 %}
-                                            <div id="step1" class="tab-pane active">
+                                            <div id="step{{ sequence.priority }}" class="tab-pane active">
                                                 <h5 class="page-header"></h5>
                                                 <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
                                                     <ul class="layui-tab-title">
@@ -120,163 +127,7 @@
                                                                          aria-valuemax="100">
                                                                     </div>
                                                                 </div>
-                                                                {% if show %}
-                                                                    <button class="layui-btn layui-btn-primary startDeploy"
-                                                                            data-type="loading">立即执行
-                                                                    </button>
-                                                                {% endif %}
-                                                                <div class="layui-btn-group">
-                                                                    <button class="layui-btn layui-btn-primary restartDeploy fade"
-                                                                            data-type="loading">重新发布
-                                                                    </button>
-                                                                    <button class="layui-btn layui-btn-primary continueDeploy fade"
-                                                                            data-type="loading">跳过继续下一个发布
-                                                                    </button>
-                                                                    <button class="layui-btn layui-btn-primary rollbackOne fade"
-                                                                            data-type="loading">回滚当前项目
-                                                                    </button>
-                                                                    <button class="layui-btn layui-btn-primary rollbackAll fade"
-                                                                            data-type="loading">回滚所有项目
-                                                                    </button>
-                                                                </div>
-                                                                <h5 class="page-header"></h5>
-                                                                <div class="layui-col-md12">
-                                                                    <div class="layui-card">
-                                                                        <div class="layui-card-header fade"
-                                                                             id="proConsoleOpt">
-                                                                            <strong>控制台信息</strong></div>
-                                                                        <div class="layui-card-body proBuildResult"></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="layui-tab-item">
-                                                            <ul class="layui-timeline">
-                                                                <button type="button"
-                                                                        class="layui-btn layui-btn-primary"
-                                                                        style="float: right"
-                                                                        onclick="window.location.reload()">刷新
-                                                                </button>
-                                                                <h5 class="page-header"></h5>
-                                                                {% for consoleOpt in consoleOpts %}
-                                                                    <li class="layui-timeline-item">
-                                                                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-                                                                        <div class="layui-timeline-content layui-text">
-                                                                            <h3 class="layui-timeline-title">{{ consoleOpt.deployTime }}</h3>
-                                                                            <p>{% if consoleOpt.category == 0 %}
-                                                                                操作：发布
-                                                                            {% else %}
-                                                                                操作：回滚
-                                                                            {% endif %}
-                                                                                <br>执行人：{{ consoleOpt.deployUser.name }}
-                                                                                <br><a href="/pro_console_opt/{{ consoleOpt.uniteKey }}">查看控制台信息</a>
-                                                                            </p>
-                                                                        </div>
-                                                                    </li>
-                                                                {% endfor %}
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {% if sequence.implemented == 1 %}
-                                                    <button type="button" class="layui-btn layui-btn-primary"
-                                                            style="float: right">
-                                                        <a href="#step{{ sequence.next_segment }}"
-                                                           onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                           role="tab" data-toggle="tab">下一步</a></button>
-                                                {% endif %}
-                                            </div>
-                                        {% else %}
-                                            <div id="step1" class="tab-pane active">
-                                                <h5 class="page-header"></h5>
-                                                <div class="alert alert-success" role="alert">
-                                                    <h4 class="alert-heading">说明</h4>
-                                                    <hr>
-                                                    <p>1-在文本框中填写操作的相关备注</p>
-                                                    <p>2-完成后点击“执行”，进入下一环节</p>
-                                                </div>
-                                                {% if sequence.implemented == 0 %}
-                                                    <p id="p1" class="fade"></p>
-                                                    <textarea class="form-control" name="desc" id="remark"
-                                                              placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）"
-                                                              rows="4" value=""></textarea>
-                                                    <h5 class="page-header"></h5>
-                                                    <button type="button" class="layui-btn layui-btn-primary segmentBtn"
-                                                            id="{{ sequence.id }}">执行
-                                                    </button>
-                                                    <button type="button" id="nextBtn"
-                                                            class="layui-btn layui-btn-primary fade"
-                                                            style="float: right">
-                                                        <a href="#step{{ sequence.next_segment }}"
-                                                           onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                           role="tab"
-                                                           data-toggle="tab">下一步</a></button>
-                                                {% else %}
-                                                    <h5 class="page-header"></h5>
-                                                    <p>
-                                                        执行人：{{ sequence.executor.name }}</p>
-                                                    <p>备注：{{ sequence.remarks }}</p>
-                                                    <button type="button" class="layui-btn layui-btn-primary"
-                                                            style="float: right">
-                                                        <a href="#step{{ sequence.next_segment }}"
-                                                           onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                           role="tab"
-                                                           data-toggle="tab">下一步</a></button>
-                                                {% endif %}
-                                            </div>
-                                        {% endif %}
-                                    {% else %}
-                                        {% if sequence.segment.isDeploy == 1 %}
-                                            <div id="step{{ sequence.priority }}" class="tab-pane fade">
-                                                <h5 class="page-header"></h5>
-                                                <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
-                                                    <ul class="layui-tab-title">
-                                                        <li class="layui-this">任务信息</li>
-                                                        <li>任务执行</li>
-                                                        <li>执行记录</li>
-                                                    </ul>
-                                                    <div class="layui-tab-content">
-                                                        <div class="layui-tab-item layui-show">
-                                                            <div class="alert alert-success" role="alert">
-                                                                <h4 class="alert-heading">说明</h4>
-                                                                <hr>
-                                                                <p>1-执行顺序从上到下</p>
-                                                                <p>2-中间未划横线的项目代表还没有发布或者发布失败</p>
-                                                                <p>3-中间划横线的项目代表已经发布完成</p>
-                                                            </div>
-                                                            <p>【标题】{{ task_obj.name }}</p>
-                                                            <br>【执行顺序】
-                                                            {% for project_plan in project_plans %}
-                                                                {% if project_plan.buildStatus == 1 %}
-                                                                    <br>
-                                                                    <del>{{ project_plan.project.name }}：{{ project_plan.lastPackageId }}</del>
-                                                                {% else %}
-                                                                    <br>{{ project_plan.project.name }}：
-                                                                    {{ project_plan.lastPackageId }}
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        </div>
-                                                        <div class="layui-tab-item">
-                                                            <div class="site-demo-button"
-                                                                 style="margin-top: 20px; margin-bottom: 0;">
-                                                                <div class="alert alert-success" role="alert">
-                                                                    <h4 class="alert-heading">说明</h4>
-                                                                    <hr>
-                                                                    <p>1-点击“立即发布”按钮进行发布，每个项目的发布预计耗时1分钟左右</p>
-                                                                    <p>2-点击“立即发布”按钮后，会有进度条显示整体发布进度</p>
-                                                                    <p>3-每个项目发布完成后，可以点击“控制台信息”下面的“查看控制台信息按钮”进行查看</p>
-                                                                </div>
-                                                                <div class="text" style="text-align:center;"><p
-                                                                        id="proDeployText"></p></div>
-                                                                <div class="progress mb-2 proDeployProgress fade">
-                                                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
-                                                                         id="proBuildProgress" role="progressbar"
-                                                                         style="width: 0%"
-                                                                         aria-valuenow="55" aria-valuemin="0"
-                                                                         aria-valuemax="100">
-                                                                    </div>
-                                                                </div>
-                                                                {% if uncompleted %}
+                                                                {% if sequence.implemented == 0 %}
                                                                     <button class="layui-btn layui-btn-primary startDeploy"
                                                                             data-type="loading">立即执行
                                                                     </button>
@@ -323,12 +174,438 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                {% if sequence.implemented == 1 %}
-                                                    <button type="button" class="layui-btn layui-btn-primary"
-                                                            style="float: right">
-                                                        <a href="#step{{ sequence.next_segment }}"
-                                                           onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                           role="tab" data-toggle="tab">下一步</a></button>
+                                                {% if sequence.implemented == 0 %}
+                                                    <div class="layui-btn-group" style="float: right">
+                                                    {% if sequence.priority > 1 %}
+                                                        <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                    {% endif %}
+                                                <button type="button" id="nextBtn"
+                                                        class="layui-btn layui-btn-primary" style="display: none">
+                                                    <a href="#step{{ sequence.next_segment }}"
+                                                       onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                       role="tab" data-toggle="tab">下一步</a></button>
+                                                </div>
+                                                {% else %}
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
+                                                {% endif %}
+                                                </div>
+                                            </div>
+                                        {% elif sequence.segment.isCheck == 1 %}
+                                            <div id="step{{ sequence.priority }}" class="tab-pane active">
+                                                <h5 class="page-header"></h5>
+                                                <div class="alert alert-success" role="alert">
+                                                    <h4 class="alert-heading">说明</h4>
+                                                    <hr>
+                                                    <p>1-在输入框中输入验收细节情况</p>
+                                                    <p>2-点击“通过”按钮完成验收</p>
+                                                    <p>3-验收通过后，会进行代码合并</p>
+                                                </div>
+                                                {% if sequence.implemented == 0 %}
+                                                    <p id="p1" class="fade"></p>
+                                                    <textarea class="form-control" name="remark"
+                                                              id="remark"
+                                                              placeholder="请输入验收结果" rows="4"></textarea>
+                                                    <h5 class="page-header"></h5>
+                                                    <button type="button" id="{{ sequence.id }}"
+                                                            class="layui-btn layui-btn-primary checkSuccess">
+                                                        通过
+                                                    </button>
+                                                    <h5 class="page-header"></h5>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                        <button type="button" id="nextBtn"
+                                                                class="layui-btn layui-btn-primary"
+                                                                style="display: none">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
+                                                {% else %}
+                                                    <p id="p1">
+                                                        <br>验收人：{{ sequence.executor.name }}
+                                                        <br>验收日期：{{ sequence.executeDate }}
+                                                        <br>备注：{{ sequence.remarks }}
+                                                    </p>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% elif sequence.segment.isMerge == 1 %}
+                                            <div id="step{{ sequence.priority }}" class="tab-pane active">
+                                                <h5 class="page-header"></h5>
+                                                <div class="alert alert-success" role="alert">
+                                                    <h4 class="alert-heading">说明</h4>
+                                                    <hr>
+                                                    <p>1-代码在项目验收后，由任务创建者（开发）进行代码合并</p>
+                                                    <p>2-点击“合并代码”按钮，将代码合并入master</p>
+                                                    <p>3-进度条显示的是所有项目的总进度</p>
+                                                </div>
+                                                {% if sequence.implemented == 0 %}
+                                                    <div class="text" style="text-align:center;">
+                                                        <p id="codeMergeText"></p>
+                                                    </div>
+                                                    <div class="progress mb-2 codeMergeProgress" style="display: none">
+                                                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                                             id="codeMergeProgressLine" role="progressbar"
+                                                             style="width: 5%"
+                                                             aria-valuenow="55" aria-valuemin="0"
+                                                             aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <button class="layui-btn layui-btn-primary startCodeMerge"
+                                                            data-type="loading">合并代码
+                                                    </button>
+                                                    <h5 class="page-header"></h5>
+                                                    <div class="layui-col-md12">
+                                                        <div class="layui-card">
+                                                            <div class="layui-card-header" style="display: none"
+                                                                 id="codeMergeOpt">
+                                                                <strong>合并进度</strong></div>
+                                                            <div class="layui-card-body codeMergeResult"></div>
+                                                        </div>
+                                                    </div>
+                                                    <h5 class="page-header"></h5>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                    </div>
+                                                {% else %}
+                                                    <table class="table">
+                                                        <thead>
+                                                        <tr>
+                                                            <th scope="col">项目</th>
+                                                            <th scope="col">结果</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        {% for project_plan in project_plans %}
+                                                            <tr>
+                                                                <th scope="row">{{ project_plan.project.name }}</th>
+                                                                {% if project_plan.mergeStatus == 0 %}
+                                                                    <td>未合并</td>
+                                                                {% elif project_plan.mergeStatus == 1 %}
+                                                                    <td>合并完成</td>
+                                                                {% elif project_plan.mergeStatus == 2 %}
+                                                                    <td>合并冲突</td>
+                                                                {% endif %}
+                                                            </tr>
+                                                        {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <div id="step{{ sequence.priority }}" class="tab-pane active">
+                                                <h5 class="page-header"></h5>
+                                                <div class="alert alert-success" role="alert">
+                                                    <h4 class="alert-heading">说明</h4>
+                                                    <hr>
+                                                    <p>1-在文本框中填写操作的相关备注</p>
+                                                    <p>2-完成后点击“执行”，进入下一环节</p>
+                                                </div>
+                                                {% if sequence.implemented == 0 %}
+                                                    <p id="p1" class="fade"></p>
+                                                    <textarea class="form-control" name="desc" id="remark"
+                                                              placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）"
+                                                              rows="4" value=""></textarea>
+                                                    <h5 class="page-header"></h5>
+                                                    <button type="button"
+                                                            class="layui-btn layui-btn-primary segmentBtn"
+                                                            id="{{ sequence.id }}">执行
+                                                    </button>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        {% if sequence.priority > 1 %}
+                                                            <button type="button"
+                                                                    class="layui-btn layui-btn-primary">
+                                                                <a href="#step{{ sequence.pre_segment }}"
+                                                                   onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                                   role="tab" data-toggle="tab">上一步</a></button>
+                                                        {% endif %}
+                                                        <button type="button" id="nextBtn"
+                                                                class="layui-btn layui-btn-primary"
+                                                                style="display: none">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
+                                                {% else %}
+                                                    <h5 class="page-header"></h5>
+                                                    <p>
+                                                        执行人：{{ sequence.executor.name }}</p>
+                                                    <p>备注：{{ sequence.remarks }}</p>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        {% if sequence.priority > 1 %}
+                                                            <button type="button"
+                                                                    class="layui-btn layui-btn-primary">
+                                                                <a href="#step{{ sequence.pre_segment }}"
+                                                                   onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                                   role="tab" data-toggle="tab">上一步</a></button>
+                                                        {% endif %}
+                                                        <button type="button"
+                                                                class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if sequence.segment.isDeploy == 1 %}
+                                            <div id="step{{ sequence.priority }}" class="tab-pane fade">
+                                                <h5 class="page-header"></h5>
+                                                <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+                                                    <ul class="layui-tab-title">
+                                                        <li class="layui-this">任务信息</li>
+                                                        <li>任务执行</li>
+                                                        <li>执行记录</li>
+                                                    </ul>
+                                                    <div class="layui-tab-content">
+                                                        <div class="layui-tab-item layui-show">
+                                                            <div class="alert alert-success" role="alert">
+                                                                <h4 class="alert-heading">说明</h4>
+                                                                <hr>
+                                                                <p>1-执行顺序从上到下</p>
+                                                                <p>2-中间未划横线的项目代表还没有发布或者发布失败</p>
+                                                                <p>3-中间划横线的项目代表已经发布完成</p>
+                                                            </div>
+                                                            <p>【标题】{{ task_obj.name }}</p>
+                                                            <br>【执行顺序】
+                                                            {% for project_plan in project_plans %}
+                                                                {% if project_plan.buildStatus == 1 %}
+                                                                    <br>
+                                                                    <del>{{ project_plan.project.name }}：{{ project_plan.lastPackageId }}</del>
+                                                                {% else %}
+                                                                    <br>{{ project_plan.project.name }}：
+                                                                    {{ project_plan.lastPackageId }}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </div>
+                                                        <div class="layui-tab-item">
+                                                            <div class="site-demo-button"
+                                                                 style="margin-top: 20px; margin-bottom: 0;">
+                                                                <div class="alert alert-success" role="alert">
+                                                                    <h4 class="alert-heading">说明</h4>
+                                                                    <hr>
+                                                                    <p>1-点击“立即发布”按钮进行发布，每个项目的发布预计耗时1分钟左右</p>
+                                                                    <p>2-点击“立即发布”按钮后，会有进度条显示整体发布进度</p>
+                                                                    <p>3-每个项目发布完成后，可以点击“控制台信息”下面的“查看控制台信息按钮”进行查看</p>
+                                                                </div>
+                                                                <div class="text" style="text-align:center;"><p
+                                                                        id="proDeployText"></p></div>
+                                                                <div class="progress mb-2 proDeployProgress fade">
+                                                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                                                         id="proBuildProgress" role="progressbar"
+                                                                         style="width: 0%"
+                                                                         aria-valuenow="55" aria-valuemin="0"
+                                                                         aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                {% if sequence.implemented == 0 %}
+                                                                    <button class="layui-btn layui-btn-primary startDeploy"
+                                                                            data-type="loading">立即执行
+                                                                    </button>
+                                                                    <div class="btn-toolbar" id="proDeployBarList"
+                                                                         role="toolbar"></div>
+                                                                {% else %}
+                                                                    <p>所有项目发布完成</p>
+                                                                {% endif %}
+                                                                <h5 class="page-header"></h5>
+                                                                <div class="layui-col-md12">
+                                                                    <div class="layui-card">
+                                                                        <div class="layui-card-header fade"
+                                                                             id="proConsoleOpt">
+                                                                            <strong>控制台信息</strong></div>
+                                                                        <div class="layui-card-body proBuildResult"></div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="layui-tab-item">
+                                                            <button type="button" id="proConsoleOptRefresh"
+                                                                    class="layui-btn layui-btn-primary"
+                                                                    style="float: right">刷新
+                                                            </button>
+                                                            <h5 class="page-header"></h5>
+                                                            <ul class="layui-timeline proConsoleOptRefresh">
+                                                                {% for consoleOpt in consoleOpts %}
+                                                                    <li class="layui-timeline-item">
+                                                                        <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+                                                                        <div class="layui-timeline-content layui-text">
+                                                                            <h3 class="layui-timeline-title">{{ consoleOpt.deployTime }}</h3>
+                                                                            <p>{% if consoleOpt.category == 0 %}
+                                                                                操作：发布
+                                                                            {% else %}
+                                                                                操作：回滚
+                                                                            {% endif %}
+                                                                                <br>执行人：{{ consoleOpt.deployUser.name }}
+                                                                                <br><a href="/pro_console_opt/{{ consoleOpt.uniteKey }}">查看控制台信息</a>
+                                                                            </p>
+                                                                        </div>
+                                                                    </li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="layui-btn-group" style="float: right">
+                                                    {% if sequence.implemented == 0 %}
+                                                        {% if sequence.priority > 1 %}
+                                                            <button type="button" class="layui-btn layui-btn-primary">
+                                                                <a href="#step{{ sequence.pre_segment }}"
+                                                                   onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                                   role="tab" data-toggle="tab">上一步</a></button>
+                                                        {% endif %}
+                                                        <button type="button" id="nextBtn"
+                                                                class="layui-btn layui-btn-primary"
+                                                                style="display: none">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    {% else %}
+                                                        {% if sequence.priority > 1 %}
+                                                            <button type="button" class="layui-btn layui-btn-primary">
+                                                                <a href="#step{{ sequence.pre_segment }}"
+                                                                   onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                                   role="tab" data-toggle="tab">上一步</a></button>
+                                                        {% endif %}
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% elif sequence.segment.isCheck == 1 %}
+                                            <div id="step{{ sequence.priority }}" class="tab-pane fade">
+                                                <h5 class="page-header"></h5>
+                                                <div class="alert alert-success" role="alert">
+                                                    <h4 class="alert-heading">说明</h4>
+                                                    <hr>
+                                                    <p>1-在输入框中输入验收细节情况</p>
+                                                    <p>2-点击“通过”按钮完成验收</p>
+                                                    <p>3-验收通过后，会进行代码合并</p>
+                                                </div>
+                                                {% if sequence.implemented == 0 %}
+                                                    <p id="p1" class="fade"></p>
+                                                    <textarea class="form-control" name="remark"
+                                                              id="remark"
+                                                              placeholder="请输入验收结果" rows="4"></textarea>
+                                                    <h5 class="page-header"></h5>
+                                                    <button type="button" id="{{ sequence.id }}"
+                                                            class="layui-btn layui-btn-primary checkSuccess">
+                                                        通过
+                                                    </button>
+                                                    <h5 class="page-header"></h5>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                        <button type="button" id="nextBtn"
+                                                                class="layui-btn layui-btn-primary"
+                                                                style="display: none">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
+                                                {% else %}
+                                                    <p id="p1">
+                                                        <br>验收人：{{ sequence.executor.name }}
+                                                        <br>验收日期：{{ sequence.executeDate }}
+                                                        <br>备注：{{ sequence.remarks }}
+                                                    </p>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% elif sequence.segment.isMerge == 1 %}
+                                            <div id="step{{ sequence.priority }}" class="tab-pane fade">
+                                                <h5 class="page-header"></h5>
+                                                <div class="alert alert-success" role="alert">
+                                                    <h4 class="alert-heading">说明</h4>
+                                                    <hr>
+                                                    <p>1-在输入框中输入验收细节情况</p>
+                                                    <p>2-点击“通过”按钮完成验收</p>
+                                                    <p>3-验收通过后，会进行代码合并</p>
+                                                </div>
+                                                {% if sequence.implemented == 0 %}
+                                                    <p id="p1" class="fade"></p>
+                                                    <textarea class="form-control" name="remark"
+                                                              id="remark"
+                                                              placeholder="请输入验收结果" rows="4"></textarea>
+                                                    <h5 class="page-header"></h5>
+                                                    <button type="button" id="{{ sequence.id }}"
+                                                            class="layui-btn layui-btn-primary checkSuccess">
+                                                        通过
+                                                    </button>
+                                                    <h5 class="page-header"></h5>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                        {% if sequence.priority < lastNum %}
+                                                            <button type="button" id="nextBtn"
+                                                                    class="layui-btn layui-btn-primary"
+                                                                    style="display: none">
+                                                                <a href="#step{{ sequence.next_segment }}"
+                                                                   onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                                   role="tab" data-toggle="tab">下一步</a></button>
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <p id="p1">
+                                                        <br>验收人：{{ sequence_obj.checkUser.name }}
+                                                        <br>验收日期：{{ sequence_obj.checkDate }}
+                                                        <br>备注：{{ sequence_obj.remarks }}
+                                                    </p>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
                                                 {% endif %}
                                             </div>
                                         {% else %}
@@ -344,129 +621,47 @@
                                                     <p id="p1" class="fade"></p>
                                                     <textarea class="form-control" name="desc" id="remark"
                                                               placeholder="请输入发布的一些备注（包括：需要执行的SQL、修改更新内容等等）"
-                                                              rows="4"></textarea>
+                                                              rows="4" value=""></textarea>
                                                     <h5 class="page-header"></h5>
                                                     <button type="button" class="layui-btn layui-btn-primary segmentBtn"
                                                             id="{{ sequence.id }}">执行
                                                     </button>
-                                                    <button type="button" id="nextBtn"
-                                                            class="layui-btn layui-btn-primary fade"
-                                                            style="float: right">
-                                                        <a href="#step{{ sequence.next_segment }}"
-                                                           onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                           role="tab" data-toggle="tab">下一步</a></button>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        {% if sequence.priority > 1 %}
+                                                            <button type="button" class="layui-btn layui-btn-primary">
+                                                                <a href="#step{{ sequence.pre_segment }}"
+                                                                   onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                                   role="tab" data-toggle="tab">上一步</a></button>
+                                                        {% endif %}
+                                                        <button type="button" id="nextBtn"
+                                                                class="layui-btn layui-btn-primary"
+                                                                style="display: none">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
                                                 {% else %}
                                                     <h5 class="page-header"></h5>
                                                     <p>
                                                         执行人：{{ sequence.executor.name }}</p>
                                                     <p>备注：{{ sequence.remarks }}</p>
-                                                    <button type="button" class="layui-btn layui-btn-primary"
-                                                            style="float: right">
-                                                        <a href="#step{{ sequence.next_segment }}"
-                                                           onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                           role="tab" data-toggle="tab">下一步</a></button>
+                                                    <div class="layui-btn-group" style="float: right">
+                                                        {% if sequence.priority > 1 %}
+                                                            <button type="button" class="layui-btn layui-btn-primary">
+                                                                <a href="#step{{ sequence.pre_segment }}"
+                                                                   onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                                   role="tab" data-toggle="tab">上一步</a></button>
+                                                        {% endif %}
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
                                                 {% endif %}
                                             </div>
                                         {% endif %}
                                     {% endif %}
                                 {% endfor %}
-                                <div id="step{{ lastNum }}" class="tab-pane fade">
-                                    <h5 class="page-header"></h5>
-                                    <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
-                                        <ul class="layui-tab-title">
-                                            <li class="layui-this">任务验收</li>
-                                            <li>代码合并</li>
-                                        </ul>
-                                        <div class="layui-tab-content">
-                                            <div class="layui-tab-item layui-show">
-                                                <div class="site-demo-button" id="step{{ lastNum }}"
-                                                     style="margin-top: 20px; margin-bottom: 0;">
-                                                    <div class="alert alert-success" role="alert">
-                                                        <h4 class="alert-heading">说明</h4>
-                                                        <hr>
-                                                        <p>1-在输入框中输入验收细节情况</p>
-                                                        <p>2-验收通过则点击“通过”</p>
-                                                        <p>3-验收不通过则点击“不通过”</p>
-                                                    </div>
-                                                    {% if task_obj.checked == 0 %}
-                                                        <p id="p1" class="fade"></p>
-                                                        <textarea class="form-control" name="remark" id="remark"
-                                                                  placeholder="请输入验收结果" rows="4"></textarea>
-                                                        <h5 class="page-header"></h5>
-                                                        <button type="button"
-                                                                class="layui-btn layui-btn-primary checkSuccess">通过
-                                                        </button>
-                                                        <button type="button"
-                                                                class="layui-btn layui-btn-primary checkFail">不通过
-                                                        </button>
-                                                    {% else %}
-                                                        <p id="p1">
-                                                            <br>验收人：{{ task_obj.checkUser.name }}
-                                                            <br>验收日期：{{ task_obj.checkDate }}
-                                                            <br>备注：{{ task_obj.remark }}
-                                                            {% if task_obj.checked == 1 %}
-                                                                <br>结果：通过
-                                                            {% else %}
-                                                                <br>结果：不通过
-                                                            {% endif %}
-                                                        </p>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                            <div class="layui-tab-item">
-                                                <div class="site-demo-button"
-                                                     style="margin-top: 20px; margin-bottom: 0;">
-                                                    <div class="alert alert-success" role="alert">
-                                                        <h4 class="alert-heading">说明</h4>
-                                                        <hr>
-                                                        <p>1-当验收通过后，会出现“合并代码”的按钮</p>
-                                                        <p>2-点击“合并代码”按钮，将代码合并入master</p>
-                                                        <p>3-进度条显示的是所有项目的总进度</p>
-                                                    </div>
-                                                    <div class="text" style="text-align:center;">
-                                                        <p id="codeMergeText"></p>
-                                                    </div>
-                                                    <div class="progress mb-2 codeMergeProgress fade">
-                                                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
-                                                             id="codeMerge" role="progressbar"
-                                                             style="width: 0%"
-                                                             aria-valuenow="55" aria-valuemin="0"
-                                                             aria-valuemax="100">
-                                                        </div>
-                                                    </div>
-                                                    {% if mergeStatus %}
-                                                        {% for project_plan in project_plans %}
-                                                            <h5 class="page-header"></h5>
-                                                            <p>项目：{{ project_plan.project.name }}</p>
-                                                            {% if project_plan.mergeStatus == 1 %}
-                                                                <br>合并结果：成功
-                                                            {% else %}
-                                                                <br>合并结果：冲突
-                                                            {% endif %}
-                                                        {% endfor %}
-                                                    {% else %}
-                                                        {% if task_obj.checked == 1 %}
-                                                            <button class="layui-btn layui-btn-primary startCodeMerge"
-                                                                    data-type="loading">合并代码
-                                                            </button>
-                                                            <h5 class="page-header"></h5>
-                                                            <div class="layui-col-md12">
-                                                                <div class="layui-card">
-                                                                    <div class="layui-card-header fade"
-                                                                         id="codeMergeOpt">
-                                                                        <strong>合并进度</strong></div>
-                                                                    <div class="layui-card-body codeMergeResult"></div>
-                                                                </div>
-                                                            </div>
-                                                        {% else %}
-                                                            <p>任务没有验收完成，请先确认验收！</p>
-                                                        {% endif %}
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>

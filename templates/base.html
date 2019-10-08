@@ -444,12 +444,12 @@
     //事件操作
     var eventFun = {
         setStep: function (index) {
-            for (var i = 2; i <= index; i++) {
+            for (var i = 1; i <= index; i++) {
                 $("#step" + i + "Li").addClass("blue").removeClass("gray");
                 $("#step" + i + "Img").attr("src", "{% static "images/blue_blue.png" %}");
                 $("#step" + i).addClass("active").removeClass("fade");
             }
-            for (var j = index + 1; j <= 4; j++) {
+            for (var j = index + 1; j <= 10; j++) {
                 $("#step" + j + "Li").addClass("gray").removeClass("blue");
                 $("#step" + j + "Img").attr("src", "{% static "images/gray_gray.png" %}");
             }

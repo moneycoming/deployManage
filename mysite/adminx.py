@@ -108,27 +108,24 @@ class project_plan_admin(object):
 
 
 class segment_admin(object):
-    list_display = ['name', 'description', 'isDeploy']
-    search_fields = ['name', 'description']
-    list_filter = ['name', 'description']
+    list_display = ['name', 'description', 'order']
+    search_fields = ['name', 'description', 'order']
+    list_filter = ['name', 'description', 'order']
 
 
 class task_admin(object):
-    list_display = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked',
-                    'remark']
-    search_fields = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff',
-                     'checked', 'remark']
-    list_filter = ['name', 'segment', 'plan', 'createDate', 'createUser', 'checkUser', 'checkDate', 'onOff', 'checked',
-                   'remark']
+    list_display = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff']
+    search_fields = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff']
+    list_filter = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff']
 
 
 class sequence_admin(object):
-    list_display = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority',
-                    'implemented', 'remarks']
-    search_fields = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority',
-                     'implemented', 'remarks']
-    list_filter = ['task', 'segment', 'pre_segment', 'next_segment', 'executeDate', 'executor', 'priority',
-                   'implemented', 'remarks']
+    list_display = ['task', 'segment', 'pre_segment', 'next_segment', 'executeCursor', 'executeDate', 'executor',
+                    'priority', 'implemented', 'remarks']
+    search_fields = ['task', 'segment', 'pre_segment', 'next_segment', 'executeCursor', 'executeDate', 'executor',
+                     'priority', 'implemented', 'remarks']
+    list_filter = ['task', 'segment', 'pre_segment', 'next_segment', 'executeCursor', 'executeDate', 'executor',
+                   'priority', 'implemented', 'remarks']
 
 
 xadmin.site.register(production, production_admin)

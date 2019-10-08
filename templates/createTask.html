@@ -36,76 +36,87 @@
                             <strong class="card-title">创建任务</strong>
                         </div>
                         <div class="card-body">
-                            <form class="form-horizontal group-border hover-stripped" role="form" id="validate"
-                                  method="post" action="/createTask?pid={{ plan_obj.id }}">
+                            <form class="form-horizontal group-border hover-stripped" role="form" method="post"
+                                  action="/createTask?pid={{ plan_obj.id }}">
                                 {% csrf_token %}
-                                <div id="myTabContent" class="tab-content">
-                                    <div class="form-group">
-                                        <label class="col-lg-2 control-label">任务标题</label>
-                                        <div class="col-lg-10">
-                                            <input type="text" id="text-input" name="title" placeholder="请输入任务标题"
-                                                   class="form-control">
-                                        </div>
+                                <div class="form-group">
+                                    <label class="col-lg-2 control-label">任务标题</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" id="text-input" name="title" placeholder="请输入任务标题"
+                                               class="form-control">
                                     </div>
-                                    <div class="form-group">
-                                        <label class="col-lg-2 control-label">所属计划</label>
-                                        <div class="col-lg-10">
-                                            <div class="row">
-                                                <div class="col-lg-6 col-md-6">
-                                                    <select title="选择计划" data-placeholder="选择所属计划..."
-                                                            class="standardSelect"
-                                                            name="plan">
-                                                        <optgroup label="计划列表">
-                                                            <option>{{ plan_obj.name }}</option>
-                                                        </optgroup>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <h5 class="page-header"></h5>
-                                    <!-- End .form-group  -->
-                                    <div class="form-group">
-                                        <div class="layui-btn-group">
-                                            <!-- col-lg-6 start here -->
-                                            <button type="button" class="layui-btn layui-btn-primary"
-                                                    id="add-btn" onclick="add_div()">添加环节
-                                            </button>
-                                            <button type="button" class="layui-btn layui-btn-primary"
-                                                    id="add-btn" onclick="del_div()">删除环节
-                                            </button>
-                                            <button type="submit" class="layui-btn layui-btn-primary">创建任务</button>
-                                        </div>
-                                    </div>
-                                    <!-- End .form-group  -->
-                                    <div class="form-group">
-                                        <div class="sufee-alert alert with-close alert-danger alert-dismissible fade show">
-                                            <span class="badge badge-pill badge-danger">提示</span>
-                                            输入此次发布任务涉及到的环节，执行顺序从上到下！！！
-                                            <button type="button" class="close" data-dismiss="alert"
-                                                    aria-label="close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <!-- End .form-group  -->
-                                    <div class="form-group" id="details">
-                                        <div class="col-lg-10 col-md-10">
-                                            <div class="row">
-                                                <div class="col-lg-6 col-md-6">
-                                                    <select title="选择环节" class="form-control" name="segment">
-                                                        <optgroup label="segment">
-                                                            {% for segment in segments %}
-                                                                <option>{{ segment.name }}</option>
-                                                            {% endfor %}
-                                                        </optgroup>
-                                                    </select>
-                                                    <span class="help-block">环节</span>
-                                                </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <label class="col-lg-2 control-label">所属计划</label>
+                                    <div class="col-lg-10">
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6">
+                                                <select title="选择计划" data-placeholder="选择所属计划..."
+                                                        class="standardSelect"
+                                                        name="plan">
+                                                    <optgroup label="计划列表">
+                                                        <option>{{ plan_obj.name }}</option>
+                                                    </optgroup>
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <div class="sufee-alert alert with-close alert-danger alert-dismissible fade show">
+                                        <span class="badge badge-pill badge-danger">提示</span>
+                                        请选择项目部署前和部署后需要执行的步骤！
+                                        <button type="button" class="close" data-dismiss="alert"
+                                                aria-label="close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <label class="col-lg-2 control-label">项目部署前</label>
+                                    <div class="col-lg-10">
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6">
+                                                <select data-placeholder="Choose a country..." multiple
+                                                        class="standardSelect" name="beforeDeploy">
+                                                    {% for segment in beforeDeploySegments %}
+                                                        <option value={{ segment.name }}>{{ segment.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <label class="col-lg-2 control-label">项目部署后</label>
+                                    <div class="col-lg-10">
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6">
+                                                <select data-placeholder="Choose a country..." multiple
+                                                        class="standardSelect" name="afterDeploy">
+                                                    {% for segment in afterDeploySegments %}
+                                                        <option value={{ segment.name }}>{{ segment.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
+                                <div class="form-group">
+                                    <div class="col-lg-10">
+                                        <div class="row">
+                                            <div class="col-lg-6 col-md-6">
+                                                <button type="submit" class="layui-btn layui-btn-primary">创建任务</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End .form-group  -->
                             </form>
                         </div>
                     </div>

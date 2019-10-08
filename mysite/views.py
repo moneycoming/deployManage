@@ -379,20 +379,21 @@ def taskDetail(request):
     if taskId:
         task_obj = models.task.objects.get(id=taskId)
         project_plans = models.project_plan.objects.filter(plan=task_obj.plan).order_by('order')
-        sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
-        lastNum = len(sequences) + 1
-        consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
-        uncompleted = False
-        mergeStatus = True
-        for i in range(len(project_plans)):
-            if project_plans[i].buildStatus != 1:
-                uncompleted = True
-                break
+        upToImplementSequence = models.sequence.objects.filter(task=task_obj).get(executeCursor=1)
+        unimplementedSequences = models.sequence.objects.filter(task=task_obj,
+                                                                priority__gt=upToImplementSequence.priority).order_by(
+            'priority')
+        blueBlueSequences = models.sequence.objects.filter(task=task_obj,
+                                                           priority__lte=upToImplementSequence.priority).order_by(
+            'priority')
+        try:
+            blueGraySequence = unimplementedSequences[0]
+            grayGraySequences = unimplementedSequences[1:]
+        except IndexError:
+            logger.info("%s已是最后一个环节" % upToImplementSequence.segment.name)
 
-        for j in range(len(project_plans)):
-            if project_plans[j] == 0:
-                mergeStatus = False
-                break
+        sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
+        consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
 
     template = get_template('taskDetail.html')
     html = template.render(context=locals(), request=request)
@@ -403,64 +404,78 @@ def taskDetail(request):
 @login_required
 @csrf_exempt
 def ajax_taskImplement(request):
-    implement = request.POST.get('implemented')
     sequenceId = request.POST.get('id')
-    remark = request.POST.get('remark')
-    taskId = request.POST.get('taskId')
-    executeDate = datetime.datetime.now()
-    task_obj = models.task.objects.get(id=taskId)
+    print(sequenceId)
+    task_obj = models.task.objects.get(id=request.POST['taskId'])
     production_members = models.production_member.objects.filter(production=task_obj.plan.production)
     member_obj = models.member.objects.get(user=request.user)
     isMember = False
     for m in range(len(production_members)):
         if member_obj == production_members[m].member:
             isMember = True
-    info = []
     if sequenceId:
-        sequence = models.sequence.objects.get(id=sequenceId)
+        sequence_obj = models.sequence.objects.get(id=sequenceId)
         if isMember and member_obj.user.has_perm('can_deploy_project'):
-            sequence.implemented = implement
-            sequence.remarks = remark
-            sequence.executor = member_obj
-            sequence.executeDate = executeDate
-            sequence.save()
-            info.append('implemented')
-            info.append(remark)
+            sequence_obj.implemented = 1
+            sequence_obj.remarks = request.POST['remark']
+            sequence_obj.executor = member_obj
+            sequence_obj.executeDate = datetime.datetime.now()
+            sequence_obj.executeCursor = False
+            sequence_obj.save()
+            nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task).filter(
+                priority__gt=sequence_obj.priority).order_by('priority')[0]
+            nextSequence_obj.executeCursor = True
+            nextSequence_obj.save()
+            ret = {
+                'role': 1,
+                'remark': sequence_obj.remarks
+            }
+            print('11111')
         else:
-            info.append("no_role")
+            ret = {
+                'role': 0
+            }
 
-        return HttpResponse(json.dumps(info), "application/json")
+        return HttpResponse(json.dumps(ret), "application/json")
 
 
 # 任务验收通过
 @login_required
 @csrf_exempt
 def ajax_checkSuccess(request):
-    taskId = request.POST.get('taskId')
-    remark = request.POST.get('remark')
-    if taskId:
-        task_obj = models.task.objects.get(id=taskId)
-        production_members = models.production_member.objects.filter(production=task_obj.plan.production)
+    sequenceId = request.POST.get('sequenceId')
+    if sequenceId:
+        sequence_obj = models.sequence.objects.get(id=sequenceId)
+        production_members = models.production_member.objects.filter(production=sequence_obj.task.plan.production)
         member_obj = models.member.objects.get(user=request.user)
         isMember = False
         for m in range(len(production_members)):
             if member_obj == production_members[m].member:
                 isMember = True
         if isMember and member_obj.user.has_perm('can_check_project'):
-            task_obj.checkUser = member_obj
-            task_obj.checkDate = datetime.datetime.now()
-            task_obj.checked = 1
-            task_obj.remark = remark
-            task_obj.save()
+            sequence_obj.implemented = 1
+            sequence_obj.remarks = request.POST['remark']
+            sequence_obj.executor = member_obj
+            sequence_obj.executeDate = datetime.datetime.now()
+            sequence_obj.executeCursor = False
+            sequence_obj.save()
+            try:
+                nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task).filter(
+                    priority__gt=sequence_obj.priority).order_by('priority')[0]
+                nextSequence_obj.executeCursor = True
+                nextSequence_obj.save()
+            except IndexError:
+                print("已是最后一个环节")
             ret = {
                 'role': 1,
-                'remark': remark
+                'remark': sequence_obj.remarks
             }
+
             mail_from = member_obj.user.email
             mail_to = []
             for k in range(len(production_members)):
                 mail_to.append(production_members[k].member.user.email)
-            email_proCheck(task_obj, mail_from, mail_to, mail_cc)
+            email_proCheck(sequence_obj.task, mail_from, mail_to, mail_cc)
         else:
             ret = {
                 'role': 0
@@ -471,7 +486,12 @@ def ajax_checkSuccess(request):
 # 创建任务
 @login_required
 def createTask(request):
-    segments = models.segment.objects.all()
+    deploySegment_obj = models.segment.objects.get(isDeploy=1)
+    checkSegment_obj = models.segment.objects.get(isCheck=1)
+    mergeSegment_obj = models.segment.objects.get(isMerge=1)
+    beforeDeploySegments = models.segment.objects.filter(order__lt=deploySegment_obj.order)
+    afterDeploySegments = models.segment.objects.filter(order__gt=deploySegment_obj.order).filter(
+        ~Q(order=checkSegment_obj.order)).filter(~Q(order=mergeSegment_obj.order))
     member_obj = models.member.objects.get(user=request.user)
     plan_obj = models.plan.objects.get(id=request.GET['pid'])
     if request.method == 'POST':
@@ -483,18 +503,37 @@ def createTask(request):
                 isMember = True
         if isMember and member_obj.user.has_perm('can_deploy_project'):
             title = request.POST.get('title')
-            segmentList = request.POST.getlist('segment')
+            beforeDeployList = request.POST.getlist('beforeDeploy')
+            afterDeployList = request.POST.getlist('afterDeploy')
             createDate = datetime.datetime.now()
             task_obj = models.task(name=title, plan=post_plan_obj, createUser=member_obj, createDate=createDate,
                                    onOff=1)
             task_obj.save()
-            for i in range(len(segmentList)):
-                segment_obj = models.segment.objects.get(name=segmentList[i])
-                sequence_obj = models.sequence(segment=segment_obj, task=task_obj, pre_segment=i, next_segment=i + 2,
-                                               priority=i + 1)
+            for i in range(len(beforeDeployList)):
+                segment_obj = models.segment.objects.get(name=beforeDeployList[i])
+                sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
                 sequence_obj.save()
+            for j in range(len(afterDeployList)):
+                segment_obj = models.segment.objects.get(name=afterDeployList[j])
+                sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
+                sequence_obj.save()
+            sequence_deploy_obj = models.sequence(segment=deploySegment_obj, task=task_obj)
+            sequence_deploy_obj.save()
+            sequence_check_obj = models.sequence(segment=checkSegment_obj, task=task_obj)
+            sequence_check_obj.save()
+            sequence_merge_obj = models.sequence(segment=mergeSegment_obj, task=task_obj)
+            sequence_merge_obj.save()
+            sequences = models.sequence.objects.filter(task=task_obj).order_by('segment__order')
 
-            sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
+            for n in range(len(sequences)):
+                sequences[n].pre_segment = n
+                sequences[n].next_segment = n + 2
+                sequences[n].priority = n + 1
+                sequences[n].save()
+
+            sequences[0].executeCursor = 1
+            sequences[0].save()
+
             mail_from = member_obj.user.email
             mail_to = []
             for k in range(len(production_members)):
@@ -658,10 +697,16 @@ def ws_startDeploy(request):
                             break
                     if len(cursor) == 0:
                         sequence_obj.implemented = True
-                        sequence_obj.executor = member_obj.name
+                        sequence_obj.executor = member_obj
                         sequence_obj.executeDate = datetime.datetime.now()
                         sequence_obj.remarks = "已部署"
+                        sequence_obj.executeCursor = False
                         sequence_obj.save()
+                        nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task,
+                                                                          priority__gt=sequence_obj.priority).order_by(
+                            'priority')[0]
+                        nextSequence_obj.executeCursor = True
+                        nextSequence_obj.save()
                         res = "任务：%s，部署完成！" % task_obj.name
                         buildMessages.append(res)
                         buildMessages.append('deploy_success')
@@ -1199,13 +1244,6 @@ def ws_uatDeploy(request):
                                                                        deployTime=deployTime, deployUser=member_obj,
                                                                        uniqueKey=uniqueKey, uniteKey=uniteKey)
                                     consoleOpt_obj.save()
-                        branch_obj = branch(project_obj.project_dir)
-                        branchDelStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
-                        if not branchDelStatus:
-                            logger.error(
-                                '计划：%s，项目：%s，分支：%s删除失败, 请手工删除！' % (plan_obj, project_obj, project_plan_obj.uatBranch))
-                        project_plan_obj.uatBranch = None
-                        project_plan_obj.save()
                     else:
                         logger.info("没有预发分支，请先创建！")
                         res = "没有预发分支，请先创建！"
@@ -1240,6 +1278,7 @@ def ws_codeMerge(request):
                 project_plans = models.project_plan.objects.filter(plan=task_obj.plan)
                 production_members = models.production_member.objects.filter(production=task_obj.plan.production)
                 member_obj = models.member.objects.get(user=request.user)
+                sequence_obj = models.sequence.objects.filter(task=task_obj).get(segment__isMerge=True)
                 isMember = False
                 buildMessages = []
                 for m in range(len(production_members)):
@@ -1251,26 +1290,32 @@ def ws_codeMerge(request):
                     for i in range(len(project_plans)):
                         project_obj = project_plans[i].project
                         branch_obj = branch(project_obj.project_dir)
-                        status = branch_obj.merge_branch(project_plans[i].uatBranch, 'master_copy')
+                        status = branch_obj.merge_branch(project_plans[i].uatBranch, 'master')
+                        buildMessages.append("startMerge")
                         if status:
                             project_plans[i].mergeStatus = 1
                             project_plans[i].save()
-                            buildMessages.append("ok")
                             res = "项目%s合并完成" % project_plans[i].project.name
                             buildMessages.append(res)
-                            request.websocket.send(json.dumps(buildMessages))
+                            branchDelStatus = branch_obj.delete_branch(project_plans[i].uatBranch)
+                            if not branchDelStatus:
+                                logger.error('计划：%s，项目：%s，分支：%s删除失败, 请手工删除！' % (
+                                    project_plans[i].plan.name, project_obj, project_plans[i].uatBranch))
                         else:
                             project_plans[i].mergeStatus = 2
                             project_plans[i].save()
-                            buildMessages.append("conflict")
-                            res = "项目%s合并冲突，请手工处理！" % project_plans[i].project.name
+                            res = "项目%s合并冲突或线上分支%s已被删除，请手工处理！" % (
+                                project_plans[i].project.name, project_plans[i].uatBranch)
                             buildMessages.append(res)
-                            request.websocket.send(json.dumps(buildMessages))
-                    buildMessages.append("success")
+                        request.websocket.send(json.dumps(buildMessages))
+                    buildMessages.append("complete")
                     request.websocket.send(json.dumps(buildMessages))
                     request.websocket.close()
-                    # send_mail("发布任务%s分支合并结果" % task_obj.name, str(buildMessages), mail_from, mail_to,
-                    #           fail_silently=False)
+                    sequence_obj.implemented = True
+                    sequence_obj.executor = member_obj
+                    sequence_obj.executeDate = datetime.datetime.now()
+                    sequence_obj.remarks = "已合并"
+                    sequence_obj.save()
                 else:
                     buildMessages.append("no_role")
                     request.websocket.send(json.dumps(buildMessages))

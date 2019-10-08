@@ -24,13 +24,14 @@ function getQueryVariable(variable) {
     return (false);
 }
 
-//任务执行
+//生产项目部署
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
-    var type = $(this).data('type');
     $("body").on("click", ".startDeploy", startDeploy);
 
     function startDeploy() {
+        var type = $(this).data('type');
+        var step = $(this).parent().attr('id');
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
@@ -151,6 +152,7 @@ layui.use(['element', 'layer'], function () {
                                         layer.closeAll();
                                     }
                                 });
+                                $(`#${step} #nextBtn`).show();
                             }
                             else {
                                 html += "<pre>" + received_msg[i] + "</pre>"
@@ -181,10 +183,11 @@ layui.use(['element', 'layer'], function () {
 //重新发布
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
-    var type = $(this).data('type');
     $("body").on("click", ".restartDeploy", restartDeploy);
 
     function restartDeploy() {
+        var step = $(this).parent().attr('id');
+        var type = $(this).data('type');
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
@@ -298,6 +301,7 @@ layui.use(['element', 'layer'], function () {
                                         layer.closeAll();
                                     }
                                 });
+                                $(`#${step} #nextBtn`).show();
                             }
                             else {
                                 html += "<pre>" + received_msg[i] + "</pre>"
@@ -327,10 +331,10 @@ layui.use(['element', 'layer'], function () {
 //跳过继续下一个发布
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
-    var type = $(this).data('type');
     $("body").on("click", ".continueDeploy", continueDeploy);
 
     function continueDeploy() {
+        var type = $(this).data('type');
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
@@ -491,10 +495,10 @@ layui.use(['element', 'layer'], function () {
 //回滚单个节点
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
-    var type = $(this).data('type');
     $("body").on("click", ".rollbackOne", rollbackOne);
 
     function rollbackOne() {
+        var type = $(this).data('type');
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
@@ -625,10 +629,10 @@ layui.use(['element', 'layer'], function () {
 //回滚所有节点
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
-    var type = $(this).data('type');
     $("body").on("click", ".rollbackAll", rollbackAll);
 
     function rollbackAll() {
+        var type = $(this).data('type');
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
@@ -946,13 +950,20 @@ layui.use(['element', 'layer'], function () {
                         if (data.deployed === 0) {
                             layer.open({
                                 type: 1
-                                , title: '警告'
-                                , content: '<div style="padding: 20px 100px;">' + "预发项目" + data.projects + "还没有部署！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
+                                ,
+                                title: '警告'
+                                ,
+                                content: '<div style="padding: 20px 100px;">' + "预发项目" + data.projects + "还没有部署！" + '</div>'
+                                ,
+                                btn: '关闭'
+                                ,
+                                btnAlign: 'c' //按钮居中
+                                ,
+                                area: '500px;'
+                                ,
+                                shade: 0.5 //不显示遮罩
+                                ,
+                                yes: function () {
                                     layer.closeAll();
                                 }
                             });
@@ -1023,49 +1034,58 @@ layui.use(['element', 'layer'], function () {
 
     $("body").on("click", ".segmentBtn", function () {
         var step = $(this).parent().attr('id');
-        var taskId = getQueryVariable("tid");
-        var str = $(this).text();
-        $(this).text(str);
-        var postData = {};
-        var sequenceId = $(this).attr("id");
         var remark = $(this).parent().children("#remark").val();
-        postData['id'] = sequenceId;
-        postData['implemented'] = 1;
-        postData['remark'] = remark;
-        postData['taskId'] = taskId;
+        var sequenceId = $(this).attr("id");
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok(step, remark, sequenceId);
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
 
-        $.ajax({
-            url: '/ajax_taskImplement',
-            type: 'POST',
-            data: postData,
+        function ok(step, remark, sequenceId) {
+            var taskId = getQueryVariable("tid");
+            var postData = {};
+            postData['id'] = sequenceId;
+            postData['remark'] = remark;
+            postData['taskId'] = taskId;
 
-            success: function (data) {
-                if (data[0] === 'implemented') {
-                    $(`#${step} #p1`).removeClass("fade").html(data[1]);
-                    $(`#${step} .segmentBtn`).hide();
-                    $(`#${step} #remark`).hide();
-                    $(`#${step} #nextBtn`).removeClass("fade").show();
-                } else {
-                    layer.open({
-                        type: 1
-                        // , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
-                        , title: '执行异常'
-                        // , id: 'layerDemo123' + type //防止重复弹出
-                        , content: '<div style="padding: 20px 100px;">' + "您没有执行此环节的权限！！！" + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
-                        }
-                    });
+            $.ajax({
+                url: '/ajax_taskImplement',
+                type: 'POST',
+                data: postData,
+
+                success: function (data) {
+                    if (data.role === 1) {
+                        $(`#${step} #p1`).removeClass("fade").html(data.remark);
+                        $(`#${step} .segmentBtn`).hide();
+                        $(`#${step} #remark`).hide();
+                        $(`#${step} #nextBtn`).show();
+                    } else {
+                        layer.open({
+                            type: 1
+                            // , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '执行异常'
+                            // , id: 'layerDemo123' + type //防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "您没有执行此环节的权限！！！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    }
+                },
+                error: function () {
+                    console.log("error");
                 }
-            },
-            error: function () {
-                console.log("error");
-            }
-        })
+            })
+        }
+
     });
 });
 //任务验收通过
@@ -1073,24 +1093,23 @@ layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
 
     $("body").on("click", ".checkSuccess", function () {
+        var step = $(this).parent().attr('id');
+        var remark = $(this).siblings("#remark").val();
+        var sequenceId = $(this).attr("id");
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
-            ok();
+            ok(step, remark, sequenceId);
             layer.closeAll();
         }, function () {
             console.log('已取消');
         });
 
-        function ok() {
-            var step = $(this).parent().attr('id');
+        function ok(step, remark, sequenceId) {
             var postData = {};
-            var taskId = getQueryVariable("tid");
-            var remark = $(this).siblings("#remark").val();
-            postData['taskId'] = taskId;
             postData['remark'] = remark;
+            postData['sequenceId'] = sequenceId;
             $('.checkSuccess').hide();
-            $('.checkFail').hide();
 
             $.ajax({
                 url: '/ajax_checkSuccess',
@@ -1112,21 +1131,10 @@ layui.use(['element', 'layer'], function () {
                             }
                         });
                     } else {
-                        layer.open({
-                            type: 1
-                            , title: '合并结果'
-                            , content: '<div style="padding: 20px 100px;">' + "验收通过！" + '</div>'
-                            , btn: '关闭'
-                            , btnAlign: 'c' //按钮居中
-                            , area: '500px;'
-                            , shade: 0.5 //不显示遮罩
-                            , yes: function () {
-                                layer.closeAll();
-                            }
-                        });
                         $(`#${step} .checkSuccess`).hide();
                         $(`#${step} #remark`).hide();
                         $(`#${step} #p1`).removeClass("fade").html(data.remark);
+                        $(`#${step} #nextBtn`).show();
                     }
                 },
                 error: function () {
@@ -1155,9 +1163,9 @@ layui.use(['element', 'layer'], function () {
         function ok() {
             var taskId = getQueryVariable("tid");
             $('#codeMergeText').text("代码合并进行中，请等待...");
-            $('.codeMergeProgress').removeClass('fade');
+            $('.codeMergeProgress').show();
             $('#codeMerge').width(5 + '%').text('5%');
-            $('#codeMergeOpt').removeClass('fade');
+            $('#codeMergeOpt').show();
             $('.startCodeMerge').hide();
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
@@ -1194,22 +1202,17 @@ layui.use(['element', 'layer'], function () {
                     } else {
                         var html = "";
                         var sumPoints = received_msg[0];
+                        console.log(sumPoints);
                         var realPoints = 0;
                         for (var i = 1; i < received_msg.length; i++) {
-                            if (received_msg[i] === 'ok') {
+                            if (received_msg[i] === 'startMerge') {
                                 realPoints++;
-                                $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
+                                $('#codeMergeText').text("代码合并进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
                                 var widthTemp = (realPoints / sumPoints) * 100;
-                                $('#codeMerge').width(widthTemp + '%').text(widthTemp + '%');
-                                html += "<br>" + received_msg[i + 1]
-                            } else if (received_msg[i] === 'conflict') {
-                                realPoints++;
-                                $('#codeMergeText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
-                                var widthTemp2 = (realPoints / sumPoints) * 100;
-                                $('#codeMerge').width(widthTemp2 + '%').text(widthTemp2 + '%');
-                                html += "<br>" + received_msg[i + 1]
+                                $('#codeMergeProgressLine').width(widthTemp + '%').text(widthTemp + '%');
+                                html += "<br>" + received_msg[i + 1];
                             }
-                            else if (received_msg[i] === 'success') {
+                            else if (received_msg[i] === 'complete') {
                                 layer.open({
                                     type: 1
                                     , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
