@@ -207,7 +207,6 @@
                                                     <hr>
                                                     <p>1-在输入框中输入验收细节情况</p>
                                                     <p>2-点击“通过”按钮完成验收</p>
-                                                    <p>3-验收通过后，会进行代码合并</p>
                                                 </div>
                                                 {% if sequence.implemented == 0 %}
                                                     <p id="p1" class="fade"></p>
@@ -297,12 +296,14 @@
                                                         <tr>
                                                             <th scope="col">项目</th>
                                                             <th scope="col">结果</th>
+                                                            <th scope="col">人员</th>
+                                                            <th scope="col">日期</th>
                                                         </tr>
                                                         </thead>
                                                         <tbody>
                                                         {% for project_plan in project_plans %}
                                                             <tr>
-                                                                <th scope="row">{{ project_plan.project.name }}</th>
+                                                                <td>{{ project_plan.project.name }}</td>
                                                                 {% if project_plan.mergeStatus == 0 %}
                                                                     <td>未合并</td>
                                                                 {% elif project_plan.mergeStatus == 1 %}
@@ -310,6 +311,8 @@
                                                                 {% elif project_plan.mergeStatus == 2 %}
                                                                     <td>合并冲突</td>
                                                                 {% endif %}
+                                                                <td>{{ sequence.executor }}</td>
+                                                                <td>{{ sequence.executeDate }}</td>
                                                             </tr>
                                                         {% endfor %}
                                                         </tbody>
@@ -512,7 +515,6 @@
                                                     <hr>
                                                     <p>1-在输入框中输入验收细节情况</p>
                                                     <p>2-点击“通过”按钮完成验收</p>
-                                                    <p>3-验收通过后，会进行代码合并</p>
                                                 </div>
                                                 {% if sequence.implemented == 0 %}
                                                     <p id="p1" class="fade"></p>
@@ -561,50 +563,73 @@
                                                 <div class="alert alert-success" role="alert">
                                                     <h4 class="alert-heading">说明</h4>
                                                     <hr>
-                                                    <p>1-在输入框中输入验收细节情况</p>
-                                                    <p>2-点击“通过”按钮完成验收</p>
-                                                    <p>3-验收通过后，会进行代码合并</p>
+                                                    <p>1-代码在项目验收后，由任务创建者（开发）进行代码合并</p>
+                                                    <p>2-点击“合并代码”按钮，将代码合并入master</p>
+                                                    <p>3-进度条显示的是所有项目的总进度</p>
                                                 </div>
                                                 {% if sequence.implemented == 0 %}
-                                                    <p id="p1" class="fade"></p>
-                                                    <textarea class="form-control" name="remark"
-                                                              id="remark"
-                                                              placeholder="请输入验收结果" rows="4"></textarea>
-                                                    <h5 class="page-header"></h5>
-                                                    <button type="button" id="{{ sequence.id }}"
-                                                            class="layui-btn layui-btn-primary checkSuccess">
-                                                        通过
+                                                    <div class="text" style="text-align:center;">
+                                                        <p id="codeMergeText"></p>
+                                                    </div>
+                                                    <div class="progress mb-2 codeMergeProgress" style="display: none">
+                                                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                                             id="codeMergeProgressLine" role="progressbar"
+                                                             style="width: 5%"
+                                                             aria-valuenow="55" aria-valuemin="0"
+                                                             aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <button class="layui-btn layui-btn-primary startCodeMerge"
+                                                            data-type="loading">合并代码
                                                     </button>
                                                     <h5 class="page-header"></h5>
+                                                    <div class="layui-col-md12">
+                                                        <div class="layui-card">
+                                                            <div class="layui-card-header" style="display: none"
+                                                                 id="codeMergeOpt">
+                                                                <strong>合并进度</strong></div>
+                                                            <div class="layui-card-body codeMergeResult"></div>
+                                                        </div>
+                                                    </div>
+                                                    <h5 class="page-header"></h5>
                                                     <div class="layui-btn-group" style="float: right">
                                                         <button type="button" class="layui-btn layui-btn-primary">
                                                             <a href="#step{{ sequence.pre_segment }}"
                                                                onclick="eventFun.setStep({{ sequence.pre_segment }})"
                                                                role="tab" data-toggle="tab">上一步</a></button>
-                                                        {% if sequence.priority < lastNum %}
-                                                            <button type="button" id="nextBtn"
-                                                                    class="layui-btn layui-btn-primary"
-                                                                    style="display: none">
-                                                                <a href="#step{{ sequence.next_segment }}"
-                                                                   onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                                   role="tab" data-toggle="tab">下一步</a></button>
-                                                        {% endif %}
                                                     </div>
                                                 {% else %}
-                                                    <p id="p1">
-                                                        <br>验收人：{{ sequence_obj.checkUser.name }}
-                                                        <br>验收日期：{{ sequence_obj.checkDate }}
-                                                        <br>备注：{{ sequence_obj.remarks }}
-                                                    </p>
+                                                    <table class="table">
+                                                        <thead>
+                                                        <tr>
+                                                            <th scope="col">项目</th>
+                                                            <th scope="col">结果</th>
+                                                            <th scope="col">人员</th>
+                                                            <th scope="col">日期</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        {% for project_plan in project_plans %}
+                                                            <tr>
+                                                                <td>{{ project_plan.project.name }}</td>
+                                                                {% if project_plan.mergeStatus == 0 %}
+                                                                    <td>未合并</td>
+                                                                {% elif project_plan.mergeStatus == 1 %}
+                                                                    <td>合并完成</td>
+                                                                {% elif project_plan.mergeStatus == 2 %}
+                                                                    <td>合并冲突</td>
+                                                                {% endif %}
+                                                                <td>{{ sequence.executor }}</td>
+                                                                <td>{{ sequence.executeDate }}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                        </tbody>
+                                                    </table>
                                                     <div class="layui-btn-group" style="float: right">
                                                         <button type="button" class="layui-btn layui-btn-primary">
                                                             <a href="#step{{ sequence.pre_segment }}"
                                                                onclick="eventFun.setStep({{ sequence.pre_segment }})"
                                                                role="tab" data-toggle="tab">上一步</a></button>
-                                                        <button type="button" class="layui-btn layui-btn-primary">
-                                                            <a href="#step{{ sequence.next_segment }}"
-                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                               role="tab" data-toggle="tab">下一步</a></button>
                                                     </div>
                                                 {% endif %}
                                             </div>

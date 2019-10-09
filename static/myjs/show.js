@@ -35,13 +35,13 @@ layui.use(['element', 'layer'], function () {
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
-            ok();
+            ok(step, type);
             layer.closeAll();
         }, function () {
             console.log('已取消');
         });
 
-        function ok() {
+        function ok(step, type) {
             var taskId = getQueryVariable("tid");
             $('#proDeployText').text("发布进行中，请等待...");
             $('.proDeployProgress').removeClass('fade');
@@ -191,13 +191,13 @@ layui.use(['element', 'layer'], function () {
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
-            ok();
+            ok(step, type);
             layer.closeAll();
         }, function () {
             console.log('已取消');
         });
 
-        function ok() {
+        function ok(step, type) {
             var taskId = getQueryVariable("tid");
             $('#proDeployText').text("发布进行中，请等待...");
             $('.proDeployProgress').removeClass('fade');
