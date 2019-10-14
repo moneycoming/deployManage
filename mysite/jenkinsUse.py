@@ -58,13 +58,17 @@ class projectBean:
         # branch_str = str(branch_byte)
         branches = branch_str.split('\n')
         branch_list = []
-        for branch in branches[1: -1]:
+        for branch in branches[:-1]:
             match = re.match(r"uat", branch.lstrip('* origin').lstrip('/'))
             if not match:
                 branch_list.append(branch.lstrip('* origin').lstrip('/'))
 
         if 'master' in branch_list:
             branch_list.remove('master')
+        if 'HEAD -> origin/master' in branch_list:
+            branch_list.remove('HEAD -> origin/master')
+        if 'pre-online' in branch_list:
+            branch_list.remove('pre-online')
 
         return branch_list
 
