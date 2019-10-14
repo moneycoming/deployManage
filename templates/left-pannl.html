@@ -8,25 +8,26 @@
                 <li class="active">
                     <a href="/"><i class="menu-icon fa fa-laptop"></i>首页 </a>
                 </li>
-                <li class="menu-title">查询工具</li><!-- /.menu-title -->
-                <li class="menu-item-has-children dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
-                       aria-expanded="false"> <i class="menu-icon fa fa-cogs"></i>fileKey 查询</a>
-                    <ul class="sub-menu children dropdown-menu">
-                        <li><i class="fa fa-puzzle-piece"></i><a href="{% url 'ios' %}">fileKey 查询</a></li>
-                    </ul>
-                </li>
+                {#                <li class="menu-title">查询工具</li><!-- /.menu-title -->#}
+                {#                <li class="menu-item-has-children dropdown">#}
+                {#                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"#}
+                {#                       aria-expanded="false"> <i class="menu-icon fa fa-cogs"></i>fileKey 查询</a>#}
+                {#                    <ul class="sub-menu children dropdown-menu">#}
+                {#                        <li><i class="fa fa-puzzle-piece"></i><a href="{% url 'ios' %}">fileKey 查询</a></li>#}
+                {#                    </ul>#}
+                {#                </li>#}
+                {% if user.is_authenticated %}
+                    <li class="menu-title">发布平台</li><!-- /.menu-title -->
 
-                <li class="menu-title">发布平台</li><!-- /.menu-title -->
-
-                <li class="menu-item-has-children dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
-                       aria-expanded="false"> <i class="menu-icon fa fa-tasks"></i>发布管理</a>
-                    <ul class="sub-menu children dropdown-menu">
-                        <li><i class="menu-icon fa fa-fort-awesome"></i><a href="{% url 'showPlan' %}">计划栏</a></li>
-                        <li><i class="menu-icon fa fa-fort-awesome"></i><a href="{% url 'showTask' %}">任务栏</a></li>
-                    </ul>
-                </li>
+                    <li class="menu-item-has-children dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                           aria-expanded="false"> <i class="menu-icon fa fa-tasks"></i>发布管理</a>
+                        <ul class="sub-menu children dropdown-menu">
+                            <li><i class="menu-icon fa fa-fort-awesome"></i><a href="{% url 'showPlan' %}">计划栏</a></li>
+                            <li><i class="menu-icon fa fa-fort-awesome"></i><a href="{% url 'showTask' %}">任务栏</a></li>
+                        </ul>
+                    </li>
+                {% endif %}
             </ul>
         </div><!-- /.navbar-collapse -->
     </nav>

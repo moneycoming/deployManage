@@ -33,12 +33,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-if DEBUG:
-    CORS_ORIGIN_ALLOW_ALL = True
-else:
-    CORS_ORIGIN_WHITELIST = (
-        'okr.bestjlb.cn',
-    )
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 

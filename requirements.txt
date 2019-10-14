@@ -12,3 +12,4 @@ pymysql==0.8.1
 python-jenkins==1.4.0
 django-apscheduler==0.2.4
 dwebsocket==0.5.10
+django-cors-headers=3.1.0
