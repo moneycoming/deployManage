@@ -64,6 +64,7 @@ mail_cc = ['hepengchong@zhixuezhen.com']
 def index(request):
     plans = models.plan.objects.all()
     productions = models.production.objects.all()
+    member_obj = models.member.objects.get(user=request.user)
     monthAllPlan = []
     for i in range(len(productions)):
         data_analysis_obj = DataAnalysis(productions[i])
