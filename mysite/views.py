@@ -169,6 +169,8 @@ def createPlan(request):
 @login_required
 def planDetail(request):
     planId = request.GET.get('pid')
+    if request.user.is_authenticated:
+        member_obj = models.member.objects.get(user=request.user)
     if planId:
         plan_obj = models.plan.objects.get(id=planId)
         tasks = models.task.objects.filter(plan__id=planId)
@@ -212,6 +214,8 @@ def ajax_deletePlan(request):
 def showTask(request):
     # 使用了js分页技术，无须做分页
     tasks = models.task.objects.all()
+    if request.user.is_authenticated:
+        member_obj = models.member.objects.get(user=request.user)
 
     template = get_template('showTask.html')
     html = template.render(context=locals(), request=request)
@@ -287,6 +291,8 @@ def createTask(request):
 @login_required
 def taskDetail(request):
     taskId = request.GET.get('tid')
+    if request.user.is_authenticated:
+        member_obj = models.member.objects.get(user=request.user)
     if taskId:
         task_obj = models.task.objects.get(id=taskId)
         project_plans = models.project_plan.objects.filter(plan=task_obj.plan).order_by('order')
@@ -358,6 +364,8 @@ def ajax_showTask(request):
 @login_required
 def uatDetail(request):
     planId = request.GET.get('pid')
+    if request.user.is_authenticated:
+        member_obj = models.member.objects.get(user=request.user)
     if planId:
         plan_obj = models.plan.objects.get(id=planId)
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
@@ -372,6 +380,8 @@ def uatDetail(request):
 def uatDeploy(request):
     projectId = request.GET.get('prjId')
     planId = request.GET.get('pid')
+    if request.user.is_authenticated:
+        member_obj = models.member.objects.get(user=request.user)
     if projectId and planId:
         project_obj = models.project.objects.get(id=projectId)
         plan_obj = models.plan.objects.get(id=planId)
