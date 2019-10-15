@@ -52,7 +52,11 @@ class projectBean:
         project = self.project
         project_dir = project.project_dir
         os.chdir(project_dir)
-        subprocess.check_output(["git", "remote", "update", "--prune"])
+        try:
+            subprocess.check_output(["git", "remote", "update", "--prune"])
+        except subprocess.CalledProcessError:
+            logger.info("项目%s已是最新信息，无须更新" % project.name)
+
         branch_byte = subprocess.check_output(["git", "branch", "-r"])
         branch_str = str(branch_byte, 'utf-8')
         # branch_str = str(branch_byte)
