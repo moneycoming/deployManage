@@ -61,7 +61,10 @@ class branch:
         curBranch = repo.head.reference
         master = repo.heads.master
         os.chdir(repoPath)
-        subprocess.check_output(["git", "remote", "update", "--prune"])
+        try:
+            subprocess.check_output(["git", "remote", "update", "--prune"])
+        except subprocess.CalledProcessError:
+            logger.info("已是最新分支信息，无法更新")
         status = True
         try:
             assert curBranch == master
@@ -118,7 +121,10 @@ class branch:
         master = repo.heads.master
         curBranch = repo.head.reference
         os.chdir(repoPath)
-        subprocess.check_output(["git", "remote", "update", "--prune"])
+        try:
+            subprocess.check_output(["git", "remote", "update", "--prune"])
+        except subprocess.CalledProcessError:
+            logger.info("已是最新分支信息，无法更新")
         try:
             assert curBranch == master
         except AssertionError:
@@ -141,7 +147,10 @@ class branch:
     def delete_branch(self, hopeBranch):
         repoPath = self.url
         os.chdir(repoPath)
-        subprocess.check_output(["git", "remote", "update", "--prune"])
+        try:
+            subprocess.check_output(["git", "remote", "update", "--prune"])
+        except subprocess.CalledProcessError:
+            logger.info("已是最新分支信息，无法更新")
         status = True
         try:
             subprocess.check_output(["git", "push", "origin", "--delete", hopeBranch])
