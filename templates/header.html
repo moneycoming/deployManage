@@ -13,9 +13,15 @@
             <div class="user-area dropdown float-right">
                 <a href="#" class="dropdown-toggle active" data-toggle="dropdown" aria-haspopup="true"
                    aria-expanded="false">
-                    欢迎，<strong>{{ member_obj.name }}</strong>
-                    <img class="user-avatar rounded-circle" src="{% static "images/jlb.png" %}" alt="欢迎<strong>{{ member_obj.name }}</strong>登陆">
-{#                    <img class="user-avatar rounded-circle" src="{% static "images/jlb.png" %}" alt="欢迎<strong>{{ user.last_name }}{{ user.first_name }}</strong>登陆">#}
+                    {% if user.is_authenticated %}
+                        欢迎，<strong>{{ member_obj.name }}</strong>
+                        <img class="user-avatar rounded-circle" src="{% static "images/jlb.png" %}"
+                             alt="欢迎<strong>{{ member_obj.name }}</strong>登陆">
+                    {% else %}
+                        请先登录！
+                        <img class="user-avatar rounded-circle" src="{% static "images/jlb.png" %}"
+                             alt="<strong>未登录</strong>登陆">
+                    {% endif %}
                 </a>
                 <div class="user-menu dropdown-menu">
                     {% if user.is_authenticated %}
