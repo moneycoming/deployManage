@@ -128,6 +128,12 @@ class sequence_admin(object):
                    'priority', 'implemented', 'remarks']
 
 
+class paramConfig_admin(object):
+    list_display = ['name', 'param']
+    search_fields = ['name', 'param']
+    list_filter = ['name', 'param']
+
+
 xadmin.site.register(production, production_admin)
 xadmin.site.register(production_member, production_member_admin)
 xadmin.site.register(server, server_admin)
@@ -144,3 +150,4 @@ xadmin.site.register(project_plan, project_plan_admin)
 xadmin.site.register(segment, segment_admin)
 xadmin.site.register(task, task_admin)
 xadmin.site.register(sequence, sequence_admin)
+xadmin.site.register(paramConfig, paramConfig_admin)

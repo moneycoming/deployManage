@@ -255,3 +255,13 @@ class sequence(models.Model):
     class Meta:
         verbose_name = u'任务队列管理'
         verbose_name_plural = verbose_name
+
+
+# 环境配置表
+class paramConfig(models.Model):
+    name = models.CharField(max_length=50, verbose_name="参数名")
+    param = models.CharField(max_length=200, verbose_name="参数值")
+
+    class Meta:
+        verbose_name = u'环境参数表'
+        verbose_name_plural = verbose_name

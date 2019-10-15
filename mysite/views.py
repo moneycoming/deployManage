@@ -156,7 +156,8 @@ def createPlan(request):
         mail_to = []
         for k in range(len(production_members)):
             mail_to.append(production_members[k].member.user.email)
-        email_createPlan(project_plans, mail_from, mail_to, mail_cc)
+        paramConfig_obj = models.paramConfig.objects.get(name='email_url')
+        email_createPlan(project_plans, mail_from, mail_to, mail_cc, paramConfig_obj)
         return HttpResponseRedirect('/showPlan')
 
     template = get_template('createPlan.html')
@@ -172,12 +173,6 @@ def planDetail(request):
         plan_obj = models.plan.objects.get(id=planId)
         tasks = models.task.objects.filter(plan__id=planId)
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
-        # production_members = models.production_member.objects.filter(production=plan_obj.production)
-        # member_obj = models.member.objects.get(user=request.user)
-        # isMember = False
-        # for m in range(len(production_members)):
-        #     if member_obj == production_members[m].member:
-        #         isMember = True
 
     template = get_template('planDetail.html')
     html = template.render(context=locals(), request=request)
@@ -278,7 +273,8 @@ def createTask(request):
             mail_to = []
             for k in range(len(production_members)):
                 mail_to.append(production_members[k].member.user.email)
-            email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc)
+            paramConfig_obj = models.paramConfig.objects.get(name='email_url')
+            email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc, paramConfig_obj)
 
             return HttpResponseRedirect('/planDetail?pid=%s' % post_plan_obj.id)
 
@@ -431,7 +427,8 @@ def ajax_uatCheck(request):
                 mail_to = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
-                email_uatCheck(plan_obj, mail_from, mail_to, mail_cc)
+                paramConfig_obj = models.paramConfig.objects.get(name='email_url')
+                email_uatCheck(plan_obj, mail_from, mail_to, mail_cc, paramConfig_obj)
             else:
                 ret = {
                     'role:': 1,
@@ -579,7 +576,8 @@ def ajax_checkSuccess(request):
             mail_to = []
             for k in range(len(production_members)):
                 mail_to.append(production_members[k].member.user.email)
-            email_proCheck(sequence_obj, mail_from, mail_to, mail_cc)
+            paramConfig_obj = models.paramConfig.objects.get(name='email_url')
+            email_proCheck(sequence_obj, mail_from, mail_to, mail_cc, paramConfig_obj)
         else:
             ret = {
                 'role': 0
