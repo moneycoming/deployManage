@@ -6,4 +6,5 @@ urlpatterns = [
     url(r'^api/productTaskPercent', views.get_productTaskPercent, name='productTaskPercent'),
     url(r'^api/productTaskStatusPercent', views.get_productTaskStatusPercent, name='productTaskStatusPercent'),
     url(r'^api/productScorePercent', views.get_productScorePercent, name='productScorePercent'),
+    url(r'^api/productTaskWorkingHour', views.get_productTaskWorkingHour, name='productTaskWorkingHour'),
 ]

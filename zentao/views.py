@@ -4,6 +4,7 @@ from zentao.function import __get_productBugPercent_response_json_dict
 from zentao.function import __get_productTaskPercent_response_json_dict
 from zentao.function import __get_productTaskStatusPercent_response_json_dict
 from zentao.function import __get_productScorePercent_response_json_dict
+from zentao.function import __get_productTaskWorkingHour_dic
 from django.db import connections
 
 
@@ -170,3 +171,49 @@ def get_productScorePercent(request):
 
     return JsonResponse(
         __get_productScorePercent_response_json_dict(result, productId, int(nowScore), allScore, message))
+
+
+# 根据项目id查询项目任务工时消耗
+def get_productTaskWorkingHour(request):
+    productId = request.GET['productId']
+    cursor = connections['zentao'].cursor()
+    query = "select 'total',sum(estimate) as expHour, sum(consumed) as workingHour from zt_task where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and status = 'done'"
+    cursor.execute(query, productId)
+    allData = cursor.fetchall()
+    totalExpHour = totalWorkingHour = 0
+    if allData[0][1]:
+        totalExpHour = int(allData[0][1])
+    if allData[0][2]:
+        totalWorkingHour = int(allData[0][2])
+
+    cursor2 = connections['zentao'].cursor()
+    query2 = "select (select realname from zt_user where account = finishedby) as username,sum(estimate) as expHour, sum(consumed) as workingHour,round(sum(consumed)/sum(estimate),2) as rate from zt_task where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and status = 'done' group by username order by rate desc"
+    cursor2.execute(query2, productId)
+    allData2 = cursor2.fetchall()
+    memberList = []
+    for i in range(len(allData2)):
+        name = allData2[i][0]
+        expHour = int(allData2[i][1])
+        workingHour = int(allData2[i][2])
+        rate = allData2[i][3]
+        perDetail = {
+            'name': name,
+            'expHour': expHour,
+            'workingHour': workingHour,
+            'rate': rate
+        }
+        memberList.append(perDetail)
+
+    total = {
+        'expHour': totalExpHour,
+        'workingHour': totalWorkingHour
+    }
+
+    if productId:
+        result = "true"
+        message = ""
+    else:
+        result = "false"
+        message = "服务器开小差了"
+
+    return JsonResponse(__get_productTaskWorkingHour_dic(result, productId, total, memberList, message))
