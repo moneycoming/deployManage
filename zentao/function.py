@@ -50,3 +50,15 @@ def __get_productScorePercent_response_json_dict(result, productID, now, total, 
     }
 
     return ret
+
+
+def __get_productTaskWorkingHour_dic(result, productId, total, memberList, message):
+    ret = {
+        'result': result,
+        'productId': productId,
+        'total': total,
+        'list': memberList,
+        'message': message
+    }
+
+    return ret
