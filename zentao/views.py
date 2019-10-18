@@ -177,7 +177,7 @@ def get_productScorePercent(request):
 def get_productTaskWorkingHour(request):
     productId = request.GET['productId']
     cursor = connections['zentao'].cursor()
-    query = "select 'total',sum(estimate) as expHour, sum(consumed) as workingHour from zt_task where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and status = 'done'"
+    query = "select 'total',sum(estimate) as expHour, sum(consumed) as workingHour from zt_task where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and status in ('done','closed') "
     cursor.execute(query, productId)
     allData = cursor.fetchall()
     totalExpHour = totalWorkingHour = 0
@@ -187,7 +187,7 @@ def get_productTaskWorkingHour(request):
         totalWorkingHour = int(allData[0][2])
 
     cursor2 = connections['zentao'].cursor()
-    query2 = "select (select realname from zt_user where account = finishedby) as username,sum(estimate) as expHour, sum(consumed) as workingHour,round(sum(consumed)/sum(estimate),2) as rate from zt_task where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and status = 'done' group by username order by rate desc"
+    query2 = "select (select realname from zt_user where account = finishedby) as username,sum(estimate) as expHour, sum(consumed) as workingHour,round(sum(consumed)/sum(estimate),2) as rate from zt_task where project in (select project from `zt_projectproduct` where product = %s) and deleted = '0' and status in ('done','closed') group by username order by rate desc"
     cursor2.execute(query2, productId)
     allData2 = cursor2.fetchall()
     memberList = []
