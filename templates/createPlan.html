@@ -99,7 +99,7 @@
                                                                 name="production">
                                                             <optgroup label="产品列表">
                                                                 <option value="" label="default"></option>
-                                                                {% for production_member in production_members %}
+                                                                {% for production_member in productions %}
                                                                     <option>{{ production_member.production.name }}</option>
                                                                 {% endfor %}
                                                             </optgroup>
