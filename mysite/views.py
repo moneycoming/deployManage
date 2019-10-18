@@ -128,8 +128,9 @@ def showPlan(request):
 def createPlan(request):
     kinds = models.kind.objects.all()
     projects = models.project.objects.all()
-    productions = models.production.objects.all()
+    # productions = models.production.objects.all()
     member_obj = models.member.objects.get(user=request.user)
+    productions = models.production_member.objects.filter(member=member_obj)
     if request.method == 'POST' and member_obj.user.has_perm('add_plan'):
         production_obj = models.production.objects.get(name=request.POST['production'])
         production_members = models.production_member.objects.filter(production=production_obj)
