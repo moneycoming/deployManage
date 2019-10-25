@@ -192,10 +192,16 @@ def get_productTaskWorkingHour(request):
     allData2 = cursor2.fetchall()
     memberList = []
     for i in range(len(allData2)):
-        name = allData2[i][0]
-        expHour = int(allData2[i][1])
-        workingHour = int(allData2[i][2])
-        rate = allData2[i][3]
+        name = "无"
+        expHour = workingHour = rate = 0
+        if allData2[i][0]:
+            name = allData2[i][0]
+        if allData2[i][1]:
+            expHour = int(allData2[i][1])
+        if allData2[i][2]:
+            workingHour = int(allData2[i][2])
+        if allData2[i][3]:
+            rate = allData2[i][3]
         perDetail = {
             'name': name,
             'expHour': expHour,
