@@ -501,7 +501,7 @@ def ajax_createUatBranch(request):
                     'uatBranch': uatBranch
                 }
             else:
-                res = "预发分支：%s创建失败！" % uatBranch
+                res = "预发分支：%s创建失败,分支合并冲突，请手工处理！" % uatBranch
                 ret = {
                     'role': 1,
                     'result': 0,
