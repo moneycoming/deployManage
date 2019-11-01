@@ -15,10 +15,10 @@ class pythonJenkins:
     def __init__(self, jenkinsJob, param):
         self.jenkinsJob = jenkinsJob
         self.param = param
-        token = "114cac1892a8158d6e0f4d51e117d016da"
-        url = "http://10.10.10.24:8080"
-        user = "zhumingjie"
-        self.server = jenkins.Jenkins(url, username=user, password=token)
+        token = models.paramConfig.objects.get(name='jenkins_token')
+        url = models.paramConfig.objects.get(name='jenkins_url')
+        user = models.paramConfig.objects.get(name='jenkins_user')
+        self.server = jenkins.Jenkins(url.param, username=user.param, password=token.param)
 
     def deploy(self):
         jenkinsJob = self.jenkinsJob
