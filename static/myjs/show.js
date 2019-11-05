@@ -31,7 +31,7 @@ layui.use(['element', 'layer'], function () {
 
     function startDeploy() {
         var type = $(this).data('type');
-        var step = $(this).parent().attr('id');
+        var step = $(this).parent().parent().parent().parent().parent().attr('id');
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {

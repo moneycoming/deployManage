@@ -204,6 +204,10 @@ class deployDetail(models.Model):
     server = models.ForeignKey(server, on_delete=models.CASCADE, verbose_name="服务器")
     buildStatus = models.IntegerField(default=0, verbose_name="0：未发布，1；发布成功，2：发布失败")
 
+    class Meta:
+        verbose_name = u'生产环境发布细节'
+        verbose_name_plural = verbose_name
+
 
 # 任务执行环节
 class segment(models.Model):
