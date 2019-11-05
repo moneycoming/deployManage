@@ -91,7 +91,7 @@ layui.use(['element', 'layer'], function () {
                                 $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
                                 var widthTemp = (realPoints / sumPoints) * 100;
                                 $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                             } else if (received_msg[i] === 'deploy_failed') {
                                 layer.open({
@@ -250,7 +250,7 @@ layui.use(['element', 'layer'], function () {
                                 $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
                                 var widthTemp = (realPoints / sumPoints) * 100;
                                 $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                             } else if (received_msg[i] === 'deploy_failed') {
                                 $('.restartDeploy').show();
@@ -416,7 +416,7 @@ layui.use(['element', 'layer'], function () {
                                 $('#proDeployText').text("发布进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
                                 var widthTemp = (realPoints / sumPoints) * 100;
                                 $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                             } else if (received_msg[i] === 'deploy_failed') {
                                 layer.open({
@@ -561,7 +561,7 @@ layui.use(['element', 'layer'], function () {
                                 $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
                                 var widthTemp = (realPoints / sumPoints) * 100;
                                 $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>";
                             } else if (received_msg[i] === 'no_reversion') {
                                 layer.open({
@@ -695,7 +695,7 @@ layui.use(['element', 'layer'], function () {
                                 $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
                                 var widthTemp = (realPoints / sumPoints) * 100;
                                 $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
-                                html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                                html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                             } else if (received_msg[i] === 'no_reversion') {
                                 realPoints += received_msg[i + 1];
@@ -898,11 +898,11 @@ layui.use(['element', 'layer'], function () {
                         console.log(received_msg[i]);
                         if (received_msg[i] === 'success') {
                             html += "<pre>" + received_msg[i + 1] + "</pre>";
-                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                            html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                 + received_msg[i + 2] + "' target='_blank'>查看控制台信息</a>";
                         } else if (received_msg[i] === 'fail') {
                             html += "<pre>" + received_msg[i + 1] + "</pre>";
-                            html += "<a href='http://127.0.0.1:8000/single_console_opt/"
+                            html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                 + received_msg[i + 2] + "' target='_blank'>查看控制台信息</a>";
                         } else if (received_msg[i] === 'deploy') {
                             html += "<pre>" + received_msg[i + 1] + "</pre>";
