@@ -134,6 +134,12 @@ class paramConfig_admin(object):
     list_filter = ['name', 'param']
 
 
+class deployDetail_admin(object):
+    list_display = ['project_plan', 'server', 'buildStatus']
+    search_fields = ['project_plan', 'server', 'buildStatus']
+    list_filter = ['project_plan', 'server', 'buildStatus']
+
+
 xadmin.site.register(production, production_admin)
 xadmin.site.register(production_member, production_member_admin)
 xadmin.site.register(server, server_admin)
@@ -151,3 +157,4 @@ xadmin.site.register(segment, segment_admin)
 xadmin.site.register(task, task_admin)
 xadmin.site.register(sequence, sequence_admin)
 xadmin.site.register(paramConfig, paramConfig_admin)
+xadmin.site.register(deployDetail, deployDetail_admin)

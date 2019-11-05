@@ -128,7 +128,6 @@ def showPlan(request):
 def createPlan(request):
     kinds = models.kind.objects.all()
     projects = models.project.objects.all()
-    # productions = models.production.objects.all()
     member_obj = models.member.objects.get(user=request.user)
     productions = models.production_member.objects.filter(member=member_obj)
     if request.method == 'POST' and member_obj.user.has_perm('add_plan'):
@@ -683,7 +682,7 @@ def ws_startDeploy(request):
                                 params = {}
                                 params.update(param)
                                 server_obj = deployDetails[j].server
-                                if relVersion:
+                                if relVersion and sequence_obj:
                                     uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                     params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                     pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
@@ -736,8 +735,8 @@ def ws_startDeploy(request):
                                         deployDetails[j].save()
                                 else:
                                     cursor.append(project_obj.id)
-                                    logger.info("项目：%s，没有发布版本号，请先在预发创建！" % project_obj.name)
-                                    res = "项目：%s，没有发布版本号，请先在预发创建！" % project_obj.name
+                                    logger.info("项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name)
+                                    res = "项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name
                                     buildMessages.append(res)
                                     buildMessages.append('no_reversion')
                                     request.websocket.send(json.dumps(buildMessages))
@@ -811,9 +810,9 @@ def ws_restartDeploy(request):
                             for k in range(len(deployDetails)):
                                 params = {}
                                 params.update(param)
-                                if relVersion:
+                                server_obj = deployDetails[k].server
+                                if relVersion and server_obj:
                                     uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
-                                    server_obj = deployDetails[k].server
                                     params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                     pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
                                     info = pythonJenkins_obj.deploy()
@@ -867,8 +866,8 @@ def ws_restartDeploy(request):
                                         deployDetails[k].save()
                                 else:
                                     cursor.append(project_obj.id)
-                                    logger.info("项目：%s，没有发布版本号，请先在预发创建！" % project_obj.name)
-                                    res = "项目：%s，没有发布版本号，请先在预发创建！" % project_obj.name
+                                    logger.info("项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name)
+                                    res = "项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name
                                     buildMessages.append(res)
                                     buildMessages.append('no_reversion')
                                     request.websocket.send(json.dumps(buildMessages))
@@ -934,8 +933,8 @@ def ws_continueDeploy(request):
                                 for k in range(len(deployDetails)):
                                     params = {}
                                     params.update(param)
-                                    if relVersion:
-                                        server_obj = deployDetails[k].server
+                                    server_obj = deployDetails[k].server
+                                    if relVersion and server_obj:
                                         uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                         params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                         pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
@@ -992,8 +991,8 @@ def ws_continueDeploy(request):
                                             deployDetails[k].save()
                                     else:
                                         cursor.append(project_obj.id)
-                                        logger.info("项目：%s，没有发布版本号，请先在预发创建！" % project_obj.name)
-                                        res = "项目：%s，没有发布版本号，请先在预发创建！" % project_obj.name
+                                        logger.info("项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name)
+                                        res = "项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name
                                         buildMessages.append(res)
                                         buildMessages.append('no_reversion')
                                         request.websocket.send(json.dumps(buildMessages))
@@ -1097,7 +1096,6 @@ def ws_rollbackOne(request):
                                 consoleOpt_obj.save()
                                 deployDetails[i].buildStatus = 1
                                 deployDetails[i].save()
-                        # if len(cursor) == 0:
                         res = "任务：%s，回滚结束！" % task_obj.name
                         buildMessages.append(res)
                         buildMessages.append('deploy_success')
