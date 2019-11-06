@@ -84,11 +84,11 @@ class jenkinsUat_admin(object):
 
 
 class consoleOpt_admin(object):
-    list_display = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
+    list_display = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
                     'uniqueKey', 'uniteKey']
-    search_fields = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime',
+    search_fields = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime',
                      'deployUser', 'uniqueKey', 'uniteKey']
-    list_filter = ['project', 'plan', 'type', 'category', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
+    list_filter = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
                    'uniqueKey', 'uniteKey']
 
 
@@ -140,6 +140,12 @@ class deployDetail_admin(object):
     list_filter = ['project_plan', 'server', 'buildStatus']
 
 
+class taskBuildHistory_admin(object):
+    list_display = ['task', 'category', 'uniteKey', 'deployTime', 'deployUser']
+    search_fields = ['task', 'category', 'uniteKey', 'deployTime', 'deployUser']
+    list_filter = ['task', 'category', 'uniteKey', 'deployTime', 'deployUser']
+
+
 xadmin.site.register(production, production_admin)
 xadmin.site.register(production_member, production_member_admin)
 xadmin.site.register(server, server_admin)
@@ -151,6 +157,7 @@ xadmin.site.register(devBranch, devBranch_admin)
 xadmin.site.register(jenkinsPro, jenkinsPro_admin)
 xadmin.site.register(jenkinsUat, jenkinsUat_admin)
 xadmin.site.register(consoleOpt, consoleOpt_admin)
+xadmin.site.register(taskBuildHistory, taskBuildHistory_admin)
 xadmin.site.register(project_server, project_server_admin)
 xadmin.site.register(project_plan, project_plan_admin)
 xadmin.site.register(segment, segment_admin)
