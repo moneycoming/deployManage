@@ -152,63 +152,6 @@ class jenkinsUat(models.Model):
         return self.name
 
 
-# Jenkins控制台信息表
-class consoleOpt(models.Model):
-    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
-    plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
-    type = models.IntegerField(verbose_name="0:代表预发， 1:代表生产")
-    category = models.IntegerField(null=True, verbose_name="0:代表发布， 1：代表回滚")
-    content = models.TextField(verbose_name="控制台信息")
-    packageId = models.IntegerField(verbose_name="生产发布包编号")
-    result = models.BooleanField(verbose_name="构建成功，失败")
-    deployTime = models.DateTimeField(auto_now_add=True, verbose_name="最新操作日期")
-    deployUser = models.ForeignKey(member, verbose_name="执行人")
-    uniqueKey = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
-    uniteKey = models.CharField(max_length=40, verbose_name="发布历史统一标记号")
-
-    class Meta:
-        verbose_name = u'后台信息管理'
-        verbose_name_plural = verbose_name
-
-
-# 项目服务器信息关系表
-class project_server(models.Model):
-    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
-    server = models.ForeignKey(server, on_delete=models.CASCADE, verbose_name="服务器")
-
-    class Meta:
-        verbose_name = u'项目和服务器管理'
-        verbose_name_plural = verbose_name
-
-
-# 项目发布计划表
-class project_plan(models.Model):
-    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
-    plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
-    devBranch = models.ForeignKey(devBranch, on_delete=models.CASCADE, verbose_name="开发分支")
-    uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
-    lastPackageId = models.CharField(max_length=3, null=True, verbose_name="最新生产发布包编号")
-    order = models.IntegerField(verbose_name="执行顺序")
-    cursor = models.BooleanField(default=False, verbose_name="发布游标")
-    buildStatus = models.IntegerField(default=0, verbose_name="0：未发布，1；发布成功，2：发布失败")
-    mergeStatus = models.IntegerField(default=0, verbose_name="0：未合并，1；合并完成，2：合并冲突")
-    exclusiveKey = models.IntegerField(default=0, verbose_name="项目预发环境使用情况，0：未占用， 1：已占用")
-
-    class Meta:
-        verbose_name = u'发布计划和项目管理'
-        verbose_name_plural = verbose_name
-
-
-class deployDetail(models.Model):
-    project_plan = models.ForeignKey(project_plan, on_delete=models.CASCADE, verbose_name="计划-项目")
-    server = models.ForeignKey(server, on_delete=models.CASCADE, verbose_name="服务器")
-    buildStatus = models.IntegerField(default=0, verbose_name="0：未发布，1；发布成功，2：发布失败")
-
-    class Meta:
-        verbose_name = u'生产环境发布细节'
-        verbose_name_plural = verbose_name
-
-
 # 任务执行环节
 class segment(models.Model):
     name = models.CharField(max_length=20, verbose_name="任务执行环节")
@@ -258,6 +201,75 @@ class sequence(models.Model):
 
     class Meta:
         verbose_name = u'任务队列管理'
+        verbose_name_plural = verbose_name
+
+
+# Jenkins控制台信息表
+class consoleOpt(models.Model):
+    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
+    plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
+    type = models.IntegerField(verbose_name="0:代表预发， 1:代表生产")
+    content = models.TextField(verbose_name="控制台信息")
+    packageId = models.IntegerField(null=True, verbose_name="生产发布包编号")
+    result = models.BooleanField(verbose_name="构建成功，失败")
+    uniqueKey = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
+    uniteKey = models.CharField(max_length=40, verbose_name="发布历史统一标记号")
+    deployTime = models.DateTimeField(auto_now_add=True, verbose_name="最新操作日期")
+    deployUser = models.ForeignKey(member, verbose_name="执行人")
+
+    class Meta:
+        verbose_name = u'后台信息管理'
+        verbose_name_plural = verbose_name
+
+
+# jenkins控制台信息按任务分类
+class taskBuildHistory(models.Model):
+    task = models.ForeignKey(task, on_delete=models.CASCADE, verbose_name="任务名")
+    category = models.IntegerField(default=0, verbose_name="0:代表发布， 1：代表回滚")
+    uniteKey = models.CharField(max_length=40, verbose_name="发布历史统一标记号")
+    deployTime = models.DateTimeField(auto_now_add=True, verbose_name="最新操作日期")
+    deployUser = models.ForeignKey(member, verbose_name="执行人")
+
+    class Meta:
+        verbose_name = u'生产发布记录'
+        verbose_name_plural = verbose_name
+
+
+# 项目服务器信息关系表
+class project_server(models.Model):
+    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
+    server = models.ForeignKey(server, on_delete=models.CASCADE, verbose_name="服务器")
+
+    class Meta:
+        verbose_name = u'项目和服务器管理'
+        verbose_name_plural = verbose_name
+
+
+# 项目发布计划表
+class project_plan(models.Model):
+    project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
+    plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
+    devBranch = models.ForeignKey(devBranch, on_delete=models.CASCADE, verbose_name="开发分支")
+    uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
+    lastPackageId = models.CharField(max_length=3, null=True, verbose_name="最新生产发布包编号")
+    order = models.IntegerField(verbose_name="执行顺序")
+    cursor = models.BooleanField(default=False, verbose_name="发布游标")
+    buildStatus = models.IntegerField(default=0, verbose_name="0：未发布，1；发布成功，2：发布失败")
+    mergeStatus = models.IntegerField(default=0, verbose_name="0：未合并，1；合并完成，2：合并冲突")
+    exclusiveKey = models.IntegerField(default=0, verbose_name="项目预发环境使用情况，0：未占用， 1：已占用")
+
+    class Meta:
+        verbose_name = u'发布计划和项目管理'
+        verbose_name_plural = verbose_name
+
+
+class deployDetail(models.Model):
+    project_plan = models.ForeignKey(project_plan, on_delete=models.CASCADE, verbose_name="计划-项目")
+    server = models.ForeignKey(server, on_delete=models.CASCADE, verbose_name="服务器")
+    buildStatus = models.IntegerField(default=0, verbose_name="0：未发布，1；发布成功，2：发布失败")
+
+    class Meta:
+        verbose_name = u'生产环境发布细节'
         verbose_name_plural = verbose_name
 
 

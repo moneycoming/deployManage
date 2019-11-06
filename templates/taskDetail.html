@@ -459,18 +459,18 @@
                                                             </button>
                                                             <h5 class="page-header"></h5>
                                                             <ul class="layui-timeline proConsoleOptRefresh">
-                                                                {% for consoleOpt in consoleOpts %}
+                                                                {% for taskBuildHistory in taskBuildHistories %}
                                                                     <li class="layui-timeline-item">
                                                                         <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
                                                                         <div class="layui-timeline-content layui-text">
-                                                                            <h3 class="layui-timeline-title">{{ consoleOpt.deployTime }}</h3>
-                                                                            <p>{% if consoleOpt.category == 0 %}
+                                                                            <h3 class="layui-timeline-title">{{ taskBuildHistory.deployTime }}</h3>
+                                                                            <p>{% if taskBuildHistory.category == 0 %}
                                                                                 操作：发布
                                                                             {% else %}
                                                                                 操作：回滚
                                                                             {% endif %}
-                                                                                <br>执行人：{{ consoleOpt.deployUser.name }}
-                                                                                <br><a href="/pro_console_opt/{{ consoleOpt.uniteKey }}">查看控制台信息</a>
+                                                                                <br>执行人：{{ taskBuildHistory.deployUser.name }}
+                                                                                <br><a href="/pro_console_opt/{{ taskBuildHistory.uniteKey }}">查看控制台信息</a>
                                                                             </p>
                                                                         </div>
                                                                     </li>

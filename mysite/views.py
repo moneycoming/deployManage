@@ -311,7 +311,7 @@ def taskDetail(request):
             logger.info("%s已是最后一个环节" % upToImplementSequence.segment.name)
 
         sequences = models.sequence.objects.filter(task=task_obj).order_by('priority')
-        consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
+        taskBuildHistories = models.taskBuildHistory.objects.filter(task=task_obj).order_by('deployTime')
 
     template = get_template('taskDetail.html')
     html = template.render(context=locals(), request=request)
@@ -708,7 +708,7 @@ def ws_startDeploy(request):
                                         buildMessages.append('deploy_failed')
                                         request.websocket.send(json.dumps(buildMessages))
                                         request.websocket.close()
-                                        consoleOpt_obj = models.consoleOpt(type=1, category=0, plan=task_obj.plan,
+                                        consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                            project=project_obj,
                                                                            content=consoleOpt, packageId=relVersion,
                                                                            result=False, deployUser=member_obj,
@@ -723,7 +723,7 @@ def ws_startDeploy(request):
                                         buildMessages.append(res)
                                         buildMessages.append(uniqueKey)
                                         request.websocket.send(json.dumps(buildMessages))
-                                        consoleOpt_obj = models.consoleOpt(type=1, category=0, plan=task_obj.plan,
+                                        consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                            project=project_obj, content=consoleOpt,
                                                                            packageId=relVersion, result=True,
                                                                            deployUser=member_obj,
@@ -745,6 +745,9 @@ def ws_startDeploy(request):
                         else:
                             break
                     if len(cursor) == 0:
+                        taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
+                                                                       deployUser=member_obj)
+                        taskBuildHistory_obj.save()
                         sequence_obj.implemented = True
                         sequence_obj.executor = member_obj
                         sequence_obj.executeDate = datetime.datetime.now()
@@ -837,7 +840,7 @@ def ws_restartDeploy(request):
                                         request.websocket.send(json.dumps(buildMessages))
                                         request.websocket.close()
                                         consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
-                                                                           project=project_obj, category=0,
+                                                                           project=project_obj,
                                                                            content=consoleOpt, packageId=relVersion,
                                                                            result=False, deployUser=member_obj,
                                                                            uniqueKey=uniqueKey, uniteKey=uniteKey)
@@ -854,7 +857,7 @@ def ws_restartDeploy(request):
                                         buildMessages.append(res)
                                         buildMessages.append(uniqueKey)
                                         request.websocket.send(json.dumps(buildMessages))
-                                        consoleOpt_obj = models.consoleOpt(type=1, category=0, plan=task_obj.plan,
+                                        consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                            project=project_obj, content=consoleOpt,
                                                                            packageId=relVersion, result=True,
                                                                            deployUser=member_obj,
@@ -874,6 +877,9 @@ def ws_restartDeploy(request):
                                     request.websocket.close()
                                     break
                     if len(cursor) == 0:
+                        taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
+                                                                       deployUser=member_obj)
+                        taskBuildHistory_obj.save()
                         sequence_obj.implemented = True
                         sequence_obj.executor = member_obj
                         sequence_obj.executeDate = datetime.datetime.now()
@@ -960,7 +966,7 @@ def ws_continueDeploy(request):
                                             buildMessages.append('deploy_failed')
                                             request.websocket.send(json.dumps(buildMessages))
                                             request.websocket.close()
-                                            consoleOpt_obj = models.consoleOpt(type=1, category=0, plan=task_obj.plan,
+                                            consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                                project=project_obj,
                                                                                content=consoleOpt,
                                                                                packageId=relVersion,
@@ -977,7 +983,7 @@ def ws_continueDeploy(request):
                                             buildMessages.append(res)
                                             buildMessages.append(uniqueKey)
                                             request.websocket.send(json.dumps(buildMessages))
-                                            consoleOpt_obj = models.consoleOpt(type=1, category=0, plan=task_obj.plan,
+                                            consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                                project=project_obj,
                                                                                content=consoleOpt,
                                                                                packageId=relVersion, result=True,
@@ -999,6 +1005,9 @@ def ws_continueDeploy(request):
                                         request.websocket.close()
                                         break
                         if len(cursor) == 0:
+                            taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
+                                                                           deployUser=member_obj)
+                            taskBuildHistory_obj.save()
                             sequence_obj.implemented = True
                             sequence_obj.executor = member_obj.name
                             sequence_obj.executeDate = datetime.datetime.now()
@@ -1070,7 +1079,7 @@ def ws_rollbackOne(request):
                                 buildMessages.append(uniqueKey)
                                 request.websocket.send(json.dumps(buildMessages))
                                 request.websocket.close()
-                                consoleOpt_obj2 = models.consoleOpt(type=1, category=1, plan=task_obj.plan,
+                                consoleOpt_obj2 = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                     project=project_obj,
                                                                     content=consoleOpt, packageId=relVersion,
                                                                     result=False, deployUser=member_obj,
@@ -1086,7 +1095,7 @@ def ws_rollbackOne(request):
                                 buildMessages.append(res)
                                 buildMessages.append(uniqueKey)
                                 request.websocket.send(json.dumps(buildMessages))
-                                consoleOpt_obj = models.consoleOpt(type=1, category=1, plan=task_obj.plan,
+                                consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                    project=project_obj,
                                                                    content=consoleOpt,
                                                                    packageId=relVersion, result=True,
@@ -1096,6 +1105,9 @@ def ws_rollbackOne(request):
                                 consoleOpt_obj.save()
                                 deployDetails[i].buildStatus = 1
                                 deployDetails[i].save()
+                        taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, category=1, uniteKey=uniteKey,
+                                                                       deployUser=member_obj)
+                        taskBuildHistory_obj.save()
                         res = "任务：%s，回滚结束！" % task_obj.name
                         buildMessages.append(res)
                         buildMessages.append('deploy_success')
@@ -1167,7 +1179,7 @@ def ws_rollbackAll(request):
                                     buildMessages.append(res)
                                     buildMessages.append(uniqueKey)
                                     request.websocket.send(json.dumps(buildMessages))
-                                    consoleOpt_obj2 = models.consoleOpt(type=1, category=1, plan=task_obj.plan,
+                                    consoleOpt_obj2 = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                         project=project_obj, content=consoleOpt,
                                                                         packageId=relVersion, result=False,
                                                                         deployUser=member_obj, uniqueKey=uniqueKey,
@@ -1183,7 +1195,7 @@ def ws_rollbackAll(request):
                                     buildMessages.append(res)
                                     buildMessages.append(uniqueKey)
                                     request.websocket.send(json.dumps(buildMessages))
-                                    consoleOpt_obj = models.consoleOpt(type=1, category=1, plan=task_obj.plan,
+                                    consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                        project=project_obj,
                                                                        content=consoleOpt,
                                                                        packageId=relVersion, result=True,
@@ -1202,6 +1214,9 @@ def ws_rollbackAll(request):
                             request.websocket.send(json.dumps(buildMessages))
                             cursor.append(project_obj.id)
                     if len(cursor) == 0:
+                        taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, category=1, uniteKey=uniteKey,
+                                                                       deployUser=member_obj)
+                        taskBuildHistory_obj.save()
                         res = "任务：%s，所有节点都已回滚！" % task_obj.name
                         buildMessages.append(res)
                         buildMessages.append('deploy_success')
@@ -1287,8 +1302,7 @@ def ws_uatDeploy(request):
                                         request.websocket.send(json.dumps(buildMessage))
                                         request.websocket.close()
                                     consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj,
-                                                                       content=consoleOpt, packageId=buildId,
-                                                                       result=result,
+                                                                       content=consoleOpt, result=result,
                                                                        deployTime=deployTime, deployUser=member_obj,
                                                                        uniqueKey=uniqueKey, uniteKey=uniteKey)
                                     consoleOpt_obj.save()
@@ -1414,14 +1428,14 @@ def ws_proConsoleOptRefresh(request):
         for taskId in request.websocket:
             if taskId:
                 task_obj = models.task.objects.get(id=taskId)
-                consoleOpts = models.consoleOpt.objects.filter(plan=task_obj.plan, type=1).order_by('deployTime')
+                taskBuildHistories = models.taskBuildHistory.objects.filter(task=task_obj).order_by('deployTime')
                 consoleMessages = []
-                for i in range(len(consoleOpts)):
+                for i in range(len(taskBuildHistories)):
                     consoleMessages.append("console")
-                    consoleMessages.append(consoleOpts[i].deployTime)
-                    consoleMessages.append(consoleOpts[i].category)
-                    consoleMessages.append(consoleOpts[i].deployUser.name)
-                    consoleMessages.append(consoleOpts[i].uniteKey)
+                    consoleMessages.append(taskBuildHistories[i].deployTime)
+                    consoleMessages.append(taskBuildHistories[i].category)
+                    consoleMessages.append(taskBuildHistories[i].deployUser.name)
+                    consoleMessages.append(taskBuildHistories[i].uniteKey)
                     request.websocket.send(json.dumps(consoleMessages, cls=DateEncoder))
                 request.websocket.close()
 
