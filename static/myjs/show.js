@@ -186,7 +186,7 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".restartDeploy", restartDeploy);
 
     function restartDeploy() {
-        var step = $(this).parent().attr('id');
+        var step = $(this).parent().parent().parent().parent().parent().attr('id');
         var type = $(this).data('type');
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮

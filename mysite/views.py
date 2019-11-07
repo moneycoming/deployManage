@@ -117,6 +117,7 @@ def productionKindChart(request):
 @login_required
 def showPlan(request):
     plans = models.plan.objects.all()
+    member_obj = models.member.objects.get(user=request.user)
 
     template = get_template('showPlan.html')
     html = template.render(context=locals(), request=request)
@@ -881,10 +882,16 @@ def ws_restartDeploy(request):
                                                                        deployUser=member_obj)
                         taskBuildHistory_obj.save()
                         sequence_obj.implemented = True
+                        sequence_obj.executeCursor = False
                         sequence_obj.executor = member_obj
                         sequence_obj.executeDate = datetime.datetime.now()
                         sequence_obj.remarks = "已部署"
                         sequence_obj.save()
+                        nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task,
+                                                                          priority__gt=sequence_obj.priority).order_by(
+                            'priority')[0]
+                        nextSequence_obj.executeCursor = True
+                        nextSequence_obj.save()
                         res = "任务：%s，部署完成！" % task_obj.name
                         buildMessages.append(res)
                         buildMessages.append('deploy_success')
