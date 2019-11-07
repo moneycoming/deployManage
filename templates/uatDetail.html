@@ -36,48 +36,54 @@
                             <strong class="card-title">详情栏</strong>
                         </div>
                         <div class="card-body">
-                            <div class="alert alert-success" role="alert">
-                                <h4 class="alert-heading">部署流程</h4>
-                                <hr>
-                                <p>1-点击项目列表中的项目名，进入项目部署页面</p>
-                                <p>2-验证通过后，点击“通过”按钮</p>
-                            </div>
-                            <h3>项目列表</h3>
-                            {% for project_plan in project_plans %}
-                                {% if project_plan.buildStatus == 1 %}
-                                    <p><br><del><a
-                                            href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }}
-                                        --
-                                        项目名：{{ project_plan.project.name }}</a></del></p>
+                            {% if user.is_authenticated %}
+                                <div class="alert alert-success" role="alert">
+                                    <h4 class="alert-heading">部署流程</h4>
+                                    <hr>
+                                    <p>1-点击项目列表中的项目名，进入项目部署页面</p>
+                                    <p>2-验证通过后，点击“通过”按钮</p>
+                                </div>
+                                <h3>项目列表</h3>
+                                {% for project_plan in project_plans %}
+                                    {% if project_plan.buildStatus == 1 %}
+                                        <p><br>
+                                            <del><a
+                                                    href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }}
+                                                --
+                                                项目名：{{ project_plan.project.name }}</a></del>
+                                        </p>
+                                    {% else %}
+                                        <p><br>
+                                            <del><a
+                                                    href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }}
+                                                --
+                                                项目名：{{ project_plan.project.name }}</a></del>
+                                        </p>
+                                    {% endif %}
+                                {% endfor %}
+                                <h5 class="page-header"></h5>
+                                <h3>验收情况</h3>
+                                <h5 class="page-header"></h5>
+                                {% if plan_obj.uatCheck %}
+                                    <p id="uatP1">
+                                        <br>验收通过
+                                        <br>验收人：{{ plan_obj.uatCheckMember }}
+                                        <br>验收日期：{{ plan_obj.uatCheckDate }}
+                                        <br>备注：{{ plan_obj.uatRemark }}
+                                    </p>
                                 {% else %}
-                                    <p><br><a
-                                            href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }}
-                                        --
-                                        项目名：{{ project_plan.project.name }}</a></p>
-                                {% endif %}
-                            {% endfor %}
-                            <h5 class="page-header"></h5>
-                            <h3>验收情况</h3>
-                            <h5 class="page-header"></h5>
-                            {% if plan_obj.uatCheck %}
-                                <p id="uatP1">
-                                    <br>验收通过
-                                    <br>验收人：{{ plan_obj.uatCheckMember }}
-                                    <br>验收日期：{{ plan_obj.uatCheckDate }}
-                                    <br>备注：{{ plan_obj.uatRemark }}
-                                </p>
-                            {% else %}
-                                <p id="uatP1" style="display: none"></p>
-                                <!-- End .form-group  -->
-                                <div class="form-group" id="uatForm">
-                                    <div class="col-lg-10">
+                                    <p id="uatP1" style="display: none"></p>
+                                    <!-- End .form-group  -->
+                                    <div class="form-group" id="uatForm">
+                                        <div class="col-lg-10">
                                         <textarea class="form-control" name="desc" id="uatRemark"
                                                   placeholder="验收情况备注" rows="4"></textarea>
-                                        <h5 class="page-header"></h5>
-                                        <button type="button" class="layui-btn layui-btn-primary uatCheckBtn">通过
-                                        </button>
+                                            <h5 class="page-header"></h5>
+                                            <button type="button" class="layui-btn layui-btn-primary uatCheckBtn">通过
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>
