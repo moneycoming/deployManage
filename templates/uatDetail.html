@@ -44,9 +44,17 @@
                             </div>
                             <h3>项目列表</h3>
                             {% for project_plan in project_plans %}
-                                <p><br><a href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }}
-                                    --
-                                    项目名：{{ project_plan.project.name }}</a></p>
+                                {% if project_plan.buildStatus == 1 %}
+                                    <p><br><del><a
+                                            href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }}
+                                        --
+                                        项目名：{{ project_plan.project.name }}</a></del></p>
+                                {% else %}
+                                    <p><br><a
+                                            href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }}
+                                        --
+                                        项目名：{{ project_plan.project.name }}</a></p>
+                                {% endif %}
                             {% endfor %}
                             <h5 class="page-header"></h5>
                             <h3>验收情况</h3>
@@ -66,7 +74,8 @@
                                         <textarea class="form-control" name="desc" id="uatRemark"
                                                   placeholder="验收情况备注" rows="4"></textarea>
                                         <h5 class="page-header"></h5>
-                                        <button type="button" class="layui-btn layui-btn-primary uatCheckBtn">通过</button>
+                                        <button type="button" class="layui-btn layui-btn-primary uatCheckBtn">通过
+                                        </button>
                                     </div>
                                 </div>
                             {% endif %}
