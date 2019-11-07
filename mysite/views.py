@@ -366,8 +366,7 @@ def ajax_showTask(request):
 @login_required
 def uatDetail(request):
     planId = request.GET.get('pid')
-    if request.user.is_authenticated:
-        member_obj = models.member.objects.get(user=request.user)
+    member_obj = models.member.objects.get(user=request.user)
     if planId:
         plan_obj = models.plan.objects.get(id=planId)
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
@@ -414,7 +413,7 @@ def ajax_uatCheck(request):
             project_plans = models.project_plan.objects.filter(plan=plan_obj)
             unDeployedProject = []
             for j in range(len(project_plans)):
-                if not project_plans[j].lastPackageId:
+                if project_plans[j].buildStatus != 1:
                     unDeployedProject.append(project_plans[j].project.name)
             if len(unDeployedProject) == 0:
                 remark = request.POST.get('remark')
@@ -1291,6 +1290,7 @@ def ws_uatDeploy(request):
                                     if isSuccess != -1:
                                         result = True
                                         project_plan_obj.lastPackageId = buildId
+                                        project_plan_obj.buildStatus = 1
                                         project_plan_obj.save()
                                         res = "分支%s部署成功" % project_plan_obj.uatBranch
                                         logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
@@ -1303,6 +1303,8 @@ def ws_uatDeploy(request):
                                         result = False
                                         res = "分支%s部署失败" % project_plan_obj.uatBranch
                                         logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
+                                        project_plan_obj.buildStatus = 2
+                                        project_plan_obj.save()
                                         buildMessage.append("fail")
                                         buildMessage.append(res)
                                         buildMessage.append(uniqueKey)
@@ -1394,6 +1396,7 @@ def ws_codeMerge(request):
 # 查看预发控制台信息
 @login_required
 def uat_console_opt(request, uid):
+    member_obj = models.member.objects.get(user=request.user)
     if uid:
         consoleOpts = models.consoleOpt.objects.filter(uniteKey=uid)
         planId = consoleOpts[0].plan.id
@@ -1407,6 +1410,7 @@ def uat_console_opt(request, uid):
 # 查看生产控制台信息
 @login_required
 def pro_console_opt(request, uid):
+    member_obj = models.member.objects.get(user=request.user)
     if uid:
         consoleOpts = models.consoleOpt.objects.filter(uniteKey=uid)
         task_obj = models.task.objects.get(plan=consoleOpts[0].plan)
@@ -1419,6 +1423,7 @@ def pro_console_opt(request, uid):
 # 单个控制台信息查看
 @login_required
 def single_console_opt(request, uid):
+    member_obj = models.member.objects.get(user=request.user)
     if uid:
         consoleOpt_obj = models.consoleOpt.objects.get(uniqueKey=uid)
 
