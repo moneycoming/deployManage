@@ -282,7 +282,7 @@ def createTask(request):
             paramConfig_obj = models.paramConfig.objects.get(name='email_url')
             email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc, paramConfig_obj)
 
-            return HttpResponseRedirect('/planDetail?pid=%s' % post_plan_obj.id)
+            return HttpResponseRedirect('/taskDetail?tid=%s' % task_obj.id)
 
     template = get_template('createTask.html')
     html = template.render(context=locals(), request=request)
@@ -413,7 +413,7 @@ def ajax_uatCheck(request):
             project_plans = models.project_plan.objects.filter(plan=plan_obj)
             unDeployedProject = []
             for j in range(len(project_plans)):
-                if project_plans[j].buildStatus != 1:
+                if not project_plans[j].uatBuildStatus:
                     unDeployedProject.append(project_plans[j].project.name)
             if len(unDeployedProject) == 0:
                 remark = request.POST.get('remark')
@@ -655,7 +655,7 @@ def ws_startDeploy(request):
                 uniteKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                 task_obj = models.task.objects.get(id=taskId)
                 project_plans = models.project_plan.objects.filter(plan=task_obj.plan).filter(
-                    ~Q(buildStatus=1)).order_by('order')
+                    ~Q(proBuildStatus=True)).order_by('order')
                 production_members = models.production_member.objects.filter(production=task_obj.plan.production)
                 member_obj = models.member.objects.get(user=request.user)
                 sequence_obj = models.sequence.objects.filter(task=task_obj).get(segment__isDeploy=True)
@@ -673,7 +673,7 @@ def ws_startDeploy(request):
                     for i in range(len(project_plans)):
                         project_obj = project_plans[i].project
                         deployDetails = models.deployDetail.objects.filter(project_plan=project_plans[i]).order_by(
-                            '-buildStatus')
+                            'buildStatus')
                         jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_obj)
                         param = eval(jenkinsPro_obj.param)
                         relVersion = project_plans[i].lastPackageId
@@ -696,9 +696,9 @@ def ws_startDeploy(request):
                                     consoleOpt = info['consoleOpt']
                                     isSuccess = consoleOpt.find("Finished: SUCCESS")
                                     if isSuccess == -1:
-                                        project_plans[i].buildStatus = 2
+                                        project_plans[i].proBuildStatus = False
                                         project_plans[i].save()
-                                        deployDetails[j].buildStatus = 2
+                                        deployDetails[j].buildStatus = False
                                         deployDetails[j].save()
                                         res = "任务: %s, 项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % \
                                               (task_obj.name, project_obj.name, relVersion, server_obj.name)
@@ -711,7 +711,7 @@ def ws_startDeploy(request):
                                         consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                            project=project_obj,
                                                                            content=consoleOpt, packageId=relVersion,
-                                                                           result=False, deployUser=member_obj,
+                                                                           buildStatus=False, deployUser=member_obj,
                                                                            uniqueKey=uniqueKey, uniteKey=uniteKey)
                                         consoleOpt_obj.save()
                                         cursor.append(project_obj.id)
@@ -725,13 +725,13 @@ def ws_startDeploy(request):
                                         request.websocket.send(json.dumps(buildMessages))
                                         consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                            project=project_obj, content=consoleOpt,
-                                                                           packageId=relVersion, result=True,
+                                                                           packageId=relVersion, buildStatus=True,
                                                                            deployUser=member_obj,
                                                                            uniqueKey=uniqueKey, uniteKey=uniteKey)
                                         consoleOpt_obj.save()
-                                        project_plans[i].buildStatus = 1
+                                        project_plans[i].proBuildStatus = True
                                         project_plans[i].save()
-                                        deployDetails[j].buildStatus = 1
+                                        deployDetails[j].buildStatus = True
                                         deployDetails[j].save()
                                 else:
                                     cursor.append(project_obj.id)
@@ -744,10 +744,10 @@ def ws_startDeploy(request):
                                     break
                         else:
                             break
+                    taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
+                                                                   deployUser=member_obj)
+                    taskBuildHistory_obj.save()
                     if len(cursor) == 0:
-                        taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
-                                                                       deployUser=member_obj)
-                        taskBuildHistory_obj.save()
                         sequence_obj.implemented = True
                         sequence_obj.executor = member_obj
                         sequence_obj.executeDate = datetime.datetime.now()
@@ -780,7 +780,7 @@ def ws_restartDeploy(request):
                 uniteKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                 task_obj = models.task.objects.get(id=taskId)
                 project_plans = models.project_plan.objects.filter(plan=task_obj.plan).filter(
-                    ~Q(buildStatus=1)).order_by('order')
+                    proBuildStatus=False).order_by('order')
                 sequence_obj = models.sequence.objects.filter(task=task_obj).get(segment__isDeploy=True)
                 production_members = models.production_member.objects.filter(production=task_obj.plan.production)
                 member_obj = models.member.objects.get(user=request.user)
@@ -804,7 +804,7 @@ def ws_restartDeploy(request):
                     for j in range(len(project_plans_news)):
                         project_obj = project_plans_news[j].project
                         deployDetails = models.deployDetail.objects.filter(project_plan=project_plans_news[j]).order_by(
-                            '-buildStatus')
+                            'buildStatus')
                         project_servers = models.project_server.objects.filter(project=project_obj)
                         jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_obj)
                         param = eval(jenkinsPro_obj.param)
@@ -828,7 +828,7 @@ def ws_restartDeploy(request):
                                     consoleOpt = info['consoleOpt']
                                     isSuccess = consoleOpt.find("Finished: SUCCESS")
                                     if isSuccess == -1:
-                                        project_plans_news[j].buildStatus = 2
+                                        project_plans_news[j].proBuildStatus = False
                                         project_plans_news[j].save()
                                         res = "任务: %s, 项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % \
                                               (task_obj.name, project_obj.name, relVersion,
@@ -842,10 +842,10 @@ def ws_restartDeploy(request):
                                         consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                            project=project_obj,
                                                                            content=consoleOpt, packageId=relVersion,
-                                                                           result=False, deployUser=member_obj,
+                                                                           buildStatus=False, deployUser=member_obj,
                                                                            uniqueKey=uniqueKey, uniteKey=uniteKey)
                                         consoleOpt_obj.save()
-                                        deployDetails[k].buildStatus = 2
+                                        deployDetails[k].buildStatus = False
                                         deployDetails[k].save()
                                         cursor.append(project_obj.id)
                                         break
@@ -859,13 +859,13 @@ def ws_restartDeploy(request):
                                         request.websocket.send(json.dumps(buildMessages))
                                         consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                            project=project_obj, content=consoleOpt,
-                                                                           packageId=relVersion, result=True,
+                                                                           packageId=relVersion, buildStatus=True,
                                                                            deployUser=member_obj,
                                                                            uniqueKey=uniqueKey, uniteKey=uniteKey)
                                         consoleOpt_obj.save()
-                                        project_plans_news[j].buildStatus = 1
+                                        project_plans_news[j].buildStatus = True
                                         project_plans_news[j].save()
-                                        deployDetails[k].buildStatus = 1
+                                        deployDetails[k].buildStatus = True
                                         deployDetails[k].save()
                                 else:
                                     cursor.append(project_obj.id)
@@ -876,10 +876,10 @@ def ws_restartDeploy(request):
                                     request.websocket.send(json.dumps(buildMessages))
                                     request.websocket.close()
                                     break
+                    taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
+                                                                   deployUser=member_obj)
+                    taskBuildHistory_obj.save()
                     if len(cursor) == 0:
-                        taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
-                                                                       deployUser=member_obj)
-                        taskBuildHistory_obj.save()
                         sequence_obj.implemented = True
                         sequence_obj.executeCursor = False
                         sequence_obj.executor = member_obj
@@ -912,7 +912,7 @@ def ws_continueDeploy(request):
                 uniteKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                 task_obj = models.task.objects.get(id=taskId)
                 project_plans = models.project_plan.objects.filter(plan=task_obj.plan).filter(
-                    ~Q(buildStatus=1)).order_by('order')
+                    proBuildStatus=False).order_by('order')
                 sequence_obj = models.sequence.objects.filter(task=task_obj).get(segment__isDeploy=True)
                 production_members = models.production_member.objects.filter(production=task_obj.plan.production)
                 member_obj = models.member.objects.get(user=request.user)
@@ -960,9 +960,9 @@ def ws_continueDeploy(request):
                                         consoleOpt = info['consoleOpt']
                                         isSuccess = consoleOpt.find("Finished: SUCCESS")
                                         if isSuccess == -1:
-                                            project_plans_news[j].buildStatus = 2
+                                            project_plans_news[j].proBuildStatus = False
                                             project_plans_news[j].save()
-                                            deployDetails[k].buildStatus = 2
+                                            deployDetails[k].buildStatus = False
                                             deployDetails[k].save()
                                             res = "任务: %s, 项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % \
                                                   (task_obj.name, project_obj.name, relVersion, server_obj.name)
@@ -976,7 +976,7 @@ def ws_continueDeploy(request):
                                                                                project=project_obj,
                                                                                content=consoleOpt,
                                                                                packageId=relVersion,
-                                                                               result=False, deployUser=member_obj,
+                                                                               buildStatus=False, deployUser=member_obj,
                                                                                uniqueKey=uniqueKey,
                                                                                uniteKey=uniteKey)
                                             consoleOpt_obj.save()
@@ -992,14 +992,14 @@ def ws_continueDeploy(request):
                                             consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                                project=project_obj,
                                                                                content=consoleOpt,
-                                                                               packageId=relVersion, result=True,
+                                                                               packageId=relVersion, buildStatus=True,
                                                                                deployUser=member_obj,
                                                                                uniqueKey=uniqueKey,
                                                                                uniteKey=uniteKey)
                                             consoleOpt_obj.save()
-                                            project_plans_news[j].buildStatus = 1
+                                            project_plans_news[j].proBuildStatus = True
                                             project_plans_news[j].save()
-                                            deployDetails[k].buildStatus = 1
+                                            deployDetails[k].buildStatus = True
                                             deployDetails[k].save()
                                     else:
                                         cursor.append(project_obj.id)
@@ -1010,10 +1010,10 @@ def ws_continueDeploy(request):
                                         request.websocket.send(json.dumps(buildMessages))
                                         request.websocket.close()
                                         break
+                        taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
+                                                                       deployUser=member_obj)
+                        taskBuildHistory_obj.save()
                         if len(cursor) == 0:
-                            taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
-                                                                           deployUser=member_obj)
-                            taskBuildHistory_obj.save()
                             sequence_obj.implemented = True
                             sequence_obj.executor = member_obj.name
                             sequence_obj.executeDate = datetime.datetime.now()
@@ -1054,22 +1054,21 @@ def ws_rollbackOne(request):
                         isMember = True
                 if isMember and member_obj.user.has_perm("can_deploy_project"):
                     deployDetails = models.deployDetail.objects.filter(project_plan=project_plan_obj).order_by(
-                        '-buildStatus')
+                        'buildStatus')
                     cursor = []
                     total = len(deployDetails)
                     buildMessages.append(total)
                     request.websocket.send(json.dumps(buildMessages))
                     try:
-                        consoleOpt_obj = models.consoleOpt.objects.filter(project=project_obj).filter(
-                            type=1).filter(packageId__lt=project_plan_obj.lastPackageId)[0]
-                        project_plan_obj.buildStatus = 0
-                        project_plan_obj.save()
+                        pre_project_plan_obj = \
+                        models.project_plan.objects.filter(project=project_obj, proBuildStatus=True,
+                                                           lastPackageId__lt=project_plan_obj.lastPackageId)[0]
                         for i in range(len(deployDetails)):
                             jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_plan_obj.project)
                             param = eval(jenkinsPro_obj.param)
                             params = {}
                             params.update(param)
-                            relVersion = consoleOpt_obj.packageId
+                            relVersion = pre_project_plan_obj.lastPackageId
                             server_obj = deployDetails[i].server
                             uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                             params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
@@ -1084,15 +1083,13 @@ def ws_rollbackOne(request):
                                 buildMessages.append(res)
                                 buildMessages.append(uniqueKey)
                                 request.websocket.send(json.dumps(buildMessages))
-                                request.websocket.close()
-                                consoleOpt_obj2 = models.consoleOpt(type=1, plan=task_obj.plan,
-                                                                    project=project_obj,
-                                                                    content=consoleOpt, packageId=relVersion,
-                                                                    result=False, deployUser=member_obj,
-                                                                    uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                consoleOpt_obj2.save()
+                                consoleOpt_obj_new = models.consoleOpt(type=1, plan=task_obj.plan, project=project_obj,
+                                                                       content=consoleOpt, packageId=relVersion,
+                                                                       deployUser=member_obj, uniqueKey=uniqueKey,
+                                                                       uniteKey=uniteKey)
+                                consoleOpt_obj_new.save()
                                 cursor.append(project_obj.id)
-                                deployDetails[i].buildStatus = 2
+                                deployDetails[i].buildStatus = False
                                 deployDetails[i].save()
                             else:
                                 res = "任务: %s, 项目: %s ,版本号: %s, 服务器: %s, 回滚完成！" % (
@@ -1101,15 +1098,12 @@ def ws_rollbackOne(request):
                                 buildMessages.append(res)
                                 buildMessages.append(uniqueKey)
                                 request.websocket.send(json.dumps(buildMessages))
-                                consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
-                                                                   project=project_obj,
-                                                                   content=consoleOpt,
-                                                                   packageId=relVersion, result=True,
-                                                                   deployUser=member_obj,
-                                                                   uniqueKey=uniqueKey,
-                                                                   uniteKey=uniteKey)
-                                consoleOpt_obj.save()
-                                deployDetails[i].buildStatus = 1
+                                consoleOpt_obj_new = models.consoleOpt(type=1, plan=task_obj.plan, project=project_obj,
+                                                                       content=consoleOpt, packageId=relVersion,
+                                                                       buildStatus=True, deployUser=member_obj,
+                                                                       uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                consoleOpt_obj_new.save()
+                                deployDetails[i].buildStatus = True
                                 deployDetails[i].save()
                         taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, category=1, uniteKey=uniteKey,
                                                                        deployUser=member_obj)
@@ -1142,7 +1136,8 @@ def ws_rollbackAll(request):
                 uniteKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                 task_obj = models.task.objects.get(id=taskId)
                 project_plan_obj = models.project_plan.objects.filter(plan=task_obj.plan).get(cursor=True)
-                project_plan_news = models.project_plan.objects.filter(order__lte=project_plan_obj.order)
+                project_plans = models.project_plan.objects.filter(plan=task_obj.plan,
+                                                                   order__lte=project_plan_obj.order)
                 buildMessages = []
                 production_members = models.production_member.objects.filter(production=task_obj.plan.production)
                 member_obj = models.member.objects.get(user=request.user)
@@ -1152,25 +1147,25 @@ def ws_rollbackAll(request):
                         isMember = True
                 if isMember and member_obj.user.has_perm("can_deploy_project"):
                     cursor = []
-                    projectBean_obj = projectBean(project_plan_news)
+                    projectBean_obj = projectBean(project_plans)
                     total = projectBean_obj.countDeploySum2(1, project_plan_obj.order)
                     buildMessages.append(total)
                     request.websocket.send(json.dumps(buildMessages))
-                    for k in range(len(project_plan_news)):
-                        project_obj = project_plan_news[k].project
-                        deployDetails = models.deployDetail.objects.filter(project_plan=project_plan_news[k]).order_by(
-                            '-buildStatus')
+                    for k in range(len(project_plans)):
+                        project_obj = project_plans[k].project
+                        deployDetails = models.deployDetail.objects.filter(project_plan=project_plans[k]).order_by(
+                            'buildStatus')
                         try:
-                            consoleOpt_obj = models.consoleOpt.objects.filter(project=project_obj).filter(
-                                type=1).filter(packageId__lt=project_plan_news[k].lastPackageId)[0]
-                            project_plan_news[k].buildStatus = 0
-                            project_plan_news[k].save()
+                            pre_project_plan_obj = models.project_plan.objects.filter(project=project_obj,
+                                                                                      proBuildStatus=True,
+                                                                                      lastPackageId__lt=project_plans[
+                                                                                          k].lastPackageId)[0]
                             for i in range(len(deployDetails)):
-                                jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_plan_news[k].project)
+                                jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_plans[k].project)
                                 param = eval(jenkinsPro_obj.param)
                                 params = {}
                                 params.update(param)
-                                relVersion = consoleOpt_obj.packageId
+                                relVersion = pre_project_plan_obj.lastPackageId
                                 server_obj = deployDetails[i].server
                                 uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                 params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
@@ -1187,12 +1182,12 @@ def ws_rollbackAll(request):
                                     request.websocket.send(json.dumps(buildMessages))
                                     consoleOpt_obj2 = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                         project=project_obj, content=consoleOpt,
-                                                                        packageId=relVersion, result=False,
+                                                                        packageId=relVersion, buildStatus=False,
                                                                         deployUser=member_obj, uniqueKey=uniqueKey,
                                                                         uniteKey=uniteKey)
                                     consoleOpt_obj2.save()
                                     cursor.append(project_obj.id)
-                                    deployDetails[i].buildStatus = 2
+                                    deployDetails[i].buildStatus = False
                                     deployDetails[i].save()
                                 else:
                                     res = "任务: %s, 项目: %s ,版本号: %s, 服务器: %s, 回滚完成！" % (
@@ -1204,30 +1199,28 @@ def ws_rollbackAll(request):
                                     consoleOpt_obj = models.consoleOpt(type=1, plan=task_obj.plan,
                                                                        project=project_obj,
                                                                        content=consoleOpt,
-                                                                       packageId=relVersion, result=True,
+                                                                       packageId=relVersion, buildStatus=True,
                                                                        deployUser=member_obj,
                                                                        uniqueKey=uniqueKey,
                                                                        uniteKey=uniteKey)
                                     consoleOpt_obj.save()
-                                    deployDetails[i].buildStatus = 1
+                                    deployDetails[i].buildStatus = True
                                     deployDetails[i].save()
                         except IndexError:
                             logger.info("项目：%s，已是最初版本，无法回滚！" % project_obj.name)
                             res = "项目：%s，已是最初版本，无法回滚！" % project_obj.name
                             buildMessages.append(res)
                             buildMessages.append('no_reversion')
-                            buildMessages.append(len(deployDetails))
                             request.websocket.send(json.dumps(buildMessages))
                             cursor.append(project_obj.id)
-                    if len(cursor) == 0:
-                        taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, category=1, uniteKey=uniteKey,
-                                                                       deployUser=member_obj)
-                        taskBuildHistory_obj.save()
-                        res = "任务：%s，所有节点都已回滚！" % task_obj.name
-                        buildMessages.append(res)
-                        buildMessages.append('deploy_success')
-                        request.websocket.send(json.dumps(buildMessages))
-                        request.websocket.close()
+                    taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, category=1, uniteKey=uniteKey,
+                                                                   deployUser=member_obj)
+                    taskBuildHistory_obj.save()
+                    res = "任务：%s，所有节点都已回滚！" % task_obj.name
+                    buildMessages.append(res)
+                    buildMessages.append('deploy_success')
+                    request.websocket.send(json.dumps(buildMessages))
+                    request.websocket.close()
                 else:
                     buildMessages.append('no_role')
                     request.websocket.send(json.dumps(buildMessages))
@@ -1261,10 +1254,10 @@ def ws_uatDeploy(request):
                 project_plans = models.project_plan.objects.filter(project=project_obj)
                 exclusivePlan = []
                 for k in range(len(project_plans)):
-                    if project_plans[k].exclusiveKey == 1:
+                    if project_plans[k].exclusiveKey:
                         exclusivePlan.append(project_plans[k].plan.name)
                         break
-                if project_plan_obj.exclusiveKey == 1 or len(exclusivePlan) == 0:
+                if len(exclusivePlan) == 0 or project_plan_obj.exclusiveKey:
                     if project_plan_obj.uatBranch:
                         for i in range(len(project_servers)):
                             params = {}
@@ -1272,7 +1265,7 @@ def ws_uatDeploy(request):
                             params.update(param)
                             server_obj = project_servers[i].server
                             if server_obj.type == 0:
-                                project_plan_obj.exclusiveKey = 1
+                                project_plan_obj.exclusiveKey = True
                                 project_plan_obj.save()
                                 uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                 params.update(SERVER_IP=server_obj.ip, BRANCH=project_plan_obj.uatBranch)
@@ -1285,12 +1278,11 @@ def ws_uatDeploy(request):
                                 info = pythonJenkins_obj.deploy()
                                 if info:
                                     consoleOpt = info['consoleOpt']
-                                    buildId = info['buildId']
                                     isSuccess = consoleOpt.find("Finished: SUCCESS")
                                     if isSuccess != -1:
                                         result = True
-                                        project_plan_obj.lastPackageId = buildId
-                                        project_plan_obj.buildStatus = 1
+                                        project_plan_obj.uatBuildStatus = True
+                                        project_plan_obj.lastPackageId = info['buildId']
                                         project_plan_obj.save()
                                         res = "分支%s部署成功" % project_plan_obj.uatBranch
                                         logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
@@ -1303,7 +1295,7 @@ def ws_uatDeploy(request):
                                         result = False
                                         res = "分支%s部署失败" % project_plan_obj.uatBranch
                                         logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
-                                        project_plan_obj.buildStatus = 2
+                                        project_plan_obj.uatBuildStatus = False
                                         project_plan_obj.save()
                                         buildMessage.append("fail")
                                         buildMessage.append(res)
@@ -1311,7 +1303,7 @@ def ws_uatDeploy(request):
                                         request.websocket.send(json.dumps(buildMessage))
                                         request.websocket.close()
                                     consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj,
-                                                                       content=consoleOpt, result=result,
+                                                                       content=consoleOpt, buildStatus=result,
                                                                        deployTime=deployTime, deployUser=member_obj,
                                                                        uniqueKey=uniqueKey, uniteKey=uniteKey)
                                     consoleOpt_obj.save()
@@ -1364,7 +1356,7 @@ def ws_codeMerge(request):
                         status = branch_obj.merge_branch(project_plans[i].uatBranch, 'master')
                         buildMessages.append("startMerge")
                         if status:
-                            project_plans[i].mergeStatus = 1
+                            project_plans[i].mergeStatus = True
                             project_plans[i].save()
                             res = "项目%s合并完成" % project_plans[i].project.name
                             buildMessages.append(res)
@@ -1373,8 +1365,6 @@ def ws_codeMerge(request):
                                 logger.error('计划：%s，项目：%s，分支：%s删除失败, 请手工删除！' % (
                                     project_plans[i].plan.name, project_obj, project_plans[i].uatBranch))
                         else:
-                            project_plans[i].mergeStatus = 2
-                            project_plans[i].save()
                             res = "项目%s合并冲突或线上分支%s已被删除，请手工处理！" % (
                                 project_plans[i].project.name, project_plans[i].uatBranch)
                             buildMessages.append(res)
