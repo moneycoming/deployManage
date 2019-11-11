@@ -84,11 +84,11 @@ class jenkinsUat_admin(object):
 
 
 class consoleOpt_admin(object):
-    list_display = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
+    list_display = ['project', 'plan', 'type', 'content', 'packageId', 'buildStatus', 'deployTime', 'deployUser',
                     'uniqueKey', 'uniteKey']
-    search_fields = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime',
+    search_fields = ['project', 'plan', 'type', 'content', 'packageId', 'buildStatus', 'deployTime',
                      'deployUser', 'uniqueKey', 'uniteKey']
-    list_filter = ['project', 'plan', 'type', 'content', 'packageId', 'result', 'deployTime', 'deployUser',
+    list_filter = ['project', 'plan', 'type', 'content', 'packageId', 'buildStatus', 'deployTime', 'deployUser',
                    'uniqueKey', 'uniteKey']
 
 
@@ -99,12 +99,12 @@ class project_server_admin(object):
 
 
 class project_plan_admin(object):
-    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus',
-                    'mergeStatus', 'exclusiveKey']
-    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus',
-                     'mergeStatus', 'exclusiveKey']
-    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'buildStatus',
-                   'mergeStatus', 'exclusiveKey']
+    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'proBuildStatus',
+                    'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
+    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'proBuildStatus',
+                     'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
+    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'proBuildStatus',
+                   'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
 
 
 class segment_admin(object):

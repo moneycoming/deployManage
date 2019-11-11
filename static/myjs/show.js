@@ -502,13 +502,13 @@ layui.use(['element', 'layer'], function () {
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
-            ok();
+            ok(type);
             layer.closeAll();
         }, function () {
             console.log('已取消');
         });
 
-        function ok() {
+        function ok(type) {
             var taskId = getQueryVariable("tid");
             $('#proDeployText').text("回滚进行中，请等待...");
             $('.proDeployProgress').removeClass('fade');
@@ -636,13 +636,13 @@ layui.use(['element', 'layer'], function () {
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
-            ok();
+            ok(type);
             layer.closeAll();
         }, function () {
             console.log('已取消');
         });
 
-        function ok() {
+        function ok(type) {
             var taskId = getQueryVariable("tid");
             $('#proDeployText').text("回滚进行中，请等待...");
             $('.proDeployProgress').removeClass('fade');
@@ -690,6 +690,7 @@ layui.use(['element', 'layer'], function () {
                         var sumPoints = received_msg[0];
                         var realPoints = 0;
                         for (var i = 1; i < received_msg.length; i++) {
+                            console.log(received_msg[i]);
                             if (received_msg[i].length === 10) {
                                 realPoints++;
                                 $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");

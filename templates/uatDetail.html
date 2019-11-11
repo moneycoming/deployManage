@@ -41,11 +41,12 @@
                                     <h4 class="alert-heading">部署流程</h4>
                                     <hr>
                                     <p>1-点击项目列表中的项目名，进入项目部署页面</p>
-                                    <p>2-验证通过后，点击“通过”按钮</p>
+                                    <p>2-项目部署成功后，会在项目上出现中划线</p>
+                                    <p>3-验证通过后，点击“通过”按钮</p>
                                 </div>
                                 <h3>项目列表</h3>
                                 {% for project_plan in project_plans %}
-                                    {% if project_plan.buildStatus == 1 %}
+                                    {% if project_plan.uatBuildStatus == 1 %}
                                         <p><br>
                                             <del><a
                                                     href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}">项目编号：{{ project_plan.project.id }}
