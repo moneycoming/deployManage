@@ -116,7 +116,7 @@ def productionKindChart(request):
 # 计划主页
 @login_required
 def showPlan(request):
-    plans = models.plan.objects.all()
+    plans = models.plan.objects.filter(isSubPlan=False)
     member_obj = models.member.objects.get(user=request.user)
 
     template = get_template('showPlan.html')
@@ -177,8 +177,61 @@ def planDetail(request):
         plan_obj = models.plan.objects.get(id=planId)
         tasks = models.task.objects.filter(plan__id=planId)
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
+        sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
+        father_plans = models.plan.objects.filter(subPlanId=plan_obj.id)
 
     template = get_template('planDetail.html')
+    html = template.render(context=locals(), request=request)
+    return HttpResponse(html)
+
+
+# 创建子计划
+@login_required
+def createSubPlan(request):
+    father_plan_obj = models.plan.objects.get(id=request.GET['pid'])
+    if father_plan_obj:
+        projects = models.project.objects.all()
+        member_obj = models.member.objects.get(user=request.user)
+        production_obj = father_plan_obj.production
+        if request.method == 'POST':
+            production_members = models.production_member.objects.filter(production=production_obj)
+            isMember = False
+            for m in range(len(production_members)):
+                if member_obj == production_members[m].member:
+                    isMember = True
+            if isMember and member_obj.user.has_perm('add_plan'):
+                projectList = request.POST.getlist('project')
+                devBranchList = request.POST.getlist('devBranch')
+                kind_obj = father_plan_obj.kind
+                plan_obj = models.plan(name=request.POST['title'], description=request.POST['desc'], kind=kind_obj,
+                                       fatherPlanId=father_plan_obj.id, isSubPlan=True, production=production_obj,
+                                       createUser=member_obj, createDate=datetime.datetime.now())
+                plan_obj.save()
+                father_plan_obj.subPlanId = plan_obj.id
+                father_plan_obj.save()
+                for j in range(len(projectList)):
+                    project_obj = models.project.objects.get(name=projectList[j])
+                    dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
+                    project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=dev_branch_obj,
+                                                           order=j)
+                    project_plan_obj.save()
+                    project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)
+                    for i in range(len(project_servers)):
+                        deployDetail_obj = models.deployDetail(project_plan=project_plan_obj,
+                                                               server=project_servers[i].server)
+                        deployDetail_obj.save()
+
+                project_plans = models.project_plan.objects.filter(plan=plan_obj)
+                production_members = models.production_member.objects.filter(production=production_obj)
+                mail_from = member_obj.user.email
+                mail_to = []
+                for k in range(len(production_members)):
+                    mail_to.append(production_members[k].member.user.email)
+                paramConfig_obj = models.paramConfig.objects.get(name='email_url')
+                email_createPlan(project_plans, mail_from, mail_to, mail_cc, paramConfig_obj)
+                return HttpResponseRedirect('/planDetail?pid=%s' % plan_obj.id)
+
+    template = get_template('createSubPlan.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
 
@@ -1061,8 +1114,8 @@ def ws_rollbackOne(request):
                     request.websocket.send(json.dumps(buildMessages))
                     try:
                         pre_project_plan_obj = \
-                        models.project_plan.objects.filter(project=project_obj, proBuildStatus=True,
-                                                           lastPackageId__lt=project_plan_obj.lastPackageId)[0]
+                            models.project_plan.objects.filter(project=project_obj, proBuildStatus=True,
+                                                               lastPackageId__lt=project_plan_obj.lastPackageId)[0]
                         for i in range(len(deployDetails)):
                             jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_plan_obj.project)
                             param = eval(jenkinsPro_obj.param)

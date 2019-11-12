@@ -1112,7 +1112,7 @@ layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
 
     $("body").on("click", ".checkSuccess", function () {
-        var step = $(this).parent().attr('id');
+        var step = $(this).parent().parent().attr('id');
         var remark = $(this).siblings("#remark").val();
         var sequenceId = $(this).attr("id");
         layer.confirm('确认执行？', {

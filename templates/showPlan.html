@@ -35,7 +35,7 @@
                         </div>
                         <div class="card-body">
                             {% if perms.mysite.add_deployplan %}
-                                <input type="button" class="layui-btn layui-btn-primary" name="createJob" value="创建计划"
+                                <input type="button" class="layui-btn layui-btn-primary" name="createPlan" value="创建计划"
                                        onclick="window.location.href='{% url 'createPlan' %}'">
                             {% endif %}
                             <h5 class="page-header"></h5>

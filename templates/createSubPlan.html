@@ -17,6 +17,7 @@
                             <ol class="breadcrumb text-right">
                                 <li><a href="{% url 'index' %}">首页</a></li>
                                 <li><a href="{% url 'showPlan' %}">计划栏</a></li>
+                                <li><a href="/planDetail?pid={{ father_plan_obj.id }}">计划详情</a></li>
                                 <li class="active">创建计划</li>
                             </ol>
                         </div>
@@ -49,7 +50,7 @@
                                 </li>
                             </ul>
                             <form class="form-horizontal group-border hover-stripped" role="form" id="validate"
-                                  method="post" action="/createPlan">
+                                  method="post" action="/createSubPlan?pid={{ father_plan_obj.id }}">
                                 {% csrf_token %}
                                 <div id="myTabContent" class="tab-content">
                                     <div id="step1" class="tab-pane active">
@@ -64,25 +65,6 @@
                                         </div>
                                         <!-- End .form-group  -->
                                         <div class="form-group">
-                                            <label class="col-lg-2 control-label">发布类型</label>
-                                            <div class="col-lg-10">
-                                                <div class="row">
-                                                    <div class="col-lg-6 col-md-6">
-                                                        <select data-placeholder="选择发布类型..." class="standardSelect"
-                                                                name="kind">
-                                                            <optgroup label="类型列表">
-                                                                <option value="" label="default"></option>
-                                                                {% for kind in kinds %}
-                                                                    <option>{{ kind.name }}</option>
-                                                                {% endfor %}
-                                                            </optgroup>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- End .form-group  -->
-                                        <div class="form-group">
                                             <label class="col-lg-2 control-label">说明</label>
                                             <div class="col-lg-10">
                                         <textarea class="form-control" name="desc" id="textarea"
@@ -91,17 +73,15 @@
                                         </div>
                                         <!-- End .form-group  -->
                                         <div class="form-group">
-                                            <label class="col-lg-2 control-label">所属产品</label>
+                                            <label class="col-lg-2 control-label">关联计划</label>
                                             <div class="col-lg-10">
                                                 <div class="row">
                                                     <div class="col-lg-6 col-md-6">
-                                                        <select data-placeholder="选择所属产品..." class="standardSelect"
-                                                                name="production">
-                                                            <optgroup label="产品列表">
-                                                                <option value="" label="default"></option>
-                                                                {% for production_member in productions %}
-                                                                    <option>{{ production_member.production.name }}</option>
-                                                                {% endfor %}
+                                                        <select title="选择计划" data-placeholder="选择关联计划..."
+                                                                class="standardSelect"
+                                                                name="plan">
+                                                            <optgroup label="计划列表">
+                                                                <option>{{ father_plan_obj.name }}</option>
                                                             </optgroup>
                                                         </select>
                                                     </div>
@@ -149,7 +129,6 @@
                                                             <select title="选择项目" class="form-control" name="project"
                                                                     onchange="change(this,this[selectedIndex].value)">
                                                                 <optgroup label="project">
-                                                                     <option value="" label="default"></option>
                                                                     {% for project in projects %}
                                                                         <option>{{ project.name }}</option>
                                                                     {% endfor %}
