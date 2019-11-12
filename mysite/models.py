@@ -96,12 +96,15 @@ class plan(models.Model):
     project = models.ManyToManyField(project, through="project_plan", verbose_name="包含项目")
     description = models.TextField(verbose_name="说明")
     production = models.ForeignKey(production, on_delete=models.CASCADE, verbose_name="所属产品")
+    fatherPlanId = models.IntegerField(null=True, verbose_name="关联主计划的id")
+    subPlanId = models.IntegerField(null=True, verbose_name="关联子计划的id")
+    isSubPlan = models.BooleanField(default=False, verbose_name="是否为子计划")
     createUser = models.ForeignKey(member, verbose_name="由谁创建")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     uatCheck = models.BooleanField(default=False, verbose_name="验证通过？")
-    uatRemark = models.TextField(null=True, verbose_name="备注")
-    uatCheckMember = models.ForeignKey(member, null=True, related_name="uatCheckMember", verbose_name="由谁验收")
-    uatCheckDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="验收日期")
+    uatRemark = models.TextField(null=True, verbose_name="预发验收备注")
+    uatCheckMember = models.ForeignKey(member, null=True, related_name="uatCheckMember", verbose_name="预发由谁验收")
+    uatCheckDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="预发验收日期")
 
     class Meta:
         verbose_name = u'发布计划列表'

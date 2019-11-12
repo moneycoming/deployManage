@@ -214,10 +214,15 @@
                                                               id="remark"
                                                               placeholder="请输入验收结果" rows="4"></textarea>
                                                     <h5 class="page-header"></h5>
-                                                    <button type="button" id="{{ sequence.id }}"
-                                                            class="layui-btn layui-btn-primary checkSuccess">
-                                                        通过
-                                                    </button>
+                                                    <div class="layui-btn-group" style="float: left">
+                                                        <button type="button" id="{{ sequence.id }}"
+                                                                class="layui-btn layui-btn-primary checkSuccess">
+                                                            通过
+                                                        </button>
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="/createSubPlan?pid={{ task_obj.plan.id }}">创建关联子计划</a>
+                                                        </button>
+                                                    </div>
                                                     <h5 class="page-header"></h5>
                                                     <div class="layui-btn-group" style="float: right">
                                                         <button type="button" class="layui-btn layui-btn-primary">

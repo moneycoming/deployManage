@@ -39,6 +39,7 @@ urlpatterns = [
     url(r'^planDetail', views.planDetail, name='planDetail'),
     url(r'^createTask', views.createTask, name='createTask'),
     url(r'^createPlan$', views.createPlan, name='createPlan'),
+    url(r'^createSubPlan', views.createSubPlan, name='createSubPlan'),
     url(r'^ajax_showTask$', views.ajax_showTask),
     url(r'^ajax_deleteTask$', views.ajax_deleteTask),
     url(r'^ajax_deletePlan$', views.ajax_deletePlan),

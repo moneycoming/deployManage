@@ -35,49 +35,80 @@
                             <strong class="card-title">计划详情</strong>
                         </div>
                         <div class="card-body">
-                            <h3>标题</h3>
-                            <p class="text-muted m-b-15"><br>{{ plan_obj.name }}</p>
-                            <h5 class="page-header"></h5>
-                            <h3>所属产品</h3>
-                            <p class="text-muted m-b-15"><br>{{ plan_obj.production.name }}</p>
-                            <h5 class="page-header"></h5>
-                            <h3>发布类型</h3>
-                            <p class="text-muted m-b-15"><br>{{ plan_obj.kind.name }}</p>
-                            <h5 class="page-header"></h5>
-                            <h3>说明</h3>
-                            <p>
-                            <pre><br>{{ plan_obj.description }}</pre>
-                            </p>
-                            <h5 class="page-header"></h5>
-                            <h3>关联项目</h3>
-                            <p>
-                                {% for project_plan in project_plans %}
-                                    <br>{{ project_plan.project }}：{{ project_plan.devBranch }}
-                                {% endfor %}
-                            </p>
-                            <h5 class="page-header"></h5>
-                            <h3>预发部署</h3>
-                            <h5 class="page-header"></h5>
-                            {% if plan_obj.uatCheck %}
-                                <p>验证通过</p>
-                                <h5 class="page-header"></h5>
-                                <h3>关联任务</h3>
-                                <h5 class="page-header"></h5>
-                                {% if tasks %}
-                                    {% for task in tasks %}
-                                        <p><br><a href="/taskDetail?tid={{ task.id }}">编号：{{ task.id }} --
-                                            标题：{{ task.name }}</a></p>
-                                    {% endfor %}
-                                {% else %}
-                                    {% if perms.mysite.can_deploy_project %}
-                                        <p><a href="/createTask?pid={{ plan_obj.id }}" style="color: #ff3e03">点此创建任务</a></p>
+                            <div class="layui-row layui-col-space15">
+                                <div class="layui-col-md9">
+                                    <h4>计划说明</h4>
+                                    <p class="text-muted m-b-15"><br>
+                                    <pre>{{ plan_obj.description }}</pre>
+                                    <hr>
+                                    <h4>预发部署</h4>
+                                    {% if plan_obj.uatCheck %}
+                                        <br><p>验证通过
+                                        <br>验证人：{{ plan_obj.uatCheckMember }}
+                                        <br>备注：{{ plan_obj.uatRemark }}
+                                        <br>日期：{{ plan_obj.uatCheckDate }}
+                                    </p>
+                                        <hr>
+                                        <h4>生产部署</h4>
+                                        {% if tasks %}
+                                            {% for task in tasks %}
+                                                <p><br><a href="/taskDetail?tid={{ task.id }}">编号：{{ task.id }} --
+                                                    标题：{{ task.name }}</a></p>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% if perms.mysite.can_deploy_project %}
+                                                <p><a href="/createTask?pid={{ plan_obj.id }}" style="color: #ff3e03">点此创建任务</a>
+                                                </p>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        <p><br><a href="/uatDetail?pid={{ plan_obj.id }}"
+                                                  style="color: #ff3e03">点击此处进入预发部署页面</a>
+                                        </p>
                                     {% endif %}
-                                {% endif %}
-                            {% else %}
-                                <p><br><a href="/uatDetail?pid={{ plan_obj.id }}"
-                                          style="color: #ff3e03">点击此处进入预发部署页面</a>
-                                </p>
-                            {% endif %}
+                                </div>
+                                <div class="layui-col-md3">
+                                    <h4>基本信息</h4>
+                                    <p class="text-muted m-b-15"><br>
+                                        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp标题&nbsp&nbsp&nbsp&nbsp{{ plan_obj.name }}</p>
+                                    <p class="text-muted m-b-15">
+                                        所属产品&nbsp&nbsp&nbsp&nbsp{{ plan_obj.production.name }}</p>
+                                    <p class="text-muted m-b-15">发布类型&nbsp&nbsp&nbsp&nbsp{{ plan_obj.kind.name }}</p>
+                                    {% if father_plans %}
+                                        {% for father_plan in father_plans %}
+                                            <p class="text-muted m-b-15">
+                                                &nbsp&nbsp&nbsp&nbsp主任务&nbsp&nbsp&nbsp&nbsp<a
+                                                    href="/planDetail?pid={{ father_plan.id }}">{{ father_plan.name }}</a>
+                                            </p>
+                                        {% endfor %}
+                                    {% endif %}
+                                    <p class="text-muted m-b-15">
+                                        &nbsp&nbsp&nbsp&nbsp创建人&nbsp&nbsp&nbsp&nbsp{{ plan_obj.createUser.name }}</p>
+                                    <p class="text-muted m-b-15">创建日期&nbsp&nbsp&nbsp&nbsp{{ plan_obj.createDate }}</p>
+                                    <h5 class="page-header"></h5>
+                                    <h5>关联项目</h5>
+                                    <p class="text-muted m-b-15">
+                                        {% for project_plan in project_plans %}
+                                            <br>{{ project_plan.project }}：{{ project_plan.devBranch }}
+                                        {% endfor %}
+                                    </p>
+                                    <h5 class="page-header"></h5>
+                                    {% if not plan_obj.isSubPlan %}
+                                        <h5>关联子计划</h5>
+                                        <p class="text-muted m-b-15">
+                                            {% for sub_plan in sub_plans %}
+                                                <br><a href="/planDetail?pid={{ sub_plan.id }}">{{ sub_plan.name }}</a>
+                                            {% endfor %}
+                                        </p>
+                                        <h5 class="page-header"></h5>
+                                        <h5>其他操作</h5>
+                                        <p class="text-muted m-b-15"><br>
+                                            <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"><a
+                                                    href="/createSubPlan?pid={{ plan_obj.id }}">创建子计划</a></button>
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
