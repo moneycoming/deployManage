@@ -57,7 +57,7 @@
                                             {% endfor %}
                                         {% else %}
                                             {% if perms.mysite.can_deploy_project %}
-                                                <p><a href="/createTask?pid={{ plan_obj.id }}" style="color: #ff3e03">点此创建任务</a>
+                                                <br><p><a href="/createTask?pid={{ plan_obj.id }}" style="color: #ff3e03">点此创建任务</a>
                                                 </p>
                                             {% endif %}
                                         {% endif %}
