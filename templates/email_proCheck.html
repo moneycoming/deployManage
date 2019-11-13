@@ -12,18 +12,19 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        <h3>标题</h3>
+                        <h4>标题</h4>
                         <p class="text-muted m-b-15"><br>{{ plan.name }}</p>
-                        <h5 class="page-header"></h5>
-                        <h3>验收情况</h3>
-                        <p>
+                        <hr>
+                        <h4>验收情况</h4>
+                        <p class="text-muted m-b-15">
                             <br>验收通过
                             <br>验收人：{{ sequence.executor.name }}
                             <br>验收日期：{{ sequence.executeDate }}
                             <br>备注：{{ sequence.remarks }}
                         </p>
-                        <h3>链接</h3>
-                        <p><a style="color: red" href={{ url }}>请前往合并代码至master分支！！</a></p>
+                        <hr>
+                        <h4>链接</h4>
+                        <p class="text-muted m-b-15"><a style="color: red" href={{ url }}>请前往合并代码至master分支！！</a></p>
                     </div>
                 </div>
             </div>
