@@ -43,27 +43,46 @@
                                     <hr>
                                     <h4>预发部署</h4>
                                     {% if plan_obj.uatCheck %}
-                                        <br><p>验证通过
-                                        <br>验证人：{{ plan_obj.uatCheckMember }}
-                                        <br>备注：{{ plan_obj.uatRemark }}
-                                        <br>日期：{{ plan_obj.uatCheckDate }}
-                                    </p>
+                                        <p class="text-muted m-b-15">
+                                            <br>验证通过
+                                            <br>验证人：{{ plan_obj.uatCheckMember }}
+                                            <br>备注：{{ plan_obj.uatRemark }}
+                                            <br>日期：{{ plan_obj.uatCheckDate }}
+                                        </p>
+                                        <p class="text-muted m-b-15"><br><a href="/uatDetail?pid={{ plan_obj.id }}"
+                                                                            style="color: #ff3e03">点击此处进入预发部署页面</a>
+                                        </p>
                                         <hr>
                                         <h4>生产部署</h4>
-                                        {% if tasks %}
-                                            {% for task in tasks %}
-                                                <p><br><a href="/taskDetail?tid={{ task.id }}">编号：{{ task.id }} --
-                                                    标题：{{ task.name }}</a></p>
-                                            {% endfor %}
+                                        {% if task_obj %}
+                                            {% if proCheckStatus %}
+                                                <p class="text-muted m-b-15">
+                                                    <br>验收通过
+                                                    <br>验证人：{{ sequence_check_obj.executor }}
+                                                    <br>备注：{{ sequence_check_obj.remarks }}
+                                                    <br>验证日期：{{ sequence_check_obj.executeDate }}
+                                                </p>
+                                                <p class="text-muted m-b-15"><br><a
+                                                        href="/taskDetail?tid={{ task_obj.id }}" style="color: #ff3e03">编号：{{ task_obj.id }}
+                                                    --
+                                                    标题：{{ task_obj.name }}</a></p>
+                                            {% else %}
+                                                <p class="text-muted m-b-15"><br><a
+                                                        href="/taskDetail?tid={{ task_obj.id }}" style="color: #ff3e03">编号：{{ task_obj.id }}
+                                                    --
+                                                    标题：{{ task_obj.name }}</a></p>
+                                            {% endif %}
                                         {% else %}
                                             {% if perms.mysite.can_deploy_project %}
-                                                <br><p><a href="/createTask?pid={{ plan_obj.id }}" style="color: #ff3e03">点此创建任务</a>
+                                                <br>
+                                                <p class="text-muted m-b-15"><a href="/createTask?pid={{ plan_obj.id }}"
+                                                                                style="color: #ff3e03">点此创建任务</a>
                                                 </p>
                                             {% endif %}
                                         {% endif %}
                                     {% else %}
-                                        <p><br><a href="/uatDetail?pid={{ plan_obj.id }}"
-                                                  style="color: #ff3e03">点击此处进入预发部署页面</a>
+                                        <p class="text-muted m-b-15"><br><a href="/uatDetail?pid={{ plan_obj.id }}"
+                                                                            style="color: #ff3e03">点击此处进入预发部署页面</a>
                                         </p>
                                     {% endif %}
                                 </div>

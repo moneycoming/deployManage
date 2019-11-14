@@ -160,7 +160,7 @@ def createPlan(request):
             mail_to.append(production_members[k].member.user.email)
         paramConfig_obj = models.paramConfig.objects.get(name='email_url')
         email_createPlan(project_plans, mail_from, mail_to, mail_cc, paramConfig_obj)
-        return HttpResponseRedirect('/showPlan')
+        return HttpResponseRedirect('/planDetail?pid=%s' % plan_obj.id)
 
     template = get_template('createPlan.html')
     html = template.render(context=locals(), request=request)
@@ -175,10 +175,20 @@ def planDetail(request):
         member_obj = models.member.objects.get(user=request.user)
     if planId:
         plan_obj = models.plan.objects.get(id=planId)
-        tasks = models.task.objects.filter(plan__id=planId)
-        project_plans = models.project_plan.objects.filter(plan=plan_obj)
-        sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
-        father_plans = models.plan.objects.filter(subPlanId=plan_obj.id)
+        try:
+            task_obj = models.task.objects.filter(plan=plan_obj)[0]
+            project_plans = models.project_plan.objects.filter(plan=plan_obj)
+            sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
+            father_plans = models.plan.objects.filter(subPlanId=plan_obj.id)
+
+            proCheckStatus = False
+            sequences = models.sequence.objects.filter(task=task_obj)
+            for i in range(len(sequences)):
+                if sequences[i].segment.isCheck and sequences[i].implemented:
+                    proCheckStatus = True
+                    sequence_check_obj = sequences[i]
+        except IndexError:
+            pass
 
     template = get_template('planDetail.html')
     html = template.render(context=locals(), request=request)
