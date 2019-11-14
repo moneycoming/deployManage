@@ -175,12 +175,11 @@ def planDetail(request):
         member_obj = models.member.objects.get(user=request.user)
     if planId:
         plan_obj = models.plan.objects.get(id=planId)
+        project_plans = models.project_plan.objects.filter(plan=plan_obj)
+        sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
+        father_plans = models.plan.objects.filter(subPlanId=plan_obj.id)
         try:
             task_obj = models.task.objects.filter(plan=plan_obj)[0]
-            project_plans = models.project_plan.objects.filter(plan=plan_obj)
-            sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
-            father_plans = models.plan.objects.filter(subPlanId=plan_obj.id)
-
             proCheckStatus = False
             sequences = models.sequence.objects.filter(task=task_obj)
             for i in range(len(sequences)):
