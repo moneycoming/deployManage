@@ -149,7 +149,7 @@
                                                             <select title="选择项目" class="form-control" name="project"
                                                                     onchange="change(this,this[selectedIndex].value)">
                                                                 <optgroup label="project">
-                                                                     <option value="" label="default"></option>
+                                                                    <option value="" label="default"></option>
                                                                     {% for project in projects %}
                                                                         <option>{{ project.name }}</option>
                                                                     {% endfor %}
@@ -169,6 +169,11 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <button type="button" class="layui-btn layui-btn-primary"
+                                                    style="float: right">
+                                                <a href="#step1" onclick="eventFun.setStep(1)" role="tab"
+                                                   data-toggle="tab">上一步</a>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
