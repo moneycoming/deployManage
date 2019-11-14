@@ -1501,7 +1501,7 @@ def ws_proConsoleOptRefresh(request):
                     consoleMessages.append(taskBuildHistories[i].category)
                     consoleMessages.append(taskBuildHistories[i].deployUser.name)
                     consoleMessages.append(taskBuildHistories[i].uniteKey)
-                    request.websocket.send(json.dumps(consoleMessages, cls=DateEncoder))
+                request.websocket.send(json.dumps(consoleMessages, cls=DateEncoder))
                 request.websocket.close()
 
 
@@ -1524,5 +1524,5 @@ def ws_uatConsoleOptRefresh(request):
                     consoleMessages.append(consoleOpts[i].deployTime)
                     consoleMessages.append(consoleOpts[i].deployUser.name)
                     consoleMessages.append(consoleOpts[i].uniteKey)
-                    request.websocket.send(json.dumps(consoleMessages, cls=DateEncoder))
+                request.websocket.send(json.dumps(consoleMessages, cls=DateEncoder))
                 request.websocket.close()
