@@ -177,19 +177,19 @@
                                                 </div>
                                                 {% if sequence.implemented == 0 %}
                                                     <div class="layui-btn-group" style="float: right">
-                                                    {% if sequence.priority > 1 %}
-                                                        <div class="layui-btn-group" style="float: right">
-                                                        <button type="button" class="layui-btn layui-btn-primary">
-                                                            <a href="#step{{ sequence.pre_segment }}"
-                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
-                                                               role="tab" data-toggle="tab">上一步</a></button>
-                                                    {% endif %}
-                                                <button type="button" id="nextBtn"
-                                                        class="layui-btn layui-btn-primary" style="display: none">
-                                                    <a href="#step{{ sequence.next_segment }}"
-                                                       onclick="eventFun.setStep({{ sequence.next_segment }})"
-                                                       role="tab" data-toggle="tab">下一步</a></button>
-                                                </div>
+                                                        {% if sequence.priority > 1 %}
+                                                            <button type="button" class="layui-btn layui-btn-primary">
+                                                                <a href="#step{{ sequence.pre_segment }}"
+                                                                   onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                                   role="tab" data-toggle="tab">上一步</a></button>
+                                                        {% endif %}
+                                                        <button type="button" id="nextBtn"
+                                                                class="layui-btn layui-btn-primary"
+                                                                style="display: none">
+                                                            <a href="#step{{ sequence.next_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.next_segment }})"
+                                                               role="tab" data-toggle="tab">下一步</a></button>
+                                                    </div>
                                                 {% else %}
                                                     <div class="layui-btn-group" style="float: right">
                                                         <button type="button" class="layui-btn layui-btn-primary">
@@ -198,7 +198,6 @@
                                                                role="tab" data-toggle="tab">下一步</a></button>
                                                     </div>
                                                 {% endif %}
-                                                </div>
                                             </div>
                                         {% elif sequence.segment.isCheck == 1 %}
                                             <div id="step{{ sequence.priority }}" class="tab-pane active">
@@ -480,8 +479,8 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="layui-btn-group" style="float: right">
-                                                    {% if sequence.implemented == 0 %}
+                                                {% if sequence.implemented == 0 %}
+                                                    <div class="layui-btn-group" style="float: right">
                                                         {% if sequence.priority > 1 %}
                                                             <button type="button" class="layui-btn layui-btn-primary">
                                                                 <a href="#step{{ sequence.pre_segment }}"
@@ -494,19 +493,15 @@
                                                             <a href="#step{{ sequence.next_segment }}"
                                                                onclick="eventFun.setStep({{ sequence.next_segment }})"
                                                                role="tab" data-toggle="tab">下一步</a></button>
-                                                    {% else %}
-                                                        {% if sequence.priority > 1 %}
-                                                            <button type="button" class="layui-btn layui-btn-primary">
-                                                                <a href="#step{{ sequence.pre_segment }}"
-                                                                   onclick="eventFun.setStep({{ sequence.pre_segment }})"
-                                                                   role="tab" data-toggle="tab">上一步</a></button>
-                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="layui-btn-group" style="float: right">
                                                         <button type="button" class="layui-btn layui-btn-primary">
                                                             <a href="#step{{ sequence.next_segment }}"
                                                                onclick="eventFun.setStep({{ sequence.next_segment }})"
                                                                role="tab" data-toggle="tab">下一步</a></button>
-                                                    {% endif %}
-                                                </div>
+                                                    </div>
+                                                {% endif %}
                                             </div>
                                         {% elif sequence.segment.isCheck == 1 %}
                                             <div id="step{{ sequence.priority }}" class="tab-pane fade">
