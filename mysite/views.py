@@ -310,42 +310,44 @@ def createTask(request):
             beforeDeployList = request.POST.getlist('beforeDeploy')
             afterDeployList = request.POST.getlist('afterDeploy')
             createDate = datetime.datetime.now()
-            task_obj = models.task(name=title, plan=post_plan_obj, createUser=member_obj, createDate=createDate,
-                                   onOff=1)
-            task_obj.save()
-            for i in range(len(beforeDeployList)):
-                segment_obj = models.segment.objects.get(name=beforeDeployList[i])
-                sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
-                sequence_obj.save()
-            for j in range(len(afterDeployList)):
-                segment_obj = models.segment.objects.get(name=afterDeployList[j])
-                sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
-                sequence_obj.save()
-            sequence_deploy_obj = models.sequence(segment=deploySegment_obj, task=task_obj)
-            sequence_deploy_obj.save()
-            sequence_check_obj = models.sequence(segment=checkSegment_obj, task=task_obj)
-            sequence_check_obj.save()
-            sequence_merge_obj = models.sequence(segment=mergeSegment_obj, task=task_obj)
-            sequence_merge_obj.save()
-            sequences = models.sequence.objects.filter(task=task_obj).order_by('segment__order')
+            tasks = models.task.objects.filter(plan=post_plan_obj)
+            if len(tasks) == 0:
+                task_obj = models.task(name=title, plan=post_plan_obj, createUser=member_obj, createDate=createDate,
+                                       onOff=1)
+                task_obj.save()
+                for i in range(len(beforeDeployList)):
+                    segment_obj = models.segment.objects.get(name=beforeDeployList[i])
+                    sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
+                    sequence_obj.save()
+                for j in range(len(afterDeployList)):
+                    segment_obj = models.segment.objects.get(name=afterDeployList[j])
+                    sequence_obj = models.sequence(segment=segment_obj, task=task_obj)
+                    sequence_obj.save()
+                sequence_deploy_obj = models.sequence(segment=deploySegment_obj, task=task_obj)
+                sequence_deploy_obj.save()
+                sequence_check_obj = models.sequence(segment=checkSegment_obj, task=task_obj)
+                sequence_check_obj.save()
+                sequence_merge_obj = models.sequence(segment=mergeSegment_obj, task=task_obj)
+                sequence_merge_obj.save()
+                sequences = models.sequence.objects.filter(task=task_obj).order_by('segment__order')
 
-            for n in range(len(sequences)):
-                sequences[n].pre_segment = n
-                sequences[n].next_segment = n + 2
-                sequences[n].priority = n + 1
-                sequences[n].save()
+                for n in range(len(sequences)):
+                    sequences[n].pre_segment = n
+                    sequences[n].next_segment = n + 2
+                    sequences[n].priority = n + 1
+                    sequences[n].save()
 
-            sequences[0].executeCursor = 1
-            sequences[0].save()
+                sequences[0].executeCursor = 1
+                sequences[0].save()
 
-            mail_from = member_obj.user.email
-            mail_to = []
-            for k in range(len(production_members)):
-                mail_to.append(production_members[k].member.user.email)
-            paramConfig_obj = models.paramConfig.objects.get(name='email_url')
-            email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc, paramConfig_obj)
+                mail_from = member_obj.user.email
+                mail_to = []
+                for k in range(len(production_members)):
+                    mail_to.append(production_members[k].member.user.email)
+                paramConfig_obj = models.paramConfig.objects.get(name='email_url')
+                email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc, paramConfig_obj)
 
-            return HttpResponseRedirect('/taskDetail?tid=%s' % task_obj.id)
+                return HttpResponseRedirect('/taskDetail?tid=%s' % task_obj.id)
 
     template = get_template('createTask.html')
     html = template.render(context=locals(), request=request)
@@ -416,7 +418,6 @@ def ajax_deleteTask(request):
 def ajax_showTask(request):
     onOff = request.POST.get('onOff')
     taskId = request.POST.get('id')
-    print(onOff, taskId)
     if taskId:
         task = models.task.objects.get(id=taskId)
         task.onOff = onOff

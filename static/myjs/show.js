@@ -1023,7 +1023,6 @@ layui.use(['element', 'layer'], function () {
         $(this).text(str);
         var postData = {};
         var taskId = $(this).closest("tr").find("#taskId").text();
-        console.log(taskId);
         postData['id'] = taskId;
         if (str === '关闭') {
             postData['onOff'] = 1;
