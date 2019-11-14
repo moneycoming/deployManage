@@ -52,7 +52,7 @@
                                     <tr>
                                         <td id="taskId">{{ task.id }}</td>
                                         {% if task.onOff == 1 %}
-                                            <td><a href="/taskDetail?tid={{ task.id }}">{{ task.name }}</a></td>
+                                            <td><a href="/taskDetail?tid={{ task.id }}" style="color: #ff3e03">{{ task.name }}</a></td>
                                         {% else %}
                                             <td>{{ task.name }}</td>
                                         {% endif %}
