@@ -187,7 +187,7 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", ".restartDeploy", restartDeploy);
 
     function restartDeploy() {
-        var step = $(this).parent().parent().parent().parent().parent().attr('id');
+        var step = $(this).parent().parent().parent().parent().parent().parent().parent().attr('id');
         var type = $(this).data('type');
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
@@ -202,12 +202,13 @@ layui.use(['element', 'layer'], function () {
             var taskId = getQueryVariable("tid");
             $('#proDeployText').text("发布进行中，请等待...");
             $('.proDeployProgress').removeClass('fade');
-            $('#proBuildProgress').width('5%').text('5%');
+            $('#proBuildProgress').width('5%').text('5%').removeClass("bg-danger").addClass("bg-success");
             $('#proConsoleOpt').removeClass('fade');
             $('.restartDeploy').hide();
             $('.continueDeploy').hide();
             $('.rollbackOne').hide();
             $('.rollbackAll').hide();
+            $(`.proBuildResult`).hide();
 
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
@@ -309,7 +310,7 @@ layui.use(['element', 'layer'], function () {
                                 html += "<pre>" + received_msg[i] + "</pre>"
                             }
                         }
-                        $(`.proBuildResult`).html(html);
+                        $(`.proBuildResult`).show().html(html);
                         if (realPoints === sumPoints) {
                             $('#proDeployText').text("发布完成");
                         }
@@ -350,12 +351,13 @@ layui.use(['element', 'layer'], function () {
             var taskId = getQueryVariable("tid");
             $('#proDeployText').text("发布进行中，请等待...");
             $('.proDeployProgress').removeClass('fade');
-            $('#proBuildProgress').width('5%').text('5%');
+            $('#proBuildProgress').width('5%').text('5%').removeClass("bg-danger").addClass("bg-success");
             $('#proConsoleOpt').removeClass('fade');
             $('.restartDeploy').hide();
             $('.continueDeploy').hide();
             $('.rollbackOne').hide();
             $('.rollbackAll').hide();
+            $(`.proBuildResult`).hide();
 
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
@@ -455,6 +457,7 @@ layui.use(['element', 'layer'], function () {
                                         layer.closeAll();
                                     }
                                 });
+                                $('.restartDeploy').show();
                             } else if (received_msg[i] === 'deploy_success') {
                                 layer.open({
                                     type: 1
@@ -475,7 +478,7 @@ layui.use(['element', 'layer'], function () {
                                 html += "<pre>" + received_msg[i] + "</pre>"
                             }
                         }
-                        $(`.proBuildResult`).html(html);
+                        $(`.proBuildResult`).show().html(html);
                         if (realPoints === sumPoints) {
                             $('#proDeployText').text("发布完成");
                         }
@@ -515,12 +518,13 @@ layui.use(['element', 'layer'], function () {
             var taskId = getQueryVariable("tid");
             $('#proDeployText').text("回滚进行中，请等待...");
             $('.proDeployProgress').removeClass('fade');
-            $('#proBuildProgress').width(5 + '%').text('5%');
+            $('#proBuildProgress').width(5 + '%').text('5%').removeClass("bg-danger").addClass("bg-success");
             $('#proConsoleOpt').removeClass('fade');
             $('.restartDeploy').hide();
             $('.continueDeploy').hide();
             $('.rollbackOne').hide();
             $('.rollbackAll').hide();
+            $(`.proBuildResult`).hide();
 
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
@@ -593,7 +597,7 @@ layui.use(['element', 'layer'], function () {
                                     , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
                                     , title: '发布结果'
                                     , id: 'layerDemo' + type//防止重复弹出
-                                    , content: '<div style="padding: 20px 100px;">' + "回滚结束！" + '</div>'
+                                    , content: '<div style="padding: 20px 100px;">' + "所有节点都已回滚" + '</div>'
                                     , btn: '关闭'
                                     , btnAlign: 'c' //按钮居中
                                     , area: '500px;'
@@ -604,12 +608,32 @@ layui.use(['element', 'layer'], function () {
                                 });
                                 $('.restartDeploy').show();
                                 $('.continueDeploy').show();
+                            } else if (received_msg[i] === 'deploy_failed') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + received_msg[i - 2] + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                                $('#proBuildProgress').removeClass("bg-success").addClass("bg-danger");
+                                $('.restartDeploy').show();
+                                $('.continueDeploy').show();
+                                $('.rollbackOne').show();
+                                $('.rollbackAll').show();
                             }
                             else {
                                 html += "<pre>" + received_msg[i] + "</pre>"
                             }
                         }
-                        $(`.proBuildResult`).html(html);
+                        $(`.proBuildResult`).show().html(html);
                         if (realPoints === sumPoints) {
                             $('#proDeployText').text("回滚结束");
                         }
@@ -649,12 +673,13 @@ layui.use(['element', 'layer'], function () {
             var taskId = getQueryVariable("tid");
             $('#proDeployText').text("回滚进行中，请等待...");
             $('.proDeployProgress').removeClass('fade');
-            $('#proBuildProgress').width(5 + '%').text('5%');
+            $('#proBuildProgress').width(5 + '%').text('5%').removeClass("bg-danger").addClass("bg-success");
             $('#proConsoleOpt').removeClass('fade');
             $('.restartDeploy').hide();
             $('.continueDeploy').hide();
             $('.rollbackOne').hide();
             $('.rollbackAll').hide();
+            $(`.proBuildResult`).hide();
 
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
@@ -712,7 +737,7 @@ layui.use(['element', 'layer'], function () {
                                     , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
                                     , title: '发布结果'
                                     , id: 'layerDemo' + type//防止重复弹出
-                                    , content: '<div style="padding: 20px 100px;">' + "回滚结束！" + '</div>'
+                                    , content: '<div style="padding: 20px 100px;">' + "所有项目回滚成功！" + '</div>'
                                     , btn: '关闭'
                                     , btnAlign: 'c' //按钮居中
                                     , area: '500px;'
@@ -722,12 +747,32 @@ layui.use(['element', 'layer'], function () {
                                     }
                                 });
                                 $('.startDeploy').show();
+                            } else if (received_msg[i] === 'deploy_failed') {
+                                layer.open({
+                                    type: 1
+                                    , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                                    , title: '发布结果'
+                                    , id: 'layerDemo' + type//防止重复弹出
+                                    , content: '<div style="padding: 20px 100px;">' + received_msg[i - 2] + '</div>'
+                                    , btn: '关闭'
+                                    , btnAlign: 'c' //按钮居中
+                                    , area: '500px;'
+                                    , shade: 0.5 //不显示遮罩
+                                    , yes: function () {
+                                        layer.closeAll();
+                                    }
+                                });
+                                $('#proBuildProgress').removeClass("bg-success").addClass("bg-danger");
+                                $('.restartDeploy').show();
+                                $('.continueDeploy').show();
+                                $('.rollbackOne').show();
+                                $('.rollbackAll').show();
                             }
                             else {
                                 html += "<pre>" + received_msg[i] + "</pre>"
                             }
                         }
-                        $(`.proBuildResult`).html(html);
+                        $(`.proBuildResult`).show().html(html);
                         if (realPoints === sumPoints) {
                             $('#proDeployText').text("回滚完成");
                             $('.restartDeploy').removeClass('fade');
