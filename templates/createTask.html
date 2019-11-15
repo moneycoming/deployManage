@@ -39,13 +39,13 @@
                             <form class="form-horizontal group-border hover-stripped" role="form" id="taskValidate"
                                   method="post" action="/createTask?pid={{ plan_obj.id }}">
                                 {% csrf_token %}
-                                <div class="form-group">
-                                    <label class="col-lg-2 control-label">任务标题</label>
-                                    <div class="col-lg-10">
-                                        <input type="text" id="text-input" name="title" placeholder="请输入任务标题"
-                                               class="form-control">
-                                    </div>
-                                </div>
+{#                                <div class="form-group">#}
+{#                                    <label class="col-lg-2 control-label">任务标题</label>#}
+{#                                    <div class="col-lg-10">#}
+{#                                        <input type="text" id="text-input" name="title" placeholder="请输入任务标题"#}
+{#                                               class="form-control">#}
+{#                                    </div>#}
+{#                                </div>#}
                                 <!-- End .form-group  -->
                                 <div class="form-group">
                                     <label class="col-lg-2 control-label">所属计划</label>

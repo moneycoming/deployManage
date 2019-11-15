@@ -254,6 +254,7 @@ class project_plan(models.Model):
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
     devBranch = models.ForeignKey(devBranch, on_delete=models.CASCADE, verbose_name="开发分支")
     uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
+    deployBranch = models.CharField(max_length=50, null=True, verbose_name="预发部署分支")
     lastPackageId = models.IntegerField(null=True, verbose_name="最新生产发布包编号")
     order = models.IntegerField(verbose_name="生产部署顺序")
     cursor = models.BooleanField(default=False, verbose_name="生产部署游标")

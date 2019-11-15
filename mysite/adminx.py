@@ -99,12 +99,12 @@ class project_server_admin(object):
 
 
 class project_plan_admin(object):
-    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'proBuildStatus',
-                    'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
-    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'proBuildStatus',
-                     'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
-    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'lastPackageId', 'order', 'cursor', 'proBuildStatus',
-                   'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
+    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'lastPackageId', 'order', 'cursor',
+                    'proBuildStatus', 'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
+    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'lastPackageId', 'order', 'cursor',
+                     'proBuildStatus', 'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
+    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'lastPackageId', 'order', 'cursor',
+                   'proBuildStatus', 'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
 
 
 class segment_admin(object):
