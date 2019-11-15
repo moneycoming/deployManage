@@ -108,6 +108,7 @@ layui.use(['element', 'layer'], function () {
                                         layer.closeAll();
                                     }
                                 });
+                                $('#proBuildProgress').removeClass("bg-success").addClass("bg-danger");
                                 html2 = "<div class=\"btn-group\">\n" +
                                     "    <button type=\"button\"\n" +
                                     "        class=\"layui-btn layui-btn-primary restartDeploy\">重新发布\n" +
@@ -257,6 +258,7 @@ layui.use(['element', 'layer'], function () {
                                 $('.continueDeploy').show();
                                 $('.rollbackOne').show();
                                 $('.rollbackAll').show();
+                                $('#proBuildProgress').removeClass("bg-success").addClass("bg-danger");
                                 layer.open({
                                     type: 1
                                     , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
@@ -433,6 +435,7 @@ layui.use(['element', 'layer'], function () {
                                         layer.closeAll();
                                     }
                                 });
+                                $('#proBuildProgress').removeClass("bg-success").addClass("bg-danger");
                                 $('.restartDeploy').show();
                                 $('.continueDeploy').show();
                                 $('.rollbackOne').show();
@@ -608,7 +611,7 @@ layui.use(['element', 'layer'], function () {
                         }
                         $(`.proBuildResult`).html(html);
                         if (realPoints === sumPoints) {
-                            $('#proDeployText').text("回滚完成");
+                            $('#proDeployText').text("回滚结束");
                         }
                     }
                 };
