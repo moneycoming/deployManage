@@ -51,18 +51,20 @@ class fileObj(models.Model):
 
 
 class branch:
-    def __init__(self, url):
+    def __init__(self, url, gitCmd):
         self.url = url
+        self.gitCmd = gitCmd
 
     def merge_branch(self, mergeFrom, mergeTo):
         repoPath = self.url
+        gitCmd = self.gitCmd
         repo = Repo(repoPath)
         origin = repo.remotes.origin
         curBranch = repo.head.reference
         master = repo.heads.master
         os.chdir(repoPath)
         try:
-            subprocess.check_output(["git", "remote", "update", "--prune"])
+            subprocess.check_output([gitCmd, "remote", "update", "--prune"])
         except subprocess.CalledProcessError:
             logger.info("已是最新分支信息，无法更新")
         status = True
@@ -116,13 +118,14 @@ class branch:
 
     def create_branch(self, hopeBranch):
         repoPath = self.url
+        gitCmd = self.gitCmd
         repo = Repo(repoPath)
         origin = repo.remotes.origin
         master = repo.heads.master
         curBranch = repo.head.reference
         os.chdir(repoPath)
         try:
-            subprocess.check_output(["git", "remote", "update", "--prune"])
+            subprocess.check_output([gitCmd, "remote", "update", "--prune"])
         except subprocess.CalledProcessError:
             logger.info("已是最新分支信息，无法更新")
         try:
@@ -146,14 +149,15 @@ class branch:
 
     def delete_branch(self, hopeBranch):
         repoPath = self.url
+        gitCmd = self.gitCmd
         os.chdir(repoPath)
         try:
-            subprocess.check_output(["git", "remote", "update", "--prune"])
+            subprocess.check_output([gitCmd, "remote", "update", "--prune"])
         except subprocess.CalledProcessError:
             logger.info("已是最新分支信息，无法更新")
         status = True
         try:
-            subprocess.check_output(["git", "push", "origin", "--delete", hopeBranch])
+            subprocess.check_output([gitCmd, "push", "origin", "--delete", hopeBranch])
         except subprocess.CalledProcessError:
             status = False
 
@@ -161,21 +165,22 @@ class branch:
 
     def create_tag(self, hopeBranch):
         repoPath = self.url
+        gitCmd = self.gitCmd
         repo = Repo(repoPath)
         os.chdir(repoPath)
         origin = repo.remotes.origin
         status = True
         try:
-            subprocess.check_output(["git", "remote", "update", "--prune"])
+            subprocess.check_output([gitCmd, "remote", "update", "--prune"])
         except subprocess.CalledProcessError:
             logger.info("已是最新分支信息，无法更新")
         try:
-            subprocess.check_output(["git", "checkout", hopeBranch])
+            subprocess.check_output([gitCmd, "checkout", hopeBranch])
         except subprocess.CalledProcessError:
             status = False
             logger.error("分支%s切换失败" % hopeBranch)
         if status:
-            subprocess.check_output(["git", "pull", 'origin', hopeBranch])
+            subprocess.check_output([gitCmd, "pull", 'origin', hopeBranch])
             tag_name = "release-" + datetime.datetime.now().strftime('%Y.%m.%d')
             try:
                 new_tag = repo.create_tag(tag_name, message='发布分支%s' % hopeBranch)

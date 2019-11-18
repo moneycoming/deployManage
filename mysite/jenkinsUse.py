@@ -45,15 +45,17 @@ class pythonJenkins:
 
 
 class projectBean:
-    def __init__(self, project):
+    def __init__(self, project, gitCmd):
         self.project = project
+        self.gitCmd = gitCmd
 
     def look_branch(self):
         project = self.project
+        gitCmd = self.gitCmd
         project_dir = project.project_dir
         os.chdir(project_dir)
         try:
-            subprocess.check_output(["git", "remote", "update", "--prune"])
+            subprocess.check_output([gitCmd, "remote", "update", "--prune"])
         except subprocess.CalledProcessError:
             logger.info("项目%s已是最新信息，无须更新" % project.name)
 
