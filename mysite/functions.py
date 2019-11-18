@@ -99,7 +99,7 @@ class branch:
                 git.checkout(mergeTo)
             try:
                 git.merge(mergeFrom)
-                # origin.push(mergeTo)
+                origin.push(mergeTo)
                 logger.info("分支%s合并成功！" % mergeFrom)
             except:
                 past_branch = repo.create_head(mergeTo, 'HEAD')
@@ -158,3 +158,31 @@ class branch:
             status = False
 
         return status
+
+    def create_tag(self, hopeBranch):
+        repoPath = self.url
+        repo = Repo(repoPath)
+        os.chdir(repoPath)
+        origin = repo.remotes.origin
+        status = True
+        try:
+            subprocess.check_output(["git", "remote", "update", "--prune"])
+        except subprocess.CalledProcessError:
+            logger.info("已是最新分支信息，无法更新")
+        try:
+            subprocess.check_output(["git", "checkout", hopeBranch])
+        except subprocess.CalledProcessError:
+            status = False
+            logger.error("分支%s切换失败" % hopeBranch)
+        if status:
+            subprocess.check_output(["git", "pull", 'origin', hopeBranch])
+            tag_name = "release-" + datetime.datetime.now().strftime('%Y.%m.%d')
+            try:
+                new_tag = repo.create_tag(tag_name, message='发布分支%s' % hopeBranch)
+                origin.push(new_tag)
+            except:
+                status = False
+
+        return status
+
+

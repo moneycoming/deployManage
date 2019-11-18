@@ -152,12 +152,13 @@ def createPlan(request):
 
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
         mail_from = member_obj.user.email
-        mail_to = []
+        mail_to = mail_cc = []
         for k in range(len(production_members)):
             mail_to.append(production_members[k].member.user.email)
         paramConfig_obj = models.paramConfig.objects.get(name='email_url')
         mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-        email_createPlan(project_plans, mail_from, mail_to, mail_cc_obj.name, paramConfig_obj)
+        mail_cc.append(mail_cc_obj.param)
+        email_createPlan(project_plans, mail_from, mail_to, mail_cc, paramConfig_obj)
         return HttpResponseRedirect('/planDetail?pid=%s' % plan_obj.id)
 
     template = get_template('createPlan.html')
@@ -231,12 +232,13 @@ def createSubPlan(request):
                 project_plans = models.project_plan.objects.filter(plan=plan_obj)
                 production_members = models.production_member.objects.filter(production=production_obj)
                 mail_from = member_obj.user.email
-                mail_to = []
+                mail_to = mail_cc = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
                 paramConfig_obj = models.paramConfig.objects.get(name='email_url')
                 mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-                email_createPlan(project_plans, mail_from, mail_to, mail_cc_obj.name, paramConfig_obj)
+                mail_cc.append(mail_cc_obj.param)
+                email_createPlan(project_plans, mail_from, mail_to, mail_cc, paramConfig_obj)
                 return HttpResponseRedirect('/planDetail?pid=%s' % plan_obj.id)
 
     template = get_template('createSubPlan.html')
@@ -344,12 +346,13 @@ def createTask(request):
                 sequences[0].save()
 
                 mail_from = member_obj.user.email
-                mail_to = []
+                mail_to = mail_cc = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
                 paramConfig_obj = models.paramConfig.objects.get(name='email_url')
                 mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-                email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc_obj.name, paramConfig_obj)
+                mail_cc.append(mail_cc_obj.param)
+                email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc, paramConfig_obj)
 
                 return HttpResponseRedirect('/taskDetail?tid=%s' % task_obj.id)
 
@@ -503,12 +506,13 @@ def ajax_uatCheck(request):
                     project_plans[i].save()
 
                 mail_from = member_obj.user.email
-                mail_to = []
+                mail_to = mail_cc = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
                 paramConfig_obj = models.paramConfig.objects.get(name='email_url')
                 mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-                email_uatCheck(plan_obj, mail_from, mail_to, mail_cc_obj.name, paramConfig_obj)
+                mail_cc.append(mail_cc_obj.param)
+                email_uatCheck(plan_obj, mail_from, mail_to, mail_cc, paramConfig_obj)
             else:
                 ret = {
                     'role:': 1,
@@ -642,6 +646,10 @@ def ajax_checkSuccess(request):
             sequence_obj.save()
             project_plans = models.project_plan.objects.filter(plan=sequence_obj.task.plan)
             for i in range(len(project_plans)):
+                branch_obj = branch(project_plans[i].project.project_dir)
+                status = branch_obj.create_tag(project_plans[i].deployBranch)
+                if status:
+                    logger.info("项目%s，预发分支%s,tag创建成功！" % (project_plans[i].project.name, project_plans[i].uatBranch))
                 if project_plans[i].exclusiveKey:
                     project_plans[i].exclusiveKey = False
                     project_plans[i].save()
@@ -658,12 +666,13 @@ def ajax_checkSuccess(request):
             }
 
             mail_from = member_obj.user.email
-            mail_to = []
+            mail_to = mail_cc = []
             for k in range(len(production_members)):
                 mail_to.append(production_members[k].member.user.email)
             paramConfig_obj = models.paramConfig.objects.get(name='email_url')
             mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-            email_proCheck(sequence_obj, mail_from, mail_to, mail_cc_obj.name, paramConfig_obj)
+            mail_cc.append(mail_cc_obj.param)
+            email_proCheck(sequence_obj, mail_from, mail_to, mail_cc, paramConfig_obj)
         else:
             ret = {
                 'role': 0
