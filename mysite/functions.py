@@ -183,11 +183,17 @@ class branch:
             subprocess.check_output([gitCmd, "pull", 'origin', hopeBranch])
             tag_name = "release-" + datetime.datetime.now().strftime('%Y.%m.%d')
             try:
+                subprocess.check_output([gitCmd, "tag", "-d", tag_name])
+            except subprocess.CalledProcessError:
+                logger.info("本地没有该tag！")
+            try:
+                subprocess.check_output([gitCmd, "push", "origin", "--delete", "tag", tag_name])
+            except subprocess.CalledProcessError:
+                logger.info("线上没有该tag！")
+            try:
                 new_tag = repo.create_tag(tag_name, message='发布分支%s' % hopeBranch)
                 origin.push(new_tag)
             except:
                 status = False
 
         return status
-
-
