@@ -24,6 +24,14 @@ from django.views.decorators.http import require_http_methods
 
 # 添加全局变量，记录日志
 logger = logging.getLogger('log')
+# 参数化git配置
+gitCmd_obj = models.paramConfig.objects.get(name='gitCmd')
+# 邮件路径配置
+email_url_obj = models.paramConfig.objects.get(name='email_url')
+# 邮件抄送对象配置
+mail_cc = []
+mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
+mail_cc.append(mail_cc_obj.param)
 
 # 定时获取dev_branch
 scheduler = BackgroundScheduler()
@@ -34,7 +42,7 @@ try:
         projects = models.project.objects.all()
         for k in range(len(projects)):
             branches = models.devBranch.objects.filter(project=projects[k])
-            projectBean_obj = projectBean(projects[k])
+            projectBean_obj = projectBean(projects[k], gitCmd_obj.param)
             branchOld = []
             for m in range(len(branches)):
                 branchOld.append(branches[m].name)
@@ -152,13 +160,10 @@ def createPlan(request):
 
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
         mail_from = member_obj.user.email
-        mail_to = mail_cc = []
+        mail_to = []
         for k in range(len(production_members)):
             mail_to.append(production_members[k].member.user.email)
-        paramConfig_obj = models.paramConfig.objects.get(name='email_url')
-        mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-        mail_cc.append(mail_cc_obj.param)
-        email_createPlan(project_plans, mail_from, mail_to, mail_cc, paramConfig_obj)
+        email_createPlan(project_plans, mail_from, mail_to, mail_cc, email_url_obj)
         return HttpResponseRedirect('/planDetail?pid=%s' % plan_obj.id)
 
     template = get_template('createPlan.html')
@@ -232,13 +237,10 @@ def createSubPlan(request):
                 project_plans = models.project_plan.objects.filter(plan=plan_obj)
                 production_members = models.production_member.objects.filter(production=production_obj)
                 mail_from = member_obj.user.email
-                mail_to = mail_cc = []
+                mail_to = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
-                paramConfig_obj = models.paramConfig.objects.get(name='email_url')
-                mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-                mail_cc.append(mail_cc_obj.param)
-                email_createPlan(project_plans, mail_from, mail_to, mail_cc, paramConfig_obj)
+                email_createPlan(project_plans, mail_from, mail_to, mail_cc, email_url_obj)
                 return HttpResponseRedirect('/planDetail?pid=%s' % plan_obj.id)
 
     template = get_template('createSubPlan.html')
@@ -346,13 +348,10 @@ def createTask(request):
                 sequences[0].save()
 
                 mail_from = member_obj.user.email
-                mail_to = mail_cc = []
+                mail_to = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
-                paramConfig_obj = models.paramConfig.objects.get(name='email_url')
-                mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-                mail_cc.append(mail_cc_obj.param)
-                email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc, paramConfig_obj)
+                email_createTask(plan_obj, sequences, mail_from, mail_to, mail_cc, email_url_obj)
 
                 return HttpResponseRedirect('/taskDetail?tid=%s' % task_obj.id)
 
@@ -506,13 +505,10 @@ def ajax_uatCheck(request):
                     project_plans[i].save()
 
                 mail_from = member_obj.user.email
-                mail_to = mail_cc = []
+                mail_to = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
-                paramConfig_obj = models.paramConfig.objects.get(name='email_url')
-                mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-                mail_cc.append(mail_cc_obj.param)
-                email_uatCheck(plan_obj, mail_from, mail_to, mail_cc, paramConfig_obj)
+                email_uatCheck(plan_obj, mail_from, mail_to, mail_cc, email_url_obj)
             else:
                 ret = {
                     'role:': 1,
@@ -558,7 +554,7 @@ def ajax_createUatBranch(request):
                 uatBranch = "uat-"
                 uatBranch += branchCode
                 devBranch = project_plan_obj.devBranch
-                branch_obj = branch(project_obj.project_dir)
+                branch_obj = branch(project_obj.project_dir, gitCmd_obj.param)
                 branch_obj.create_branch(uatBranch)
                 status = branch_obj.merge_branch(devBranch.name, uatBranch)
 
@@ -646,7 +642,7 @@ def ajax_checkSuccess(request):
             sequence_obj.save()
             project_plans = models.project_plan.objects.filter(plan=sequence_obj.task.plan)
             for i in range(len(project_plans)):
-                branch_obj = branch(project_plans[i].project.project_dir)
+                branch_obj = branch(project_plans[i].project.project_dir, gitCmd_obj.param)
                 status = branch_obj.create_tag(project_plans[i].deployBranch)
                 if status:
                     logger.info("项目%s，预发分支%s,tag创建成功！" % (project_plans[i].project.name, project_plans[i].uatBranch))
@@ -666,13 +662,10 @@ def ajax_checkSuccess(request):
             }
 
             mail_from = member_obj.user.email
-            mail_to = mail_cc = []
+            mail_to = []
             for k in range(len(production_members)):
                 mail_to.append(production_members[k].member.user.email)
-            paramConfig_obj = models.paramConfig.objects.get(name='email_url')
-            mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
-            mail_cc.append(mail_cc_obj.param)
-            email_proCheck(sequence_obj, mail_from, mail_to, mail_cc, paramConfig_obj)
+            email_proCheck(sequence_obj, mail_from, mail_to, mail_cc, email_url_obj)
         else:
             ret = {
                 'role': 0
@@ -749,7 +742,7 @@ def ws_startDeploy(request):
                         isMember = True
                 buildMessages = []
                 if isMember and member_obj.user.has_perm("can_deploy_project"):
-                    projectBean_obj = projectBean(project_plans)
+                    projectBean_obj = projectBean(project_plans, gitCmd_obj.param)
                     total = projectBean_obj.countDeploySum(1, 0)
                     buildMessages.append(total)
                     request.websocket.send(json.dumps(buildMessages))
@@ -886,7 +879,7 @@ def ws_restartDeploy(request):
                             order = project_plans[i].order
                             break
                     project_plans_news = project_plans.filter(order__gte=order).order_by('order')
-                    projectBean_obj = projectBean(project_plans_news)
+                    projectBean_obj = projectBean(project_plans_news, gitCmd_obj.param)
                     total = projectBean_obj.countDeploySum(1, order)
                     buildMessages.append(total)
                     request.websocket.send(json.dumps(buildMessages))
@@ -1027,7 +1020,7 @@ def ws_continueDeploy(request):
                             break
                     project_plans_news = project_plans.filter(order__gt=order).order_by('order')
                     if project_plans_news:
-                        projectBean_obj = projectBean(project_plans_news)
+                        projectBean_obj = projectBean(project_plans_news, gitCmd_obj.param)
                         total = projectBean_obj.countDeploySum(1, order)
                         buildMessages.append(total)
                         request.websocket.send(json.dumps(buildMessages))
@@ -1256,7 +1249,7 @@ def ws_rollbackAll(request):
                         isMember = True
                 if isMember and member_obj.user.has_perm("can_deploy_project"):
                     cursor = failedProjects = []
-                    projectBean_obj = projectBean(project_plans)
+                    projectBean_obj = projectBean(project_plans, gitCmd_obj.param)
                     total = projectBean_obj.countDeploySum2(1, project_plan_obj.order)
                     buildMessages.append(total)
                     request.websocket.send(json.dumps(buildMessages))
@@ -1478,7 +1471,7 @@ def ws_codeMerge(request):
                     request.websocket.send(json.dumps(buildMessages))
                     for i in range(len(project_plans)):
                         project_obj = project_plans[i].project
-                        branch_obj = branch(project_obj.project_dir)
+                        branch_obj = branch(project_obj.project_dir, gitCmd_obj.param)
                         status = branch_obj.merge_branch(project_plans[i].deployBranch, 'master')
                         buildMessages.append("startMerge")
                         if status:
