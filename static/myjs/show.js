@@ -93,7 +93,10 @@ layui.use(['element', 'layer'], function () {
                                 $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
                                 html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
-                            } else if (received_msg[i] === 'deploy_failed') {
+                            }else if (received_msg[i] === 'url') {
+                                i += 1;
+                                html += "<br><a href='" + received_msg[i] + "' target='_blank'>" + received_msg[i] + "</a>"
+                            }else if (received_msg[i] === 'deploy_failed') {
                                 layer.open({
                                     type: 1
                                     , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
