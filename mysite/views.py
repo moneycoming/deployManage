@@ -132,13 +132,12 @@ def showPlan(request):
 
 # 创建计划
 @login_required
-@permission_required('mysite.add_plan')
 def createPlan(request):
     kinds = models.kind.objects.all()
     projects = models.project.objects.all()
     member_obj = models.member.objects.get(user=request.user)
     productions = models.production_member.objects.filter(member=member_obj)
-    if request.method == 'POST':
+    if request.method == 'POST' and member_obj.user.has_perm('add_plan'):
         production_obj = models.production.objects.get(name=request.POST['production'])
         production_members = models.production_member.objects.filter(production=production_obj)
         projectList = request.POST.getlist('project')
@@ -265,10 +264,9 @@ def ajax_deletePlan(request):
                 break
         if isMember and member_obj.user.has_perm('delete_plan'):
             plan_obj.delete()
-            if not plan_obj.id:
+            if plan_obj.id:
                 sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
                 for i in range(len(sub_plans)):
-                    print(sub_plans[i].name)
                     sub_plans[i].delete()
 
             ret = {
