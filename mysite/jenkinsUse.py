@@ -43,6 +43,15 @@ class pythonJenkins:
             logger.error("jenkins项目未找到，请检查项目是否存在")
         return info
 
+    def realConsole(self):
+        jenkinsJob = self.jenkinsJob
+        server = self.server
+        try:
+            next_build_number = server.get_job_info(jenkinsJob)['nextBuildNumber']
+            return next_build_number
+        except jenkins.NotFoundException:
+            logger.error("jenkins项目未找到，请检查项目是否存在")
+
 
 class projectBean:
     def __init__(self, project, gitCmd):

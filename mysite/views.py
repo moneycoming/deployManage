@@ -557,9 +557,10 @@ def ajax_createUatBranch(request):
                 status = branch_obj.merge_branch(devBranch.name, uatBranch)
 
             if status:
-                delStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
-                if not delStatus:
-                    logger.info("原预发分支%s删除失败！" % project_plan_obj.uatBranch)
+                if project_plan_obj.uatBranch:
+                    delStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
+                    if not delStatus:
+                        logger.info("原预发分支%s删除失败！" % project_plan_obj.uatBranch)
                 project_plan_obj.uatBranch = uatBranch
                 project_plan_obj.save()
                 res = "预发分支：%s创建成功！" % uatBranch
@@ -771,6 +772,11 @@ def ws_startDeploy(request):
                                         uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                         params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                         pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
+                                        buildNumber = pythonJenkins_obj.realConsole()
+                                        url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(buildNumber) + "/console"
+                                        buildMessages.append('url')
+                                        buildMessages.append(url)
+                                        request.websocket.send(json.dumps(buildMessages))
                                         info = pythonJenkins_obj.deploy()
                                         consoleOpt = info['consoleOpt']
                                         isSuccess = consoleOpt.find("Finished: SUCCESS")
