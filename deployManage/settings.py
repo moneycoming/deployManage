@@ -167,8 +167,8 @@ EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
 EMAIL_HOST = 'smtp.qiye.aliyun.com'
 EMAIL_PORT = 465
-EMAIL_HOST_USER = 'zhumingjie@zhixuezhen.com'
-EMAIL_HOST_PASSWORD = 'Zhu8335466'
+EMAIL_HOST_USER = 'deploy@zhixuezhen.com'
+EMAIL_HOST_PASSWORD = 'De123456'
 
 # log
 cur_path = os.path.dirname(os.path.realpath(__file__))  # log_path是存放日志的路径

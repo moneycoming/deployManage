@@ -4,7 +4,7 @@ import json
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template.loader import get_template
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db import connection, connections
 from mysite.functions import TimeChange, fileObj, branch, DateEncoder
 from mysite import models
@@ -32,6 +32,7 @@ email_url_obj = models.paramConfig.objects.get(name='email_url')
 mail_cc = []
 mail_cc_obj = models.paramConfig.objects.get(name='mail_cc')
 mail_cc.append(mail_cc_obj.param)
+mail_from = "deploy@zhixuezhen.com"
 
 # 定时获取dev_branch
 scheduler = BackgroundScheduler()
@@ -131,12 +132,13 @@ def showPlan(request):
 
 # 创建计划
 @login_required
+@permission_required('mysite.add_plan')
 def createPlan(request):
     kinds = models.kind.objects.all()
     projects = models.project.objects.all()
     member_obj = models.member.objects.get(user=request.user)
     productions = models.production_member.objects.filter(member=member_obj)
-    if request.method == 'POST' and member_obj.user.has_perm('add_plan'):
+    if request.method == 'POST':
         production_obj = models.production.objects.get(name=request.POST['production'])
         production_members = models.production_member.objects.filter(production=production_obj)
         projectList = request.POST.getlist('project')
@@ -159,7 +161,6 @@ def createPlan(request):
                 deployDetail_obj.save()
 
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
-        mail_from = member_obj.user.email
         mail_to = []
         for k in range(len(production_members)):
             mail_to.append(production_members[k].member.user.email)
@@ -236,7 +237,6 @@ def createSubPlan(request):
 
                 project_plans = models.project_plan.objects.filter(plan=plan_obj)
                 production_members = models.production_member.objects.filter(production=production_obj)
-                mail_from = member_obj.user.email
                 mail_to = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
@@ -265,9 +265,11 @@ def ajax_deletePlan(request):
                 break
         if isMember and member_obj.user.has_perm('delete_plan'):
             plan_obj.delete()
-            sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
-            for i in range(len(sub_plans)):
-                sub_plans[i].delete()
+            if not plan_obj.id:
+                sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
+                for i in range(len(sub_plans)):
+                    print(sub_plans[i].name)
+                    sub_plans[i].delete()
 
             ret = {
                 'role': 1
@@ -347,7 +349,6 @@ def createTask(request):
                 sequences[0].executeCursor = 1
                 sequences[0].save()
 
-                mail_from = member_obj.user.email
                 mail_to = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
@@ -504,7 +505,6 @@ def ajax_uatCheck(request):
                     project_plans[i].exclusiveKey = 0
                     project_plans[i].save()
 
-                mail_from = member_obj.user.email
                 mail_to = []
                 for k in range(len(production_members)):
                     mail_to.append(production_members[k].member.user.email)
@@ -661,7 +661,6 @@ def ajax_checkSuccess(request):
                 'remark': sequence_obj.remarks
             }
 
-            mail_from = member_obj.user.email
             mail_to = []
             for k in range(len(production_members)):
                 mail_to.append(production_members[k].member.user.email)
