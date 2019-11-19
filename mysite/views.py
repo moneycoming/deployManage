@@ -536,6 +536,7 @@ def ajax_createUatBranch(request):
         plan_obj = models.plan.objects.get(id=planId)
         project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
         production_members = models.production_member.objects.filter(production=plan_obj.production)
+        branch_obj = branch(project_obj.project_dir, gitCmd_obj.param)
         member_obj = models.member.objects.get(user=request.user)
         isMember = False
         for m in range(len(production_members)):
@@ -552,11 +553,13 @@ def ajax_createUatBranch(request):
                 uatBranch = "uat-"
                 uatBranch += branchCode
                 devBranch = project_plan_obj.devBranch
-                branch_obj = branch(project_obj.project_dir, gitCmd_obj.param)
                 branch_obj.create_branch(uatBranch)
                 status = branch_obj.merge_branch(devBranch.name, uatBranch)
 
             if status:
+                delStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
+                if not delStatus:
+                    logger.info("原预发分支%s删除失败！" % project_plan_obj.uatBranch)
                 project_plan_obj.uatBranch = uatBranch
                 project_plan_obj.save()
                 res = "预发分支：%s创建成功！" % uatBranch

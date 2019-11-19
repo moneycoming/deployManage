@@ -151,15 +151,29 @@ class branch:
         repoPath = self.url
         gitCmd = self.gitCmd
         os.chdir(repoPath)
+        repo = Repo(repoPath)
+        master = repo.heads.master
+        curBranch = repo.head.reference
         try:
             subprocess.check_output([gitCmd, "remote", "update", "--prune"])
         except subprocess.CalledProcessError:
             logger.info("已是最新分支信息，无法更新")
+        try:
+            assert curBranch == master
+        except AssertionError:
+            repo.head.reference = master
+
         status = True
         try:
             subprocess.check_output([gitCmd, "push", "origin", "--delete", hopeBranch])
         except subprocess.CalledProcessError:
             status = False
+            logger.info("线上分支%s删除失败！" % hopeBranch)
+        try:
+            subprocess.check_output([gitCmd, "branch", "-D", hopeBranch])
+        except subprocess.CalledProcessError:
+            status = False
+            logger.info("本地分支%s删除失败！" % hopeBranch)
 
         return status
 
