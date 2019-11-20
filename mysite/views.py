@@ -773,7 +773,8 @@ def ws_startDeploy(request):
                                         params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                         pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
                                         buildNumber = pythonJenkins_obj.realConsole()
-                                        url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(buildNumber) + "/console"
+                                        url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(
+                                            buildNumber) + "/console"
                                         buildMessages.append('url')
                                         buildMessages.append(url)
                                         request.websocket.send(json.dumps(buildMessages))
@@ -916,6 +917,12 @@ def ws_restartDeploy(request):
                                         uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                         params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                         pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
+                                        buildNumber = pythonJenkins_obj.realConsole()
+                                        url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(
+                                            buildNumber) + "/console"
+                                        buildMessages.append('url')
+                                        buildMessages.append(url)
+                                        request.websocket.send(json.dumps(buildMessages))
                                         info = pythonJenkins_obj.deploy()
                                         consoleOpt = info['consoleOpt']
                                         isSuccess = consoleOpt.find("Finished: SUCCESS")
@@ -1048,6 +1055,12 @@ def ws_continueDeploy(request):
                                             uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                             params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                             pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
+                                            buildNumber = pythonJenkins_obj.realConsole()
+                                            url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(
+                                                buildNumber) + "/console"
+                                            buildMessages.append('url')
+                                            buildMessages.append(url)
+                                            request.websocket.send(json.dumps(buildMessages))
                                             info = pythonJenkins_obj.deploy()
                                             for n in range(len(all_project_plans)):
                                                 if all_project_plans[n].cursor:
@@ -1174,6 +1187,12 @@ def ws_rollbackOne(request):
                                 uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                 params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                 pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
+                                buildNumber = pythonJenkins_obj.realConsole()
+                                url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(
+                                    buildNumber) + "/console"
+                                buildMessages.append('url')
+                                buildMessages.append(url)
+                                request.websocket.send(json.dumps(buildMessages))
                                 info = pythonJenkins_obj.deploy()
                                 consoleOpt = info['consoleOpt']
                                 isSuccess = consoleOpt.find("Finished: SUCCESS")
@@ -1283,6 +1302,12 @@ def ws_rollbackAll(request):
                                         uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
                                         params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                         pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
+                                        buildNumber = pythonJenkins_obj.realConsole()
+                                        url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(
+                                            buildNumber) + "/console"
+                                        buildMessages.append('url')
+                                        buildMessages.append(url)
+                                        request.websocket.send(json.dumps(buildMessages))
                                         info = pythonJenkins_obj.deploy()
                                         consoleOpt = info['consoleOpt']
                                         isSuccess = consoleOpt.find("Finished: SUCCESS")
@@ -1397,6 +1422,12 @@ def ws_uatDeploy(request):
                                 logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
                                 buildMessage.append("deploy")
                                 buildMessage.append("分支%s执行部署" % project_plan_obj.uatBranch)
+                                request.websocket.send(json.dumps(buildMessage))
+                                buildNumber = pythonJenkins_obj.realConsole()
+                                url = "http://jenkinspro.bestjlb.cn/view/UAT-Server/job/" + jenkinsUat_obj.name + "/" + str(
+                                    buildNumber) + "/console"
+                                buildMessage.append('url')
+                                buildMessage.append(url)
                                 request.websocket.send(json.dumps(buildMessage))
                                 info = pythonJenkins_obj.deploy()
                                 if info:
