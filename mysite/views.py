@@ -312,7 +312,6 @@ def createTask(request):
             if member_obj == production_members[m].member:
                 isMember = True
         if isMember and member_obj.user.has_perm('mysite.add_task'):
-            # title = request.POST.get('title')
             beforeDeployList = request.POST.getlist('beforeDeploy')
             afterDeployList = request.POST.getlist('afterDeploy')
             createDate = datetime.datetime.now()
@@ -531,9 +530,6 @@ def ajax_uatCheck(request):
 def ajax_createUatBranch(request):
     planId = request.POST.get('pid')
     projectId = request.POST.get('prjId')
-    all_perm = request.user.get_all_permissions()
-    print(all_perm)
-    print(request.user.last_name)
 
     if projectId and planId:
         project_obj = models.project.objects.get(id=projectId)
@@ -547,7 +543,6 @@ def ajax_createUatBranch(request):
             if member_obj == production_members[m].member:
                 isMember = True
         if isMember and member_obj.user.has_perm("mysite.can_check_project"):
-            print("11111")
             option = request.POST.get('radio')
             if option == "option1":
                 uatBranch = request.POST.get('uatBranch')
