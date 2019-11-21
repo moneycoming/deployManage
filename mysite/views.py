@@ -137,7 +137,7 @@ def createPlan(request):
     projects = models.project.objects.all()
     member_obj = models.member.objects.get(user=request.user)
     productions = models.production_member.objects.filter(member=member_obj)
-    if request.method == 'POST' and member_obj.user.has_perm('add_plan'):
+    if request.method == 'POST' and member_obj.user.has_perm("mysite.add_plan"):
         production_obj = models.production.objects.get(name=request.POST['production'])
         production_members = models.production_member.objects.filter(production=production_obj)
         projectList = request.POST.getlist('project')
@@ -212,7 +212,7 @@ def createSubPlan(request):
             for m in range(len(production_members)):
                 if member_obj == production_members[m].member:
                     isMember = True
-            if isMember and member_obj.user.has_perm('add_plan'):
+            if isMember and member_obj.user.has_perm('mysite.add_plan'):
                 projectList = request.POST.getlist('project')
                 devBranchList = request.POST.getlist('devBranch')
                 kind_obj = father_plan_obj.kind
@@ -262,7 +262,7 @@ def ajax_deletePlan(request):
             if member_obj == production_members[m].member:
                 isMember = True
                 break
-        if isMember and member_obj.user.has_perm('delete_plan'):
+        if isMember and member_obj.user.has_perm('mysite.delete_plan'):
             plan_obj.delete()
             if plan_obj.id:
                 sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
@@ -311,7 +311,7 @@ def createTask(request):
         for m in range(len(production_members)):
             if member_obj == production_members[m].member:
                 isMember = True
-        if isMember and member_obj.user.has_perm('add_task'):
+        if isMember and member_obj.user.has_perm('mysite.add_task'):
             # title = request.POST.get('title')
             beforeDeployList = request.POST.getlist('beforeDeploy')
             afterDeployList = request.POST.getlist('afterDeploy')
@@ -404,7 +404,7 @@ def ajax_deleteTask(request):
             if member_obj == production_members[m].member:
                 isMember = True
                 break
-        if isMember and member_obj.user.has_perm('delete_task'):
+        if isMember and member_obj.user.has_perm('mysite.delete_task'):
             task_obj.delete()
             ret = {
                 'role': 1
@@ -478,7 +478,7 @@ def ajax_uatCheck(request):
         for m in range(len(production_members)):
             if member_obj == production_members[m].member:
                 isMember = True
-        if isMember and member_obj.user.has_perm('can_deploy_project'):
+        if isMember and member_obj.user.has_perm('mysite.can_check_project'):
             project_plans = models.project_plan.objects.filter(plan=plan_obj)
             unDeployedProject = []
             for j in range(len(project_plans)):
@@ -531,6 +531,10 @@ def ajax_uatCheck(request):
 def ajax_createUatBranch(request):
     planId = request.POST.get('pid')
     projectId = request.POST.get('prjId')
+    all_perm = request.user.get_all_permissions()
+    print(all_perm)
+    print(request.user.last_name)
+
     if projectId and planId:
         project_obj = models.project.objects.get(id=projectId)
         plan_obj = models.plan.objects.get(id=planId)
@@ -542,7 +546,8 @@ def ajax_createUatBranch(request):
         for m in range(len(production_members)):
             if member_obj == production_members[m].member:
                 isMember = True
-        if isMember and member_obj.user.has_perm("can_deploy_project"):
+        if isMember and member_obj.user.has_perm("mysite.can_check_project"):
+            print("11111")
             option = request.POST.get('radio')
             if option == "option1":
                 uatBranch = request.POST.get('uatBranch')
@@ -599,7 +604,7 @@ def ajax_taskImplement(request):
             isMember = True
     if sequenceId:
         sequence_obj = models.sequence.objects.get(id=sequenceId)
-        if isMember and member_obj.user.has_perm('can_deploy_project'):
+        if isMember and member_obj.user.has_perm('mysite.can_deploy_project'):
             sequence_obj.implemented = 1
             sequence_obj.remarks = request.POST['remark']
             sequence_obj.executor = member_obj
@@ -635,7 +640,7 @@ def ajax_checkSuccess(request):
         for m in range(len(production_members)):
             if member_obj == production_members[m].member:
                 isMember = True
-        if isMember and member_obj.user.has_perm('can_check_project'):
+        if isMember and member_obj.user.has_perm('mysite.can_check_project'):
             sequence_obj.implemented = True
             sequence_obj.remarks = request.POST['remark']
             sequence_obj.executor = member_obj
@@ -742,7 +747,7 @@ def ws_startDeploy(request):
                     if member_obj == production_members[m].member:
                         isMember = True
                 buildMessages = []
-                if isMember and member_obj.user.has_perm("can_deploy_project"):
+                if isMember and member_obj.user.has_perm("mysite.can_deploy_project"):
                     projectBean_obj = projectBean(project_plans, gitCmd_obj.param)
                     total = projectBean_obj.countDeploySum(1, 0)
                     buildMessages.append(total)
@@ -879,7 +884,7 @@ def ws_restartDeploy(request):
                     if member_obj == production_members[m].member:
                         isMember = True
                 buildMessages = []
-                if isMember and member_obj.user.has_perm("can_deploy_project"):
+                if isMember and member_obj.user.has_perm("mysite.can_deploy_project"):
                     order = 0
                     for i in range(len(project_plans)):
                         if project_plans[i].cursor:
@@ -1025,7 +1030,7 @@ def ws_continueDeploy(request):
                     if member_obj == production_members[m].member:
                         isMember = True
                 buildMessages = []
-                if isMember and member_obj.user.has_perm("can_deploy_project"):
+                if isMember and member_obj.user.has_perm("mysite.can_deploy_project"):
                     order = 0
                     for i in range(len(project_plans)):
                         if project_plans[i].cursor:
@@ -1164,7 +1169,7 @@ def ws_rollbackOne(request):
                 for m in range(len(production_members)):
                     if member_obj == production_members[m].member:
                         isMember = True
-                if isMember and member_obj.user.has_perm("can_deploy_project"):
+                if isMember and member_obj.user.has_perm("mysite.can_deploy_project"):
                     deployDetails = models.deployDetail.objects.filter(project_plan=project_plan_obj).order_by(
                         'buildStatus')
                     total = len(deployDetails)
@@ -1272,7 +1277,7 @@ def ws_rollbackAll(request):
                 for m in range(len(production_members)):
                     if member_obj == production_members[m].member:
                         isMember = True
-                if isMember and member_obj.user.has_perm("can_deploy_project"):
+                if isMember and member_obj.user.has_perm("mysite.can_deploy_project"):
                     cursor = failedProjects = []
                     projectBean_obj = projectBean(project_plans, gitCmd_obj.param)
                     total = projectBean_obj.countDeploySum2(1, project_plan_obj.order)
@@ -1398,7 +1403,7 @@ def ws_uatDeploy(request):
             for m in range(len(production_members)):
                 if member_obj == production_members[m].member:
                     isMember = True
-            if isMember and member_obj.user.has_perm("can_check_project"):
+            if isMember and member_obj.user.has_perm("mysite.can_check_project"):
                 project_plans = models.project_plan.objects.filter(project=project_obj)
                 exclusivePlan = []
                 for k in range(len(project_plans)):
@@ -1503,7 +1508,7 @@ def ws_codeMerge(request):
                 for m in range(len(production_members)):
                     if member_obj == production_members[m].member:
                         isMember = True
-                if isMember and member_obj.user.has_perm("can_deploy_project"):
+                if isMember and member_obj.user.has_perm("mysite.can_deploy_project"):
                     buildMessages.append(len(project_plans))
                     request.websocket.send(json.dumps(buildMessages))
                     for i in range(len(project_plans)):

@@ -17,3 +17,4 @@ venv2.7
 extra_apps/xadmin/migrations
 mysite/gitMerge.py
 .env
+api/*
