@@ -80,6 +80,24 @@ layui.use(['element', 'layer'], function () {
                         $('#proDeployText').hide();
                         $('.proDeployProgress').hide();
                         $('#proConsoleOpt').hide();
+                    } else if (received_msg[0] === 'on_building') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "项目正在发布中，不能重复发布，请等待发布完成后再重新发布！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('#proDeployText').hide();
+                        $('.proDeployProgress').hide();
+                        $('#proConsoleOpt').hide();
                     } else {
                         var html = "";
                         var html2 = "";
@@ -93,10 +111,10 @@ layui.use(['element', 'layer'], function () {
                                 $('#proBuildProgress').width(widthTemp + '%').text(widthTemp + '%');
                                 html += "<a href='http://" + window.location.host + "/single_console_opt/"
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
-                            }else if (received_msg[i] === 'url') {
+                            } else if (received_msg[i] === 'url') {
                                 i += 1;
                                 html += "<br><a href='" + received_msg[i] + "' target='_blank'>" + received_msg[i] + "</a>"
-                            }else if (received_msg[i] === 'deploy_failed') {
+                            } else if (received_msg[i] === 'deploy_failed') {
                                 layer.open({
                                     type: 1
                                     , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
@@ -927,6 +945,22 @@ layui.use(['element', 'layer'], function () {
                         }
                     });
                 } else if (received_msg[0] === 'exclusive') {
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布结果'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + received_msg[1] + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                    $('#uatConsoleOpt').hide();
+                } else if (received_msg[0] === 'on_building') {
                     layer.open({
                         type: 1
                         , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset

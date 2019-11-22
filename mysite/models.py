@@ -179,6 +179,7 @@ class task(models.Model):
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(member, on_delete=models.CASCADE, verbose_name="由谁创建", related_name='taskCreateUser')
+    onBuilding = models.BooleanField(default=False, verbose_name="是否部署中")
     onOff = models.IntegerField(verbose_name="关闭/重启")
 
     class Meta:
@@ -260,6 +261,7 @@ class project_plan(models.Model):
     cursor = models.BooleanField(default=False, verbose_name="生产部署游标")
     proBuildStatus = models.BooleanField(default=False, verbose_name="生产部署状态")
     uatBuildStatus = models.BooleanField(default=False, verbose_name="预发部署状态")
+    uatOnBuilding = models.BooleanField(default=False, verbose_name="预发是否部署中")
     mergeStatus = models.BooleanField(default=False, verbose_name="代码合并状态")
     exclusiveKey = models.BooleanField(default=False, verbose_name="项目预发环境独占锁")
 

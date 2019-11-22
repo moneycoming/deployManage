@@ -100,11 +100,11 @@ class project_server_admin(object):
 
 class project_plan_admin(object):
     list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'lastPackageId', 'order', 'cursor',
-                    'proBuildStatus', 'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
+                    'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding', 'mergeStatus', 'exclusiveKey']
     search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'lastPackageId', 'order', 'cursor',
-                     'proBuildStatus', 'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
+                     'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding', 'mergeStatus', 'exclusiveKey']
     list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'lastPackageId', 'order', 'cursor',
-                   'proBuildStatus', 'uatBuildStatus', 'mergeStatus', 'exclusiveKey']
+                   'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding', 'mergeStatus', 'exclusiveKey']
 
 
 class segment_admin(object):
@@ -114,9 +114,9 @@ class segment_admin(object):
 
 
 class task_admin(object):
-    list_display = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff']
-    search_fields = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff']
-    list_filter = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff']
+    list_display = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff', 'onBuilding']
+    search_fields = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff', 'onBuilding']
+    list_filter = ['name', 'segment', 'plan', 'createDate', 'createUser', 'onOff', 'onBuilding']
 
 
 class sequence_admin(object):
