@@ -48,7 +48,7 @@
                                     </a>
                                 </li>
                             </ul>
-                            <form class="form-horizontal group-border hover-stripped" role="form" id="validate"
+                            <form class="form-horizontal group-border hover-stripped" role="form"
                                   method="post" action="/createPlan">
                                 {% csrf_token %}
                                 <div id="myTabContent" class="tab-content">
@@ -115,7 +115,7 @@
                                     </div>
                                     <div id="step2" class="tab-pane fade">
                                         <!-- End .form-group  -->
-                                        <div class="form-group">
+                                        <div class="form-group" id="validate">
                                             <h5 class="page-header"></h5>
                                             <div class="form-group">
                                                 <div class="layui-btn-group">
@@ -128,8 +128,6 @@
                                                             id="add-btn"
                                                             onclick="del_div()">删除项目
                                                     </button>
-                                                    <input type="submit" class="layui-btn layui-btn-primary"
-                                                           value="创建计划">
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -169,12 +167,16 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button type="button" class="layui-btn layui-btn-primary"
-                                                    style="float: right">
-                                                <a href="#step1" onclick="eventFun.setStep(1)" role="tab"
-                                                   data-toggle="tab">上一步</a>
-                                            </button>
                                         </div>
+                                        <div class="form-group">
+                                            <input type="submit" style="display: inline-block"
+                                                   class="layui-btn layui-btn-primary" value="创建计划">
+                                        </div>
+                                        <button type="button" class="layui-btn layui-btn-primary"
+                                                style="float: right">
+                                            <a href="#step1" onclick="eventFun.setStep(1)" role="tab"
+                                               data-toggle="tab">上一步</a>
+                                        </button>
                                     </div>
                                 </div>
                             </form>
