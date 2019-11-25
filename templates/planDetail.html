@@ -75,7 +75,7 @@
                                                                                 style="color: #ff3e03">点此创建任务</a>
                                                 </p>
                                             {% else %}
-                                                <p class="text-muted m-b-15"><br><a href="#"
+                                                <p class="text-muted m-b-15"><br><a href="/createTask?pid={{ plan_obj.id }}"
                                                                                 style="color: #ff3e03">联系开发部署生产</a></p>
                                             {% endif %}
                                         {% endif %}
@@ -85,7 +85,7 @@
                                                                                 style="color: #ff3e03">点击此处进入预发部署页面</a>
                                             </p>
                                         {% else %}
-                                            <p class="text-muted m-b-15"><br><a href="#"
+                                            <p class="text-muted m-b-15"><br><a href="/uatDetail?pid={{ plan_obj.id }}"
                                                                                 style="color: #ff3e03">请让测试部署预发</a></p>
                                         {% endif %}
                                     {% endif %}
