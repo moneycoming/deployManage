@@ -48,13 +48,13 @@
                                 {% for project_plan in project_plans %}
                                     {% if project_plan.uatBuildStatus %}
                                         <p><br>
-                                            <a href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}" style="color:#ff3e03;">项目编号：{{ project_plan.project.id }}
+                                            <a href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}" class="btn btn-link btn-sm">项目编号：{{ project_plan.project.id }}
                                                 -- 项目名：{{ project_plan.project.name }} --
                                                 构建号：{{ project_plan.lastPackageId }}</a>
                                         </p>
                                     {% else %}
                                         <p><br>
-                                            <a href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}" style="color: #ff3e03">项目编号：{{ project_plan.project.id }}
+                                            <a href="/uatDeploy?pid={{ plan_obj.id }}&prjId={{ project_plan.project.id }}" class="btn btn-link btn-sm">项目编号：{{ project_plan.project.id }}
                                                 -- 项目名：{{ project_plan.project.name }}</a>
                                         </p>
                                     {% endif %}

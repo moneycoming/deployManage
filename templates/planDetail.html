@@ -49,7 +49,8 @@
                                             <br>备注：{{ plan_obj.uatRemark }}
                                             <br>日期：{{ plan_obj.uatCheckDate }}
                                         </p>
-                                        <p class="text-muted m-b-15"><br><a href="/uatDetail?pid={{ plan_obj.id }}">点击此处进入预发部署页面</a>
+                                        <p class="text-muted m-b-15"><br><a href="/uatDetail?pid={{ plan_obj.id }}"
+                                                                            class="layui-btn layui-btn-normal">点击此处进入预发部署页面</a>
                                         </p>
                                         <hr>
                                         <h4>生产部署</h4>
@@ -62,31 +63,35 @@
                                                     <br>验证日期：{{ sequence_check_obj.executeDate }}
                                                 </p>
                                                 <p class="text-muted m-b-15"><br><a
-                                                        href="/taskDetail?tid={{ task_obj.id }}">点击此处进入生产部署页面</a></p>
+                                                        href="/taskDetail?tid={{ task_obj.id }}"
+                                                        class="layui-btn layui-btn-normal">点击此处进入生产部署页面</a></p>
                                             {% else %}
                                                 <p class="text-muted m-b-15"><br><a
-                                                        href="/taskDetail?tid={{ task_obj.id }}" style="color: #ff3e03">点击此处进入生产部署页面</a>
+                                                        href="/taskDetail?tid={{ task_obj.id }}"
+                                                        class="layui-btn layui-btn-normal">点击此处进入生产部署页面</a>
                                                 </p>
                                             {% endif %}
                                         {% else %}
                                             {% if perms.mysite.can_deploy_project %}
                                                 <br>
                                                 <p class="text-muted m-b-15"><a href="/createTask?pid={{ plan_obj.id }}"
-                                                                                style="color: #ff3e03">点此创建任务</a>
+                                                                                class="layui-btn layui-btn-normal">点此创建任务</a>
                                                 </p>
                                             {% else %}
-                                                <p class="text-muted m-b-15"><br><a href="/createTask?pid={{ plan_obj.id }}"
-                                                                                style="color: #ff3e03">联系开发部署生产</a></p>
+                                                <p class="text-muted m-b-15"><br><a
+                                                        href="/createTask?pid={{ plan_obj.id }}"
+                                                        class="layui-btn layui-btn-normal">联系开发部署生产</a></p>
                                             {% endif %}
                                         {% endif %}
                                     {% else %}
                                         {% if perms.mysite.can_check_project %}
                                             <p class="text-muted m-b-15"><br><a href="/uatDetail?pid={{ plan_obj.id }}"
-                                                                                style="color: #ff3e03">点击此处进入预发部署页面</a>
+                                                                                class="layui-btn layui-btn-normal">点击此处进入预发部署页面</a>
                                             </p>
                                         {% else %}
                                             <p class="text-muted m-b-15"><br><a href="/uatDetail?pid={{ plan_obj.id }}"
-                                                                                style="color: #ff3e03">请让测试部署预发</a></p>
+                                                                                class="layui-btn layui-btn-normal">请让测试部署预发</a>
+                                            </p>
                                         {% endif %}
                                     {% endif %}
                                 </div>
