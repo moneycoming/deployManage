@@ -113,7 +113,7 @@ layui.use(['element', 'layer'], function () {
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                             } else if (received_msg[i] === 'url') {
                                 i += 1;
-                                html += "<br><a href='" + received_msg[i] + "' target='_blank'>" + received_msg[i] + "</a>"
+                                html += "<br><a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>" + received_msg[i] + "</a>"
                             } else if (received_msg[i] === 'deploy_failed') {
                                 layer.open({
                                     type: 1
@@ -277,7 +277,7 @@ layui.use(['element', 'layer'], function () {
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                             } else if (received_msg[i] === 'url') {
                                 i += 1;
-                                html += "<br><a href='" + received_msg[i] + "' target='_blank'>" + received_msg[i] + "</a>";
+                                html += "<br><a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>" + received_msg[i] + "</a>";
                             } else if (received_msg[i] === 'deploy_failed') {
                                 $('.restartDeploy').show();
                                 $('.continueDeploy').show();
@@ -448,7 +448,7 @@ layui.use(['element', 'layer'], function () {
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                             } else if (received_msg[i] === 'url') {
                                 i += 1;
-                                html += "<br><a href='" + received_msg[i] + "' target='_blank'>" + received_msg[i] + "</a>";
+                                html += "<br><a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>" + received_msg[i] + "</a>";
                             } else if (received_msg[i] === 'deploy_failed') {
                                 layer.open({
                                     type: 1
@@ -599,7 +599,7 @@ layui.use(['element', 'layer'], function () {
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>";
                             } else if (received_msg[i] === 'url') {
                                 i += 1;
-                                html += "<br><a href='" + received_msg[i] + "' target='_blank'>" + received_msg[i] + "</a>";
+                                html += "<br><a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>" + received_msg[i] + "</a>";
                             } else if (received_msg[i] === 'no_reversion') {
                                 layer.open({
                                     type: 1
@@ -758,7 +758,7 @@ layui.use(['element', 'layer'], function () {
                                     + received_msg[i] + "' target='_blank'>查看控制台信息</a>"
                             } else if (received_msg[i] === 'url') {
                                 i += 1;
-                                html += "<br><a href='" + received_msg[i] + "' target='_blank'>" + received_msg[i] + "</a>";
+                                html += "<br><a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>" + received_msg[i] + "</a>";
                             } else if (received_msg[i] === 'no_reversion') {
                                 realPoints += received_msg[i + 1];
                                 $('#proDeployText').text("回滚进行中，共" + sumPoints + "个，完成第" + realPoints + "个");
@@ -1006,7 +1006,7 @@ layui.use(['element', 'layer'], function () {
                             html += "<pre>" + received_msg[i + 1] + "</pre>";
                         } else if (received_msg[i] === 'url') {
                             i += 1;
-                            html += "<br><a href='" + received_msg[i] + "' target='_blank'>" + received_msg[i] + "</a>";
+                            html += "<br><a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>" + received_msg[i] + "</a>";
                         }
                     }
                 }
