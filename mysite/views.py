@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 import json
+import time
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template.loader import get_template
 from django.contrib import messages
@@ -548,8 +549,8 @@ def ajax_createUatBranch(request):
                 uatBranch = request.POST.get('uatBranch')
                 status = True
             else:
-                uid = str(uuid.uuid4())
-                branchCode = ''.join(uid.split('-'))[0:10]
+                t = datetime.datetime.now()
+                branchCode = str(t.year)+str(t.month)+str(t.day)+str(t.hour)+str(t.minute)
                 uatBranch = "uat-"
                 uatBranch += branchCode
                 devBranch = project_plan_obj.devBranch
