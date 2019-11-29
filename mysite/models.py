@@ -262,6 +262,7 @@ class project_plan(models.Model):
     proBuildStatus = models.BooleanField(default=False, verbose_name="生产部署状态")
     uatBuildStatus = models.BooleanField(default=False, verbose_name="预发部署状态")
     uatOnBuilding = models.BooleanField(default=False, verbose_name="预发是否部署中")
+    proOnBuilding = models.BooleanField(default=False, verbose_name="生产是否部署中")
     mergeStatus = models.BooleanField(default=False, verbose_name="代码合并状态")
     exclusiveKey = models.BooleanField(default=False, verbose_name="项目预发环境独占锁")
 

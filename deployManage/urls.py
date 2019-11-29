@@ -62,4 +62,5 @@ urlpatterns = [
     url(r'^ws_codeMerge', views.ws_codeMerge, name='codeMerge'),
     url(r'^ws_proConsoleOptRefresh', views.ws_proConsoleOptRefresh, name='proConsoleOptRefresh'),
     url(r'^ws_uatConsoleOptRefresh', views.ws_uatConsoleOptRefresh, name='uatConsoleOptRefresh'),
+    url(r'^ws_proOneProjectDeploy', views.ws_proOneProjectDeploy, name='proOneProjectDeploy'),
 ]

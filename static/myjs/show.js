@@ -24,6 +24,14 @@ function getQueryVariable(variable) {
     return (false);
 }
 
+//生成随机数
+function RandomNumBoth(Min, Max) {
+    var Range = Max - Min;
+    var Rand = Math.random();
+    return Min + Math.round(Rand * Range); //四舍五入
+    // return num;
+}
+
 //生产项目部署
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
@@ -1573,4 +1581,155 @@ layui.use(['element', 'layer'], function () {
             })
         }
     });
+});
+//部署单个节点
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer, element = layui.element;
+    $("body").on("click", "#startOneDeploy", startOneDeploy);
+
+    function startOneDeploy() {
+        var type = $(this).data('type');
+        var id = $(this).closest("tr").find("#project_plan_id").text();
+        var tr_id = $(this).closest("tr").attr("id");
+        var step = $(this).parent().parent().parent().parent().parent().parent().attr('id');
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok(id, type, step);
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok(id, type, step) {
+            if ("WebSocket" in window) {
+                console.log("您的浏览器支持 WebSocket!");
+
+                // 打开一个 web socket
+                var ws = new WebSocket("ws:" + window.location.host + "/ws_proOneProjectDeploy");
+
+                ws.onopen = function () {
+                    ws.send(id);
+                    console.log("数据已发送...");
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = JSON.parse(evt.data);
+                    console.log("数据已接收...");
+                    if (received_msg[0] === 'no_role') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else if (received_msg[0] === 'on_building') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "项目正在发布中，不能重复发布，请等待发布完成后再重新发布！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else if (received_msg[0] === 'no_reversion') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "项目没有发布版本，请检查预发环境是否部署！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else {
+                        var sumPoints = received_msg[0];
+                        var realPoints = 0;
+                        var html = "";
+                        var html2 = "";
+                        var html3 = "";
+                        var num = new Array(sumPoints);
+                        for (var j = 1; j <= sumPoints; j++) {
+                            num[j] = RandomNumBoth(100, 1000);
+                            html += "节点" + j + "：\n" +
+                                "<div class=\"layui-progress\" lay-filter=\"proOneDeploy" + num[j] + "\">\n" +
+                                "<div class=\"layui-progress-bar\"\n" +
+                                "id=\"proBuildProgress" + num[j] + "\" lay-percent=\"0%\"></div>\n" +
+                                "</div>"
+                        }
+                        $(`#${tr_id} #progress`).html(html);
+                        for (var i = 1; i < received_msg.length; i++) {
+                            if (received_msg[i] === 'start_deploy') {
+                                realPoints++;
+                                i += 2;
+                                element.progress(`proOneDeploy${num[realPoints]}`, '40%');
+                                html3 += "节点" + realPoints + "：\n" +
+                                    "<a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>去Jenkins上看</a><br>";
+                                $(`#${tr_id} #jenkinsConsole`).html(html3);
+                            } else if (received_msg[i].length === 10) {
+                                element.progress(`proOneDeploy${num[realPoints]}`, '100%');
+                            } else if (received_msg[i] === 'deploy_failed') {
+                                i += 1;
+                                html2 += "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
+                                    "<span class=\"badge badge-pill badge-primary\">Failure</span>\n" +
+                                    received_msg[i] +
+                                    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                    "aria-label=\"Close\">\n" +
+                                    "<span aria-hidden=\"true\">&times;</span>\n" +
+                                    "</button>\n" +
+                                    "</div>";
+                                $('#buildMessage').html(html2);
+                                $(`#proBuildProgress${num[realPoints]}`).addClass("layui-bg-red");
+                                $(`#${tr_id} #proBuildStatus`).html("部署失败")
+                            } else if (received_msg[i] === 'deploy_success') {
+                                i += 1;
+                                html2 += "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                                    "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                                    received_msg[i] +
+                                    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                    "aria-label=\"Close\">\n" +
+                                    "<span aria-hidden=\"true\">&times;</span>\n" +
+                                    "</button>\n" +
+                                    "</div>";
+                                $('#buildMessage').html(html2);
+                                $(`#${tr_id} #proBuildStatus`).html("部署成功");
+                            } else if (received_msg[i] === 'sequence_success') {
+                                $(`#${step} #nextBtn`).show();
+                            }
+                        }
+                    }
+                };
+
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    console.log("连接已关闭...");
+                };
+            }
+
+            else {
+                // 浏览器不支持 WebSocket
+                console.alert("您的浏览器不支持 WebSocket!");
+            }
+        }
+
+    }
 });
