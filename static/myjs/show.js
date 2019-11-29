@@ -1670,7 +1670,7 @@ layui.use(['element', 'layer'], function () {
                         var num = new Array(sumPoints);
                         for (var j = 1; j <= sumPoints; j++) {
                             num[j] = RandomNumBoth(100, 1000);
-                            html += "节点" + j + "：\n" +
+                            html += "IP" + j + "：\n" +
                                 "<div class=\"layui-progress\" lay-filter=\"proOneDeploy" + num[j] + "\">\n" +
                                 "<div class=\"layui-progress-bar\"\n" +
                                 "id=\"proBuildProgress" + num[j] + "\" lay-percent=\"0%\"></div>\n" +
@@ -1682,7 +1682,7 @@ layui.use(['element', 'layer'], function () {
                                 realPoints++;
                                 i += 2;
                                 element.progress(`proOneDeploy${num[realPoints]}`, '40%');
-                                html3 += "节点" + realPoints + "：\n" +
+                                html3 += "IP" + realPoints + "：\n" +
                                     "<a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>去Jenkins上看</a><br>";
                                 $(`#${tr_id} #jenkinsConsole`).html(html3);
                             } else if (received_msg[i].length === 10) {
