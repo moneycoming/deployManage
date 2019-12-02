@@ -1598,8 +1598,6 @@ def uat_console_opt(request, project_plan_id):
         project_plan_obj = models.project_plan.objects.get(id=project_plan_id)
         consoleOpts = models.consoleOpt.objects.filter(project=project_plan_obj.project, plan=project_plan_obj.plan,
                                                        type=0).order_by('-deployTime')
-        planId = consoleOpts[0].plan.id
-        projectId = consoleOpts[0].project.id
 
     template = get_template('uatConsoleOpt.html')
     html = template.render(context=locals(), request=request)

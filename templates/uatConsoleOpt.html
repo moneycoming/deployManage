@@ -17,9 +17,9 @@
                             <ol class="breadcrumb text-right">
                                 <li><a href="{% url 'index' %}">首页</a></li>
                                 <li><a href="{% url 'showPlan' %}">计划栏</a></li>
-                                <li><a href="/planDetail?pid={{ planId }}">计划详情</a></li>
-                                <li><a href="/uatDetail?pid={{ planId }}">预发详情</a></li>
-                                <li><a href="/uatDeploy?pid={{ planId }}&prjId={{ projectId }}">预发部署</a></li>
+                                <li><a href="/planDetail?pid={{ project_plan_obj.plan.id }}">计划详情</a></li>
+                                <li><a href="/uatDetail?pid={{ project_plan_obj.plan.id }}">预发详情</a></li>
+                                <li><a href="/uatDeploy?pid={{ project_plan_obj.plan.id }}&prjId={{ project_plan_obj.project.id }}">预发部署</a></li>
                                 <li class="active">控制台信息</li>
                             </ol>
                         </div>

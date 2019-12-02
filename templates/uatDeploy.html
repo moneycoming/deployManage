@@ -129,7 +129,11 @@
                                         <tbody>
                                         <tr id="uatBuild">
                                             <td>{{ project_plan_obj.project.name }}</td>
-                                            <td id="uatPackageId">{{ project_plan_obj.lastPackageId }}</td>
+                                            {% if project_plan_obj.lastPackageId %}
+                                                <td id="uatPackageId">{{ project_plan_obj.lastPackageId }}</td>
+                                            {% else %}
+                                                <td id="uatPackageId">无</td>
+                                            {% endif %}
                                             {% if project_plan_obj.uatBuildStatus %}
                                                 <td id="uatBuildStatus">已部署</td>
                                             {% else %}
