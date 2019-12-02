@@ -37,111 +37,138 @@
                             <h4>预发部署</h4>
                         </div>
                         <div class="card-body">
-{#                            <h5 class="page-header"></h5>#}
-                            <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
-                                <ul class="layui-tab-title">
-                                    <li class="layui-this">创建分支</li>
-                                    <li>部署环境</li>
-                                    <li>控制台显示</li>
-                                </ul>
-                                <div class="layui-tab-content">
-                                    <div class="layui-tab-item layui-show">
-                                        <div class="alert alert-primary" role="alert">
-                                            <h4 class="alert-heading">说明</h4>
-                                            <hr>
-                                            <p>创建分支包括2种方式：</p>
-                                            <hr>
-                                            <p class="mb-0">1-自动创建预发分支，无须人工干预</p>
-                                            <p class="mb-0">2-手动创建预发分支，用于自动创建冲突后人工创建</p>
-                                        </div>
-                                        <div class="row form-group">
-                                            <div class="col col-md-9">
-                                                <div class="form-check">
-                                                    <div class="radio">
-                                                        <label for="radio1" class="form-check-label ">
-                                                            <input type="radio" id="radio1" name="uatBranchChoose"
-                                                                   value="option1"
-                                                                   class="form-check-input uatBranchChoose">手动创建
-                                                        </label>
-                                                    </div>
-                                                    <div class="radio">
-                                                        <label for="radio2" class="form-check-label ">
-                                                            <input type="radio" id="radio2" name="uatBranchChoose"
-                                                                   value="option2" checked="checked"
-                                                                   class="form-check-input uatBranchChoose">自动创建
-                                                        </label>
-                                                    </div>
+                            <ul id="myTab" role="tablist">
+                                <li id="step1Li" class="active blue">
+                                    <a href="#" role="tab" data-toggle="tab">
+                                        1.创建分支
+                                    </a>
+                                </li>
+                                <li id="step2Li" class="gray">
+                                    <img id="step2Img" src="{% static "images/blue_gray.png" %}"/>
+                                    <a href="#" role="tab" data-toggle="tab">
+                                        2.预发部署
+                                    </a>
+                                </li>
+                            </ul>
+                            <div id="myTabContent" class="tab-content">
+                                <div id="step1" class="tab-pane active">
+                                    <div class="alert alert-primary" role="alert">
+                                        <h4 class="alert-heading">说明</h4>
+                                        <hr>
+                                        <p>创建分支包括2种方式：</p>
+                                        <hr>
+                                        <p class="mb-0">1-自动创建预发分支，无须人工干预</p>
+                                        <p class="mb-0">2-手动创建预发分支，用于自动创建冲突后人工创建</p>
+                                    </div>
+                                    <div class="row form-group">
+                                        <div class="col col-md-9">
+                                            <div class="form-check">
+                                                <div class="radio">
+                                                    <label for="radio1" class="form-check-label ">
+                                                        <input type="radio" id="radio1" name="uatBranchChoose"
+                                                               value="option1"
+                                                               class="form-check-input uatBranchChoose">手动创建
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label for="radio2" class="form-check-label ">
+                                                        <input type="radio" id="radio2" name="uatBranchChoose"
+                                                               value="option2" checked="checked"
+                                                               class="form-check-input uatBranchChoose">自动创建
+                                                    </label>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div id="artificialBranch" class="row form-group fade">
-                                            <div class="col-12 col-md-9"><input type="text" id="text-input"
-                                                                                name="uatBranch"
-                                                                                placeholder="branch name"
-                                                                                class="form-control">
-                                                <small class="form-text text-muted">输入手动创建的分支名</small>
-                                            </div>
-                                        </div>
-                                        <div class="text" style="text-align:center;"><p id="createUatBranchText"></p>
-                                        </div>
-                                        <input class="layui-btn layui-btn-primary createUatBranch" type="button"
-                                               value="创建分支">
-                                        <h5 class="page-header"></h5>
-                                        <strong>分支信息</strong><br>
-                                        {% if project_plan_obj.uatBranch %}
-                                            <p id="uatBranch">{{ project_plan_obj.uatBranch }}</p>
-                                        {% else %}
-                                            <p id="uatBranch">无</p>
-                                        {% endif %}
                                     </div>
-                                    <div class="layui-tab-item">
-                                        <div class="alert alert-primary" role="alert">
-                                            <h4 class="alert-heading">说明</h4>
-                                            <hr>
-                                            <p class="mb-0">1-每次部署环境前，先创建分支，防止代码未更新</p>
-                                            <p class="mb-0">2-点击“立即执行”，进行项目部署</p>
-                                            <p class="mb-0">3-部署过程会在控制台信息中展示</p>
-                                        </div>
-                                        <button class="layui-btn layui-btn-primary uatBuild" data-type="loading">
-                                            立即执行
-                                        </button>
-                                        <h5 class="page-header"></h5>
-                                        <div class="layui-col-md12">
-                                            <div class="layui-card">
-                                                <div class="layui-card-header fade"
-                                                     id="uatConsoleOpt">
-                                                    <strong>控制台信息</strong></div>
-                                                <div class="layui-card-body uatBuildResult"></div>
-                                            </div>
+                                    <div id="artificialBranch" class="row form-group fade">
+                                        <div class="col-12 col-md-9"><input type="text" id="text-input"
+                                                                            name="uatBranch"
+                                                                            placeholder="branch name"
+                                                                            class="form-control">
+                                            <small class="form-text text-muted">输入手动创建的分支名</small>
                                         </div>
                                     </div>
-                                    <div class="layui-tab-item">
-                                        <button type="button" id="uatConsoleOptRefresh"
-                                                class="layui-btn layui-btn-primary" style="float: right">刷新
-                                        </button>
-                                        <h5 class="page-header"></h5>
-                                        <ul class="layui-timeline uatConsoleOptRefresh">
-                                            {% for consoleOpt in consoleOpts %}
-                                                <li class="layui-timeline-item">
-                                                    <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-                                                    <div class="layui-timeline-content layui-text">
-                                                        <h3 class="layui-timeline-title">{{ consoleOpt.deployTime }}</h3>
-                                                        <p>
-                                                            <br>执行人：{{ consoleOpt.deployUser.name }}
-                                                            <br><a
-                                                                href="/uat_console_opt/{{ consoleOpt.uniteKey }}">查看控制台信息</a>
-                                                        </p>
-                                                    </div>
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
+                                    <div class="text" style="text-align:center;"><p id="createUatBranchText"></p>
                                     </div>
+                                    <input class="layui-btn layui-btn-primary createUatBranch" type="button"
+                                           value="创建分支">
+                                    <h5 class="page-header"></h5>
+                                    <strong>分支信息</strong><br>
+                                    {% if project_plan_obj.uatBranch %}
+                                        <p id="uatBranch">{{ project_plan_obj.uatBranch }}</p>
+                                    {% else %}
+                                        <p id="uatBranch">无</p>
+                                    {% endif %}
+                                    <button type="button" class="layui-btn layui-btn-primary" style="float: right">
+                                        <a href="#step2" onclick="eventFun.setStep(2)" role="tab"
+                                           data-toggle="tab">下一步</a>
+                                    </button>
+                                </div>
+                                <div id="step2" class="tab-pane fade">
+                                    <div class="alert alert-primary" role="alert">
+                                        <h4 class="alert-heading">说明</h4>
+                                        <hr>
+                                        <p class="mb-0">1-每次部署环境前，先创建分支，防止代码未更新</p>
+                                        <p class="mb-0">2-点击“立即执行”，进行项目部署</p>
+                                        <p class="mb-0">3-部署过程会在控制台信息中展示</p>
+                                    </div>
+                                    <p>【标题】{{ plan_obj.name }}</p>
+                                    <div id="uatBuildMessage"></div>
+                                    <table class="layui-table" lay-skin="line">
+                                        <thead>
+                                        <tr>
+                                            <th>项目</th>
+                                            <th>构建号</th>
+                                            <th>部署状态</th>
+                                            <th>部署进度</th>
+                                            <th>当前信息</th>
+                                            <th>操作</th>
+                                            <th>历史记录</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr id="uatBuild">
+                                            <td>{{ project_plan_obj.project.name }}</td>
+                                            <td id="uatPackageId">{{ project_plan_obj.lastPackageId }}</td>
+                                            {% if project_plan_obj.uatBuildStatus %}
+                                                <td id="uatBuildStatus">已部署</td>
+                                            {% else %}
+                                                <td id="uatBuildStatus">未部署</td>
+                                            {% endif %}
+                                            <td id="uatProgress">未进行</td>
+                                            <td id="uatJenkinsConsole">无</td>
+                                            <td>
+                                                <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                        id="uatDeploy">
+                                                    发布
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <a href="/uat_console_opt/{{ project_plan_obj.id }}"
+                                                   class='btn btn-link btn-sm'>点击查看</a>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <h5 class="page-header"></h5>
+                                    <div class="layui-col-md12">
+                                        <div class="layui-card">
+                                            <div class="layui-card-header fade"
+                                                 id="uatConsoleOpt">
+                                                <strong>控制台信息</strong></div>
+                                            <div class="layui-card-body uatBuildResult"></div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="layui-btn layui-btn-primary" style="float: right">
+                                        <a href="#step1" onclick="eventFun.setStep(1)" role="tab"
+                                           data-toggle="tab">上一步</a>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div><!-- .animated -->
-    </div><!-- .content -->
+        </div>
+    </div>
 {% endblock %}

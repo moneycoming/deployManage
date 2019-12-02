@@ -38,16 +38,47 @@
                             <strong class="card-title">构建信息</strong>
                         </div>
                         <div class="card-body">
-                            <div class="layui-collapse" lay-accordion="">
+                            <table class="table table-striped table-bordered" id="bootstrap-data-table">
+                                <thead>
+                                <tr>
+                                    <th width="200px">项目</th>
+                                    <th width="50px">版本号</th>
+                                    <th>部署状态</th>
+                                    <th width="100px">发布标记号</th>
+                                    <th width="200px">部署日期</th>
+                                    <th>部署人员</th>
+                                    <th>详细信息</th>
+                                </tr>
+                                </thead>
+                                <tbody>
                                 {% for consoleOpt in consoleOpts %}
-                                    <div class="layui-colla-item">
-                                        <h2 class="layui-colla-title">{{ consoleOpt.project.name }}</h2>
-                                        <div class="layui-colla-content layui-show">
-                                            <p><pre>{{ consoleOpt.content }}</pre></p>
-                                        </div>
-                                    </div>
+                                    <tr>
+                                        <td>{{ consoleOpt.project.name }}</td>
+                                        <td>{{ consoleOpt.packageId }}</td>
+                                        {% if consoleOpt.buildStatus %}
+                                            <td>成功</td>
+                                        {% else %}
+                                            <td>失败</td>
+                                        {% endif %}
+                                        <td>{{ consoleOpt.uniteKey }}</td>
+                                        <td>{{ consoleOpt.deployTime }}</td>
+                                        <td>{{ consoleOpt.deployUser }}</td>
+                                        <td><a href="/single_console_opt/{{ consoleOpt.uniqueKey }}"
+                                               class='btn btn-link btn-sm' target="_blank">点击查看</a></td>
+                                    </tr>
                                 {% endfor %}
-                            </div>
+                                </tbody>
+                            </table>
+{#                            <div class="layui-collapse" lay-accordion="">#}
+{#                                {% for consoleOpt in consoleOpts %}#}
+{#                                    <div class="layui-colla-item">#}
+{#                                        <h2 class="layui-colla-title">{{ consoleOpt.project.name }}</h2>#}
+{#                                        <div class="layui-colla-content layui-show">#}
+{#                                            <p><pre>{{ consoleOpt.content }}</pre></p>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                {% endfor %}#}
+{#                            </div>#}
                         </div>
                     </div>
                 </div>

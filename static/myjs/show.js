@@ -908,12 +908,11 @@ layui.use(['element', 'layer'], function () {
 });
 //预发部署
 layui.use(['element', 'layer'], function () {
-    var $ = layui.jquery, layer = layui.layer;
-    $("body").on("click", ".uatBuild", uatBuild);
+    var $ = layui.jquery, layer = layui.layer, element = layui.element;
+    $("body").on("click", "#uatDeploy", uatBuild);
 
     function uatBuild() {
-        $('.uatBuild').hide();
-        $('#uatConsoleOpt').removeClass('fade');
+        var tr_id = $(this).closest("tr").attr("id");
         var myDate = nowtime(new Date().getTime());
         var type = $(this).data('type');
         var projectId = getQueryVariable("prjId");
@@ -929,13 +928,12 @@ layui.use(['element', 'layer'], function () {
 
             ws.onopen = function () {
                 ws.send(combination);
-                // ws.send(planId);
                 console.log("数据已发送...");
             };
 
             ws.onmessage = function (evt) {
                 var received_msg = JSON.parse(evt.data);
-                var html = "";
+                var html3 = "";
                 console.log("数据已接收...");
                 if (received_msg[0] === 'no_role') {
                     layer.open({
@@ -967,7 +965,6 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
-                    $('#uatConsoleOpt').hide();
                 } else if (received_msg[0] === 'on_building') {
                     layer.open({
                         type: 1
@@ -983,7 +980,6 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
-                    $('#uatConsoleOpt').hide();
                 } else if (received_msg[0] === 'no_branch') {
                     layer.open({
                         type: 1
@@ -1000,25 +996,47 @@ layui.use(['element', 'layer'], function () {
                         }
                     });
                 } else {
+                    var html = "<div class=\"layui-progress layui-progress-\" lay-filter=\"uatDeploy\">\n" +
+                        "  <div class=\"layui-progress-bar\" id='uatBuildProgress' lay-percent=\"0%\"></div>\n" +
+                        "</div>";
+                    $(`#${tr_id} #uatProgress`).html(html);
                     for (var i = 0; i < received_msg.length; i++) {
-                        console.log(received_msg[i]);
-                        if (received_msg[i] === 'success') {
-                            html += "<pre>" + received_msg[i + 1] + "</pre>";
-                            html += "<a href='http://" + window.location.host + "/single_console_opt/"
-                                + received_msg[i + 2] + "' target='_blank'>查看控制台信息</a>";
-                        } else if (received_msg[i] === 'fail') {
-                            html += "<pre>" + received_msg[i + 1] + "</pre>";
-                            html += "<a href='http://" + window.location.host + "/single_console_opt/"
-                                + received_msg[i + 2] + "' target='_blank'>查看控制台信息</a>";
-                        } else if (received_msg[i] === 'deploy') {
-                            html += "<pre>" + received_msg[i + 1] + "</pre>";
-                        } else if (received_msg[i] === 'url') {
+                        if (received_msg[i] === 'deploy') {
                             i += 1;
-                            html += "<br><a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>" + received_msg[i] + "</a>";
+                            element.progress('uatDeploy', '40%');
+                            var html2 = "<a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>去Jenkins上看</a><br>";
+                            $(`#${tr_id} #uatJenkinsConsole`).html(html2);
+                        } else if (received_msg[i] === 'success') {
+                            i += 1;
+                            html3 += "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                                "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                                received_msg[i] +
+                                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                "aria-label=\"Close\">\n" +
+                                "<span aria-hidden=\"true\">&times;</span>\n" +
+                                "</button>\n" +
+                                "</div>";
+                            $('#uatBuildMessage').html(html3);
+                            i += 1;
+                            element.progress('uatDeploy', '100%');
+                            $(`#${tr_id} #uatBuildStatus`).html("部署成功");
+                            $(`#${tr_id} #uatPackageId`).html(received_msg[i]);
+                        } else if (received_msg[i] === 'fail') {
+                            i += 1;
+                            html3 += "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
+                                "<span class=\"badge badge-pill badge-primary\">Failure</span>\n" +
+                                received_msg[i] +
+                                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                "aria-label=\"Close\">\n" +
+                                "<span aria-hidden=\"true\">&times;</span>\n" +
+                                "</button>\n" +
+                                "</div>";
+                            $('#uatBuildMessage').html(html3);
+                            $('#uatBuildProgress').addClass("layui-bg-red");
+                            $(`#${tr_id} #uatBuildStatus`).html("部署失败")
                         }
                     }
                 }
-                $(`.uatBuildResult`).html(html);
             };
 
             ws.onclose = function () {
@@ -1077,20 +1095,13 @@ layui.use(['element', 'layer'], function () {
                         if (data.deployed === 0) {
                             layer.open({
                                 type: 1
-                                ,
-                                title: '警告'
-                                ,
-                                content: '<div style="padding: 20px 100px;">' + "预发项目" + data.projects + "还没有部署！" + '</div>'
-                                ,
-                                btn: '关闭'
-                                ,
-                                btnAlign: 'c' //按钮居中
-                                ,
-                                area: '500px;'
-                                ,
-                                shade: 0.5 //不显示遮罩
-                                ,
-                                yes: function () {
+                                , title: '警告'
+                                , content: '<div style="padding: 20px 100px;">' + "预发项目" + data.projects + "还没有部署！" + '</div>'
+                                , btn: '关闭'
+                                , btnAlign: 'c' //按钮居中
+                                , area: '500px;'
+                                , shade: 0.5 //不显示遮罩
+                                , yes: function () {
                                     layer.closeAll();
                                 }
                             });
@@ -1669,7 +1680,7 @@ layui.use(['element', 'layer'], function () {
                         var html3 = "";
                         var num = new Array(sumPoints);
                         for (var j = 1; j <= sumPoints; j++) {
-                            num[j] = RandomNumBoth(100, 1000);
+                            num[j] = RandomNumBoth(10000, 100000);
                             html += "IP" + j + "：\n" +
                                 "<div class=\"layui-progress\" lay-filter=\"proOneDeploy" + num[j] + "\">\n" +
                                 "<div class=\"layui-progress-bar\"\n" +
@@ -1680,7 +1691,7 @@ layui.use(['element', 'layer'], function () {
                         for (var i = 1; i < received_msg.length; i++) {
                             if (received_msg[i] === 'start_deploy') {
                                 realPoints++;
-                                i += 2;
+                                i += 1;
                                 element.progress(`proOneDeploy${num[realPoints]}`, '40%');
                                 html3 += "IP" + realPoints + "：\n" +
                                     "<a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>去Jenkins上看</a><br>";
