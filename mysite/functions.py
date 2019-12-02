@@ -86,13 +86,13 @@ class branch:
             git.checkout(mergeFrom)
         except:
             status = False
-            logger.error("线上没有分支%s" % mergeFrom)
+            logger.warning("线上没有分支%s" % mergeFrom)
 
         try:
             git.checkout(mergeTo)
         except:
             status = False
-            logger.error("线上没有分支%s" % mergeTo)
+            logger.warning("线上没有分支%s" % mergeTo)
 
         if status:
             try:
@@ -112,7 +112,7 @@ class branch:
             try:
                 repo.delete_head(mergeFrom)
             except:
-                logger.info("本地没有分支%s" % mergeFrom)
+                logger.warning("本地没有分支%s" % mergeFrom)
 
         return status
 
@@ -168,12 +168,12 @@ class branch:
             subprocess.check_output([gitCmd, "push", "origin", "--delete", hopeBranch])
         except subprocess.CalledProcessError:
             status = False
-            logger.info("线上分支%s删除失败！" % hopeBranch)
+            logger.error("线上分支%s删除失败！" % hopeBranch)
         try:
             subprocess.check_output([gitCmd, "branch", "-D", hopeBranch])
         except subprocess.CalledProcessError:
             status = False
-            logger.info("本地分支%s删除失败！" % hopeBranch)
+            logger.error("本地分支%s删除失败！" % hopeBranch)
 
         return status
 
@@ -199,15 +199,17 @@ class branch:
             try:
                 subprocess.check_output([gitCmd, "tag", "-d", tag_name])
             except subprocess.CalledProcessError:
-                logger.info("本地没有该tag！")
+                logger.warning("本地没有该tag！")
             try:
                 subprocess.check_output([gitCmd, "push", "origin", "--delete", "tag", tag_name])
             except subprocess.CalledProcessError:
-                logger.info("线上没有该tag！")
+                logger.warning("线上没有该tag！")
             try:
                 new_tag = repo.create_tag(tag_name, message='发布分支%s' % hopeBranch)
                 origin.push(new_tag)
+                logger.info("tag%s创建成功！" % tag_name)
             except:
+                logger.error("tag%s创建失败！" % tag_name)
                 status = False
 
         return status
