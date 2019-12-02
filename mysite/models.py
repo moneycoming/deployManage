@@ -176,7 +176,8 @@ class segment(models.Model):
 class task(models.Model):
     name = models.CharField(max_length=200, verbose_name="任务名称")
     segment = models.ManyToManyField(segment, through='sequence', verbose_name="执行环节")
-    plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="所属计划")
+    # plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="所属计划")
+    plan = models.OneToOneField(plan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
     createUser = models.ForeignKey(member, on_delete=models.CASCADE, verbose_name="由谁创建", related_name='taskCreateUser')
     onBuilding = models.BooleanField(default=False, verbose_name="是否部署中")

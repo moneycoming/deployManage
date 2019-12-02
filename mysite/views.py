@@ -306,8 +306,7 @@ def createTask(request):
     member_obj = models.member.objects.get(user=request.user)
     plan_obj = models.plan.objects.get(id=request.GET['pid'])
     if request.method == 'POST':
-        post_plan_obj = models.plan.objects.get(name=request.POST['plan'])
-        production_members = models.production_member.objects.filter(production=post_plan_obj.production)
+        production_members = models.production_member.objects.filter(production=plan_obj.production)
         isMember = False
         for m in range(len(production_members)):
             if member_obj == production_members[m].member:
@@ -316,9 +315,9 @@ def createTask(request):
             beforeDeployList = request.POST.getlist('beforeDeploy')
             afterDeployList = request.POST.getlist('afterDeploy')
             createDate = datetime.datetime.now()
-            tasks = models.task.objects.filter(plan=post_plan_obj)
-            if len(tasks) == 0:
-                task_obj = models.task(name=post_plan_obj.name, plan=post_plan_obj, createUser=member_obj,
+            tasks = models.task.objects.filter(plan=plan_obj)
+            if not tasks:
+                task_obj = models.task(name=plan_obj.name, plan=plan_obj, createUser=member_obj,
                                        createDate=createDate,
                                        onOff=1)
                 task_obj.save()
