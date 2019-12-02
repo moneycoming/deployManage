@@ -1498,9 +1498,10 @@ def ws_uatDeploy(request):
                                         request.websocket.send(json.dumps(buildMessage))
                                         request.websocket.close()
                                     consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj,
-                                                                       content=consoleOpt, buildStatus=result,
-                                                                       deployTime=deployTime, deployUser=member_obj,
-                                                                       uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                                                       content=consoleOpt, packageId=buildNumber,
+                                                                       buildStatus=result, deployTime=deployTime,
+                                                                       deployUser=member_obj, uniqueKey=uniqueKey,
+                                                                       uniteKey=uniteKey)
                                     consoleOpt_obj.save()
                                     project_plan_obj.deployBranch = project_plan_obj.uatBranch
                                     project_plan_obj.save()

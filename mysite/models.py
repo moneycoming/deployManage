@@ -214,7 +214,7 @@ class consoleOpt(models.Model):
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
     type = models.IntegerField(verbose_name="0:代表预发， 1:代表生产")
     content = models.TextField(verbose_name="控制台信息")
-    packageId = models.IntegerField(null=True, verbose_name="生产发布包编号")
+    packageId = models.IntegerField(null=True, verbose_name="版本号(生产)/构建号(预发)")
     buildStatus = models.BooleanField(default=False, verbose_name="部署状态")
     uniqueKey = models.CharField(max_length=40, verbose_name="发布历史唯一标记号")
     uniteKey = models.CharField(max_length=40, verbose_name="发布历史统一标记号")
