@@ -39,7 +39,7 @@ class project(models.Model):
     desc = models.CharField(max_length=50, blank=True, verbose_name="项目描述")
     applicationName = models.CharField(max_length=50, unique=True, verbose_name="应用名称")
     project_dir = models.CharField(max_length=200, blank=False, verbose_name="代码仓库")
-    createBy = models.ForeignKey(member, on_delete=models.CASCADE, verbose_name="由谁创建")
+    createBy = models.ForeignKey(member, verbose_name="由谁创建")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
 
     class Meta:
@@ -55,7 +55,7 @@ class production(models.Model):
     name = models.CharField(max_length=20, verbose_name="产品名称")
     planCounts = models.IntegerField(null=True, default=0, verbose_name="发布总数")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
-    createUser = models.ForeignKey(member, on_delete=models.CASCADE, related_name="createUser", verbose_name="由谁创建")
+    createUser = models.ForeignKey(member, related_name="createUser", verbose_name="由谁创建")
     member = models.ManyToManyField(member, through='production_member', related_name="teamMember", verbose_name="团队成员")
 
     class Meta:
@@ -95,7 +95,7 @@ class plan(models.Model):
     kind = models.ForeignKey(kind, verbose_name="发布类型")
     project = models.ManyToManyField(project, through="project_plan", verbose_name="包含项目")
     description = models.TextField(verbose_name="说明")
-    production = models.ForeignKey(production, on_delete=models.CASCADE, verbose_name="所属产品")
+    production = models.ForeignKey(production, verbose_name="所属产品")
     fatherPlanId = models.IntegerField(null=True, verbose_name="关联主计划的id")
     subPlanId = models.IntegerField(null=True, verbose_name="关联子计划的id")
     isSubPlan = models.BooleanField(default=False, verbose_name="是否为子计划")
@@ -178,7 +178,7 @@ class task(models.Model):
     segment = models.ManyToManyField(segment, through='sequence', verbose_name="执行环节")
     plan = models.OneToOneField(plan, on_delete=models.CASCADE, verbose_name="所属计划")
     createDate = models.DateTimeField(auto_now_add=True, verbose_name="创建日期")
-    createUser = models.ForeignKey(member, on_delete=models.CASCADE, verbose_name="由谁创建", related_name='taskCreateUser')
+    createUser = models.ForeignKey(member, verbose_name="由谁创建", related_name='taskCreateUser')
     onBuilding = models.BooleanField(default=False, verbose_name="是否部署中")
     onOff = models.IntegerField(verbose_name="关闭/重启")
 
@@ -253,7 +253,7 @@ class project_server(models.Model):
 class project_plan(models.Model):
     project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
-    devBranch = models.ForeignKey(devBranch, on_delete=models.CASCADE, verbose_name="开发分支")
+    devBranch = models.ForeignKey(devBranch, verbose_name="开发分支")
     uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
     deployBranch = models.CharField(max_length=50, null=True, verbose_name="预发部署分支")
     lastPackageId = models.IntegerField(null=True, verbose_name="最新生产发布包编号")
