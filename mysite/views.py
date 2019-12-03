@@ -123,8 +123,8 @@ def productionKindChart(request):
 # 计划主页
 @login_required
 def showPlan(request):
-    plans = models.plan.objects.filter(isSubPlan=False).order_by('-createDate')
     member_obj = models.member.objects.get(user=request.user)
+    plans = models.plan.objects.filter(isSubPlan=False, production__member=member_obj).order_by('-createDate')
 
     template = get_template('showPlan.html')
     html = template.render(context=locals(), request=request)

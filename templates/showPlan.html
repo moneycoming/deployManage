@@ -51,11 +51,11 @@
                                     <th>操作</th>
                                 </tr>
                                 </thead>
-                                <tbody id="show_tbody">
+                                <tbody>
                                 {% for plan in plans %}
                                     <tr>
                                         <td id="planId">{{ plan.id }}</td>
-                                        <td><a href="/planDetail?pid={{ plan.id }}" style="color: #ff3e03">{{ plan.name }}</a></td>
+                                        <td><a href="/planDetail?pid={{ plan.id }}" class='btn btn-link btn-sm'>{{ plan.name }}</a></td>
                                         <td>{{ plan.production.name }}</td>
                                         <td>{{ plan.kind.name }}</td>
                                         <td>{{ plan.createDate }}</td>
