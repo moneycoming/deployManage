@@ -150,8 +150,7 @@ def createPlan(request):
 
         for j in range(len(projectList)):
             project_obj = models.project.objects.get(name=projectList[j])
-            dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
-            project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=dev_branch_obj,
+            project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=devBranchList[j],
                                                    order=j)
             project_plan_obj.save()
             project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)
@@ -225,8 +224,8 @@ def createSubPlan(request):
                 father_plan_obj.save()
                 for j in range(len(projectList)):
                     project_obj = models.project.objects.get(name=projectList[j])
-                    dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
-                    project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=dev_branch_obj,
+                    # dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
+                    project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=devBranchList[j],
                                                            order=j)
                     project_plan_obj.save()
                     project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)
@@ -552,9 +551,8 @@ def ajax_createUatBranch(request):
                 branchCode = str(t.year) + str(t.month) + str(t.day) + str(t.hour) + str(t.minute)
                 uatBranch = "uat-"
                 uatBranch += branchCode
-                devBranch = project_plan_obj.devBranch
                 branch_obj.create_branch(uatBranch)
-                status = branch_obj.merge_branch(devBranch.name, uatBranch)
+                status = branch_obj.merge_branch(project_plan_obj.devBranch, uatBranch)
 
             if status:
                 if project_plan_obj.uatBranch:

@@ -140,9 +140,9 @@ WSGI_APPLICATION = 'deployManage.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'deploy0822',
+        'NAME': 'deployManage',
         'USER': 'root',
-        'PASSWORD': 'abc_123456',
+        'PASSWORD': '',
         'HOST': '192.168.65.10',
         'PORT': '43306',
         'OPTIONS': {
@@ -151,14 +151,18 @@ DATABASES = {
         },
     },
 
-    # 'zentao': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'zentao',
-    #     'USER': 'root',
-    #     'PASSWORD': '',
-    #     'HOST': '10.10.10.29',
-    #     'PORT': '3307',
-    # }
+    'zentao': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'zentao',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '192.168.65.10',
+        'PORT': '43306',
+        'OPTIONS': {
+               'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                               'charset': 'utf8mb4',
+        },
+    }
 }
 
 # email
@@ -177,74 +181,74 @@ if not os.path.exists(log_path):
     os.mkdir(log_path)  # 如果不存在这个logs文件夹，就自动创建一个
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        # 日志格式
-        'standard': {
-            'format': '[%(asctime)s] [%(filename)s:%(lineno)d] [%(module)s:%(funcName)s] '
-                      '[%(levelname)s]- %(message)s'},
-        'simple': {  # 简单格式
-            'format': '%(levelname)s %(message)s'
-        },
+'version': 1,
+'disable_existing_loggers': True,
+'formatters': {
+    # 日志格式
+    'standard': {
+        'format': '[%(asctime)s] [%(filename)s:%(lineno)d] [%(module)s:%(funcName)s] '
+                  '[%(levelname)s]- %(message)s'},
+    'simple': {  # 简单格式
+        'format': '%(levelname)s %(message)s'
     },
-    # 过滤
-    'filters': {
+},
+# 过滤
+'filters': {
+},
+# 定义具体处理日志的方式
+'handlers': {
+    # 默认记录所有日志
+    'default': {
+        'level': 'INFO',
+        'class': 'logging.handlers.RotatingFileHandler',
+        'filename': os.path.join(log_path, 'all-{}.log'.format(time.strftime('%Y-%m-%d'))),
+        'maxBytes': 1024 * 1024 * 5,  # 文件大小
+        'backupCount': 5,  # 备份数
+        'formatter': 'standard',  # 输出格式
+        'encoding': 'utf-8',  # 设置默认编码，否则打印出来汉字乱码
     },
-    # 定义具体处理日志的方式
-    'handlers': {
-        # 默认记录所有日志
-        'default': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(log_path, 'all-{}.log'.format(time.strftime('%Y-%m-%d'))),
-            'maxBytes': 1024 * 1024 * 5,  # 文件大小
-            'backupCount': 5,  # 备份数
-            'formatter': 'standard',  # 输出格式
-            'encoding': 'utf-8',  # 设置默认编码，否则打印出来汉字乱码
-        },
-        # 输出错误日志
-        'error': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(log_path, 'error-{}.log'.format(time.strftime('%Y-%m-%d'))),
-            'maxBytes': 1024 * 1024 * 5,  # 文件大小
-            'backupCount': 5,  # 备份数
-            'formatter': 'standard',  # 输出格式
-            'encoding': 'utf-8',  # 设置默认编码
-        },
-        # 控制台输出
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'standard'
-        },
-        # 输出info日志
-        'info': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(log_path, 'info-{}.log'.format(time.strftime('%Y-%m-%d'))),
-            'maxBytes': 1024 * 1024 * 5,
-            'backupCount': 5,
-            'formatter': 'standard',
-            'encoding': 'utf-8',  # 设置默认编码
-        },
+    # 输出错误日志
+    'error': {
+        'level': 'ERROR',
+        'class': 'logging.handlers.RotatingFileHandler',
+        'filename': os.path.join(log_path, 'error-{}.log'.format(time.strftime('%Y-%m-%d'))),
+        'maxBytes': 1024 * 1024 * 5,  # 文件大小
+        'backupCount': 5,  # 备份数
+        'formatter': 'standard',  # 输出格式
+        'encoding': 'utf-8',  # 设置默认编码
     },
-    # 配置用哪几种 handlers 来处理日志
-    'loggers': {
-        # 类型 为 django 处理所有类型的日志， 默认调用
-        'django': {
-            'handlers': ['default', 'console'],
-            'level': 'INFO',
-            'propagate': False
-        },
-        # log 调用时需要当作参数传入
-        'log': {
-            'handlers': ['error', 'info', 'console', 'default'],
-            'level': 'INFO',
-            'propagate': True
-        },
-    }
+    # 控制台输出
+    'console': {
+        'level': 'DEBUG',
+        'class': 'logging.StreamHandler',
+        'formatter': 'standard'
+    },
+    # 输出info日志
+    'info': {
+        'level': 'INFO',
+        'class': 'logging.handlers.RotatingFileHandler',
+        'filename': os.path.join(log_path, 'info-{}.log'.format(time.strftime('%Y-%m-%d'))),
+        'maxBytes': 1024 * 1024 * 5,
+        'backupCount': 5,
+        'formatter': 'standard',
+        'encoding': 'utf-8',  # 设置默认编码
+    },
+},
+# 配置用哪几种 handlers 来处理日志
+'loggers': {
+    # 类型 为 django 处理所有类型的日志， 默认调用
+    'django': {
+        'handlers': ['default', 'console'],
+        'level': 'INFO',
+        'propagate': False
+    },
+    # log 调用时需要当作参数传入
+    'log': {
+        'handlers': ['error', 'info', 'console', 'default'],
+        'level': 'INFO',
+        'propagate': True
+    },
+}
 }
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -265,6 +269,6 @@ USE_TZ = False
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+os.path.join(BASE_DIR, 'static'),
 ]
 # STATIC_ROOT = "D:\Django\BranchManager\staticfiles"

@@ -253,7 +253,7 @@ class project_server(models.Model):
 class project_plan(models.Model):
     project = models.ForeignKey(project, on_delete=models.CASCADE, verbose_name="项目")
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
-    devBranch = models.ForeignKey(devBranch, verbose_name="开发分支")
+    devBranch = models.CharField(max_length=200, verbose_name="开发分支")
     uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
     deployBranch = models.CharField(max_length=50, null=True, verbose_name="预发部署分支")
     lastPackageId = models.IntegerField(null=True, verbose_name="最新生产发布包编号")
