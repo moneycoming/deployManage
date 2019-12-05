@@ -547,8 +547,8 @@ def ajax_createUatBranch(request):
                 uatBranch = request.POST.get('uatBranch')
                 status = True
             else:
-                t = datetime.datetime.now()
-                branchCode = str(t.year) + str(t.month) + str(t.day) + str(t.hour) + str(t.minute)
+                now = datetime.datetime.now()
+                branchCode = now.strftime('%Y%m%d%I%M')
                 uatBranch = "uat-"
                 uatBranch += branchCode
                 branch_obj.create_branch(uatBranch)
