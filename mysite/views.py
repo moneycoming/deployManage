@@ -213,34 +213,42 @@ def ajax_addProject(request):
         if member_obj == production_members[m].member:
             isMember = True
     if isMember and member_obj.user.has_perm('mysite.can_deploy_project'):
-        if projectName and devBranch:
-            project_obj = models.project.objects.get(name=request.POST['project'])
-            devBranch = request.POST['branch']
-            project_plans = models.project_plan.objects.filter(plan=plan_obj)
-            flag = True
-            for i in range(len(project_plans)):
-                if project_plans[i].project == project_obj:
-                    flag = False
-                    break
-            if flag:
-                project_plan_obj = models.project_plan(project=project_obj, plan=plan_obj, devBranch=devBranch)
-                project_plan_obj.save()
+        if not plan_obj.uatCheck:
+            if projectName and devBranch:
+                project_obj = models.project.objects.get(name=request.POST['project'])
+                devBranch = request.POST['branch']
+                project_plans = models.project_plan.objects.filter(plan=plan_obj)
+                flag = True
+                for i in range(len(project_plans)):
+                    if project_plans[i].project == project_obj:
+                        flag = False
+                        break
+                if flag:
+                    project_plan_obj = models.project_plan(project=project_obj, plan=plan_obj, devBranch=devBranch)
+                    project_plan_obj.save()
+                else:
+                    project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
+                    project_plan_obj.devBranch = devBranch
+                    project_plan_obj.save()
+                ret = {
+                    'result': True,
+                    'role': True,
+                    'params': True,
+                    'project': projectName,
+                    'branch': devBranch,
+                    'checked': False
+                }
             else:
-                project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
-                project_plan_obj.devBranch = devBranch
-                project_plan_obj.save()
-            ret = {
-                'result': True,
-                'role': True,
-                'params': True,
-                'project': projectName,
-                'branch': devBranch
-            }
+                ret = {
+                    'result': False,
+                    'role': True,
+                    'params': False,
+                    'checked': False
+                }
         else:
             ret = {
-                'result': False,
                 'role': True,
-                'params': False,
+                'checked': True
             }
     else:
         ret = {
@@ -265,12 +273,19 @@ def ajax_deleteProject(request):
         if member_obj == production_members[m].member:
             isMember = True
     if isMember and member_obj.user.has_perm('mysite.can_deploy_project'):
-        project_plan_obj.delete()
-        ret = {
-            'role': True,
-            'project': project_plan_obj.project.name,
-            'branch': project_plan_obj.devBranch
-        }
+        if not project_plan_obj.plan.uatCheck:
+            project_plan_obj.delete()
+            ret = {
+                'role': True,
+                'project': project_plan_obj.project.name,
+                'branch': project_plan_obj.devBranch,
+                'checked': False
+            }
+        else:
+            ret = {
+                'role': True,
+                'checked': True
+            }
     else:
         ret = {
             'role': False

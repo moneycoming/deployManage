@@ -1727,6 +1727,19 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
+                } else if (data.checked === true) {
+                    layer.open({
+                        type: 1
+                        , title: '警告'
+                        , content: '<div style="padding: 20px 100px;">' + "预发已验收，不能添加项目！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
                 } else if (data.params === false) {
                     layer.open({
                         type: 1
@@ -1750,7 +1763,7 @@ layui.use(['element', 'layer'], function () {
         })
     });
 });
-//计划项目
+//删除项目
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
 
@@ -1789,7 +1802,21 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
-                    } else {
+                    } else if (data.checked === true) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "预发已验收，不能删除项目！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    }
+                    else {
                         tr.remove();
                     }
                 },
