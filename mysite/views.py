@@ -180,8 +180,9 @@ def planDetail(request):
     if planId:
         plan_obj = models.plan.objects.get(id=planId)
         project_plans = models.project_plan.objects.filter(plan=plan_obj)
-        sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
-        father_plans = models.plan.objects.filter(subPlanId=plan_obj.id)
+        projects = models.project.objects.all()
+        # sub_plans = models.plan.objects.filter(fatherPlanId=plan_obj.id)
+        # father_plans = models.plan.objects.filter(subPlanId=plan_obj.id)
         try:
             task_obj = models.task.objects.filter(plan=plan_obj)[0]
             proCheckStatus = False
@@ -196,6 +197,87 @@ def planDetail(request):
     template = get_template('planDetail.html')
     html = template.render(context=locals(), request=request)
     return HttpResponse(html)
+
+
+# 添加项目
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def ajax_addProject(request):
+    plan_obj = models.plan.objects.get(id=request.POST['id'])
+    projectName = request.POST['project']
+    devBranch = request.POST['branch']
+    member_obj = models.member.objects.get(user=request.user)
+    production_members = models.production_member.objects.filter(production=plan_obj.production)
+    isMember = False
+    for m in range(len(production_members)):
+        if member_obj == production_members[m].member:
+            isMember = True
+    if isMember and member_obj.user.has_perm('mysite.can_deploy_project'):
+        if projectName and devBranch:
+            project_obj = models.project.objects.get(name=request.POST['project'])
+            devBranch = request.POST['branch']
+            project_plans = models.project_plan.objects.filter(plan=plan_obj)
+            flag = True
+            for i in range(len(project_plans)):
+                if project_plans[i].project == project_obj:
+                    flag = False
+                    break
+            if flag:
+                project_plan_obj = models.project_plan(project=project_obj, plan=plan_obj, devBranch=devBranch)
+                project_plan_obj.save()
+            else:
+                project_plan_obj = models.project_plan.objects.get(project=project_obj, plan=plan_obj)
+                project_plan_obj.devBranch = devBranch
+                project_plan_obj.save()
+            ret = {
+                'result': True,
+                'role': True,
+                'params': True,
+                'project': projectName,
+                'branch': devBranch
+            }
+        else:
+            ret = {
+                'result': False,
+                'role': True,
+                'params': False,
+            }
+    else:
+        ret = {
+            'result': False,
+            'role': False,
+            'params': False,
+        }
+
+    return HttpResponse(json.dumps(ret), "application/json")
+
+
+# 删除项目
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def ajax_deleteProject(request):
+    member_obj = models.member.objects.get(user=request.user)
+    project_plan_obj = models.project_plan.objects.get(id=request.POST['id'])
+    production_members = models.production_member.objects.filter(production=project_plan_obj.plan.production)
+    isMember = False
+    for m in range(len(production_members)):
+        if member_obj == production_members[m].member:
+            isMember = True
+    if isMember and member_obj.user.has_perm('mysite.can_deploy_project'):
+        project_plan_obj.delete()
+        ret = {
+            'role': True,
+            'project': project_plan_obj.project.name,
+            'branch': project_plan_obj.devBranch
+        }
+    else:
+        ret = {
+            'role': False
+        }
+
+    return HttpResponse(json.dumps(ret), "application/json")
 
 
 # 创建子计划
@@ -225,7 +307,8 @@ def createSubPlan(request):
                 for j in range(len(projectList)):
                     project_obj = models.project.objects.get(name=projectList[j])
                     # dev_branch_obj = models.devBranch.objects.filter(project=project_obj).get(name=devBranchList[j])
-                    project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=devBranchList[j],
+                    project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj,
+                                                           devBranch=devBranchList[j],
                                                            order=j)
                     project_plan_obj.save()
                     project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)

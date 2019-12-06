@@ -257,7 +257,6 @@ class project_plan(models.Model):
     uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
     deployBranch = models.CharField(max_length=50, null=True, verbose_name="预发部署分支")
     lastPackageId = models.IntegerField(null=True, verbose_name="最新生产发布包编号")
-    order = models.IntegerField(verbose_name="生产部署顺序")
     cursor = models.BooleanField(default=False, verbose_name="生产部署游标")
     proBuildStatus = models.BooleanField(default=False, verbose_name="生产部署状态")
     uatBuildStatus = models.BooleanField(default=False, verbose_name="预发部署状态")

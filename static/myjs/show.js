@@ -1095,13 +1095,20 @@ layui.use(['element', 'layer'], function () {
                         if (data.deployed === 0) {
                             layer.open({
                                 type: 1
-                                , title: '警告'
-                                , content: '<div style="padding: 20px 100px;">' + "预发项目" + data.projects + "还没有部署！" + '</div>'
-                                , btn: '关闭'
-                                , btnAlign: 'c' //按钮居中
-                                , area: '500px;'
-                                , shade: 0.5 //不显示遮罩
-                                , yes: function () {
+                                ,
+                                title: '警告'
+                                ,
+                                content: '<div style="padding: 20px 100px;">' + "预发项目" + data.projects + "还没有部署！" + '</div>'
+                                ,
+                                btn: '关闭'
+                                ,
+                                btnAlign: 'c' //按钮居中
+                                ,
+                                area: '500px;'
+                                ,
+                                shade: 0.5 //不显示遮罩
+                                ,
+                                yes: function () {
                                     layer.closeAll();
                                 }
                             });
@@ -1574,6 +1581,112 @@ layui.use(['element', 'layer'], function () {
                             type: 1
                             , title: '警告'
                             , content: '<div style="padding: 20px 100px;">' + "你没有删除计划的权限" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else {
+                        tr.remove();
+                    }
+                },
+                error: function () {
+                    console.log("error");
+                }
+            })
+        }
+    });
+});
+//添加项目
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", "#addProject", function () {
+        var project = $('#project').find('option:selected').text();
+        var branch = $('#branch').find('option:selected').text();
+        var planId = getQueryVariable("pid");
+        var postData = {};
+        postData['id'] = planId;
+        postData['project'] = project;
+        postData['branch'] = branch;
+
+        $.ajax({
+            url: '/ajax_addProject',
+            type: 'POST',
+            data: postData,
+
+            success: function (data) {
+                console.log(data.params, data.project, data.branch);
+                if (data.role === false) {
+                    layer.open({
+                        type: 1
+                        , title: '警告'
+                        , content: '<div style="padding: 20px 100px;">' + "你没有添加计划的权限" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                } else if(data.params === false){
+                    layer.open({
+                        type: 1
+                        , title: '警告'
+                        , content: '<div style="padding: 20px 100px;">' + "项目或分支没有选择！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                } else {
+                    $('.projects').append("<br>" + data.project + "：" + data.branch);
+                }
+            },
+            error: function () {
+                console.log("error");
+            }
+        })
+    });
+});
+//计划项目
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", ".deleteProject", function () {
+        var tr = $(this).parent().parent();
+        var project_plan_id = tr.children("td#project_plan_id").text();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok(tr, project_plan_id);
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok(tr, project_plan_id) {
+            var postData = {};
+            postData['id'] = project_plan_id;
+
+            $.ajax({
+                url: '/ajax_deleteProject',
+                type: 'POST',
+                data: postData,
+
+                success: function (data) {
+                    if (data.role === false) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "你没有删除项目的权限" + '</div>'
                             , btn: '关闭'
                             , btnAlign: 'c' //按钮居中
                             , area: '500px;'
