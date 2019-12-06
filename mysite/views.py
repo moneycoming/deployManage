@@ -448,7 +448,7 @@ def taskDetail(request):
         member_obj = models.member.objects.get(user=request.user)
     if taskId:
         task_obj = models.task.objects.get(id=taskId)
-        project_plans = models.project_plan.objects.filter(plan=task_obj.plan).order_by('order')
+        project_plans = models.project_plan.objects.filter(plan=task_obj.plan)
         upToImplementSequence = models.sequence.objects.filter(task=task_obj).get(executeCursor=1)
         unimplementedSequences = models.sequence.objects.filter(task=task_obj,
                                                                 priority__gt=upToImplementSequence.priority).order_by(
