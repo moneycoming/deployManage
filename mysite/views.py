@@ -150,8 +150,7 @@ def createPlan(request):
 
         for j in range(len(projectList)):
             project_obj = models.project.objects.get(name=projectList[j])
-            project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=devBranchList[j],
-                                                   order=j)
+            project_plan_obj = models.project_plan(plan=plan_obj, project=project_obj, devBranch=devBranchList[j])
             project_plan_obj.save()
             project_servers = models.project_server.objects.filter(project=project_obj).filter(server__type=1)
             for i in range(len(project_servers)):
@@ -1532,7 +1531,8 @@ def ws_uatDeploy(request):
                     if not project_plans or project_plan_obj.exclusiveKey:
                         if project_plan_obj.uatBranch:
                             if not project_plan_obj.uatOnBuilding:
-                                project_servers = models.project_server.objects.filter(project=project_obj, server__type=0)
+                                project_servers = models.project_server.objects.filter(project=project_obj,
+                                                                                       server__type=0)
                                 jenkinsUat_obj = models.jenkinsUat.objects.get(project=project_obj)
                                 project_plan_obj.exclusiveKey = True
                                 project_plan_obj.uatOnBuilding = True
@@ -1863,7 +1863,8 @@ def ws_proOneProjectDeploy(request):
                                 project_plans = models.project_plan.objects.filter(plan=project_plan_obj.plan,
                                                                                    proBuildStatus=False)
                                 if not project_plans:
-                                    sequence_obj = models.sequence.objects.filter(task=task_obj).get(segment__isDeploy=True)
+                                    sequence_obj = models.sequence.objects.filter(task=task_obj).get(
+                                        segment__isDeploy=True)
                                     sequence_obj.implemented = True
                                     sequence_obj.executor = member_obj
                                     sequence_obj.executeDate = datetime.datetime.now()
@@ -1897,3 +1898,61 @@ def ws_proOneProjectDeploy(request):
                 buildMessages.append('no_role')
                 request.websocket.send(json.dumps(buildMessages))
                 request.websocket.close()
+
+
+# 重新上预发
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def ajax_restartUatDeploy(request):
+    plan_obj = models.plan.objects.get(id=request.POST['planId'])
+    production_members = models.production_member.objects.filter(production=plan_obj.production)
+    member_obj = models.member.objects.get(user=request.user)
+    isMember = False
+    for m in range(len(production_members)):
+        if member_obj == production_members[m].member:
+            isMember = True
+    if isMember and member_obj.user.has_perm('mysite.can_check_project'):
+        task_obj = models.task.objects.filter(plan=plan_obj)
+        if task_obj:
+            sequence_obj = models.sequence.objects.get(task=task_obj, segment__isCheck=True)
+            if not sequence_obj.implemented:
+                plan_obj.uatCheck = False
+                plan_obj.uatRemark = None
+                plan_obj.uatCheckDate = None
+                plan_obj.uatCheckMember = None
+                plan_obj.save()
+
+                ret = {
+                    'role': True,
+                    'proCheck': False
+                }
+            else:
+                ret = {
+                    'role': True,
+                    'proCheck': True
+                }
+        else:
+            if plan_obj.uatCheck:
+                plan_obj.uatCheck = False
+                plan_obj.uatRemark = None
+                plan_obj.uatCheckDate = None
+                plan_obj.uatCheckMember = None
+                plan_obj.save()
+
+                ret = {
+                    'role': True,
+                    'uatCheck': True
+                }
+            else:
+                ret = {
+                    'role': True,
+                    'uatCheck': False
+                }
+
+    else:
+        ret = {
+            'role': False
+        }
+
+    return HttpResponse(json.dumps(ret), "application/json")

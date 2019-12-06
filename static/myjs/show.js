@@ -1145,6 +1145,85 @@ layui.use(['element', 'layer'], function () {
         }
     });
 });
+//重新上预发
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", "#restartUatDeploy", function () {
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok();
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok() {
+            var postData = {};
+            var planId = getQueryVariable('pid');
+            console.log(planId);
+            postData['planId'] = planId;
+
+            $.ajax({
+                url: '/ajax_restartUatDeploy',
+                type: 'POST',
+                data: postData,
+
+                success: function (data) {
+                    if (data.role === false) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "你没有重新上预发的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else if (data.uatCheck === false) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "预发未验收！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else if (data.uatCheck === true) {
+                        location.reload();
+                    } else if (data.proCheck === true){
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "生产已验收，不能再上预发！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    }
+                    else {
+                        location.reload();
+                    }
+                },
+                error: function () {
+                    console.log("error");
+                }
+            })
+        }
+    });
+});
 //面板
 layui.use(['element', 'layer'], function () {
     var element = layui.element;
@@ -1662,7 +1741,7 @@ layui.use(['element', 'layer'], function () {
                         }
                     });
                 } else {
-                    $('.projects').append("<br>" + data.project + "：" + data.branch);
+                    location.reload();
                 }
             },
             error: function () {

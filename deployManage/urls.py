@@ -51,6 +51,7 @@ urlpatterns = [
     url(r'^ajax_checkSuccess', views.ajax_checkSuccess, name='ajax_checkSuccess'),
     url(r'^ajax_createUatBranch', views.ajax_createUatBranch),
     url(r'^ajax_uatCheck', views.ajax_uatCheck),
+    url(r'^ajax_restartUatDeploy', views.ajax_restartUatDeploy),
     url(r'^uat_console_opt/(\w+)', views.uat_console_opt, name='uat_console_opt'),
     url(r'^pro_console_opt/(\w+)', views.pro_console_opt, name='pro_console_opt'),
     url(r'^single_console_opt/(\w+)', views.single_console_opt, name='single_console'),
