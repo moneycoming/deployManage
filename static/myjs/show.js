@@ -950,6 +950,21 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
+                } else if (received_msg[0] === 'already_uatCheck') {
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布结果'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + received_msg[1] + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
                 } else if (received_msg[0] === 'exclusive') {
                     layer.open({
                         type: 1
@@ -1633,7 +1648,7 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
-                } else if(data.params === false){
+                } else if (data.params === false) {
                     layer.open({
                         type: 1
                         , title: '警告'
@@ -1747,6 +1762,21 @@ layui.use(['element', 'layer'], function () {
                             , title: '发布结果'
                             , id: 'layerDemo' + type//防止重复弹出
                             , content: '<div style="padding: 20px 100px;">' + "你没有发布的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else if (received_msg[0] === 'already_proCheck') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "生产已经验收通过，不能重复发布！" + '</div>'
                             , btn: '关闭'
                             , btnAlign: 'c' //按钮居中
                             , area: '500px;'
