@@ -421,5 +421,27 @@
         }
     };
 </script>
+<script>
+    function selectIP(id) {
+
+        $.ajax({
+            url: '/ajax_get_ip',
+            type: 'GET',
+            dataType: 'json',
+            data: {'id': id},
+
+            success: function (data) {
+                for (var i = 0; i < data.ip.length; i++) {
+                    $('#select-nodes tbody').append("<tr>\n" +
+                        "<td><input type=\"checkbox\" title=\"node\"></td>\n" +
+                        "<td>" + data.project_plan_id + "</td>\n" +
+                        "<td>" + data.name[i] + "</td>\n" +
+                        "<td>" + data.ip[i] + "</td>\n" +
+                        "</tr>");
+                }
+            }
+        })
+    }
+</script>
 </body>
 </html>
