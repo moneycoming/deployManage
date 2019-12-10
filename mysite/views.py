@@ -646,7 +646,7 @@ def ajax_taskImplement(request):
     if sequenceId:
         sequence_obj = models.sequence.objects.get(id=sequenceId)
         if isMember and member_obj.user.has_perm('mysite.can_deploy_project'):
-            sequence_obj.implemented = 1
+            sequence_obj.implemented = True
             sequence_obj.remarks = request.POST['remark']
             sequence_obj.executor = member_obj
             sequence_obj.executeDate = datetime.datetime.now()
@@ -1321,6 +1321,22 @@ def ajax_restartUatDeploy(request):
                 plan_obj.uatCheckDate = None
                 plan_obj.uatCheckMember = None
                 plan_obj.save()
+                deploy_sequence_obj = models.sequence.objects.get(task=task_obj, segment__isDeploy=True)
+                if deploy_sequence_obj.implemented:
+                    deploy_sequence_obj.implemented = False
+                    deploy_sequence_obj.executeCursor = True
+                    deploy_sequence_obj.executeDate = None
+                    deploy_sequence_obj.executor = None
+                    deploy_sequence_obj.remarks = None
+                    deploy_sequence_obj.save()
+                    sequences = models.sequence.objects.filter(priority__gt=deploy_sequence_obj.priority)
+                    for i in range(len(sequences)):
+                        sequences[i].executeCursor = False
+                        sequences[i].implemented = False
+                        sequences[i].executeDate = None
+                        sequences[i].executor = None
+                        sequences[i].remarks = None
+                        sequences[i].save()
 
                 ret = {
                     'role': True,

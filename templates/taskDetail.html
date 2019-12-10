@@ -211,6 +211,12 @@
                                                                role="tab" data-toggle="tab">下一步</a></button>
                                                     </div>
                                                 {% else %}
+                                                    {% if sequence.priority > 1 %}
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                    {% endif %}
                                                     <div class="layui-btn-group" style="float: right">
                                                         <button type="button" class="layui-btn layui-btn-primary">
                                                             <a href="#step{{ sequence.next_segment }}"
@@ -414,7 +420,7 @@
                                                 </div>
                                                 <p>【标题】{{ task_obj.name }}</p>
                                                 <div id="buildMessage"></div>
-                                                <table class="layui-table" lay-skin="line">
+                                                <table class="layui-table" id="build-table" lay-skin="line">
                                                     <thead>
                                                     <tr>
                                                         <th width="5px"><input type="checkbox"
@@ -535,6 +541,12 @@
                                                                role="tab" data-toggle="tab">下一步</a></button>
                                                     </div>
                                                 {% else %}
+                                                    {% if sequence.priority > 1 %}
+                                                        <button type="button" class="layui-btn layui-btn-primary">
+                                                            <a href="#step{{ sequence.pre_segment }}"
+                                                               onclick="eventFun.setStep({{ sequence.pre_segment }})"
+                                                               role="tab" data-toggle="tab">上一步</a></button>
+                                                    {% endif %}
                                                     <div class="layui-btn-group" style="float: right">
                                                         <button type="button" class="layui-btn layui-btn-primary">
                                                             <a href="#step{{ sequence.next_segment }}"
