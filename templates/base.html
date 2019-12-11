@@ -424,6 +424,7 @@
 <script>
     function selectIP(id) {
 
+        $('#select-nodes tbody tr').remove();
         $.ajax({
             url: '/ajax_get_ip',
             type: 'GET',

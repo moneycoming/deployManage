@@ -220,18 +220,15 @@ layui.use(['element', 'layer'], function () {
 
             success: function (data) {
                 if (data.role === 1) {
-                    layer.open({
-                        type: 1
-                        , title: '结果'
-                        , content: '<div style="padding: 20px 100px;">' + data.res + '</div>'
-                        , btn: '关闭'
-                        , btnAlign: 'c' //按钮居中
-                        , area: '500px;'
-                        , shade: 0.5 //不显示遮罩
-                        , yes: function () {
-                            layer.closeAll();
-                        }
-                    });
+                    var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                        "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                        data.res +
+                        "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                        "aria-label=\"Close\">\n" +
+                        "<span aria-hidden=\"true\">&times;</span>\n" +
+                        "</button>\n" +
+                        "</div>";
+                    $('#create-uatBranch-message').html(html);
                     if (data.result === 1) {
                         $('#createUatBranchText').html("分支创建完成");
                         $(`#uatBranch`).html(data.uatBranch);
