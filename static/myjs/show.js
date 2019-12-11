@@ -1355,7 +1355,6 @@ layui.use(['element', 'layer'], function () {
     function selectNodesDeploy() {
         var id = $('#select-nodes').find('td:eq(1)').text();
         var step = $('#build-table').parent().attr('id');
-        console.log(step);
         var tr_id = 'proBuild' + id;
         var type = $(this).data('type');
         var arrayObj = new Array();

@@ -414,7 +414,7 @@ def taskDetail(request):
     if taskId:
         task_obj = models.task.objects.get(id=taskId)
         project_plans = models.project_plan.objects.filter(plan=task_obj.plan)
-        upToImplementSequence = models.sequence.objects.filter(task=task_obj).get(executeCursor=1)
+        upToImplementSequence = models.sequence.objects.filter(task=task_obj).get(executeCursor=True)
         unimplementedSequences = models.sequence.objects.filter(task=task_obj,
                                                                 priority__gt=upToImplementSequence.priority).order_by(
             'priority')
