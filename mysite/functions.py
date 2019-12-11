@@ -194,7 +194,10 @@ class branch:
             status = False
             logger.error("分支%s切换失败" % hopeBranch)
         if status:
-            subprocess.check_output([gitCmd, "pull", 'origin', hopeBranch])
+            try:
+                subprocess.check_output([gitCmd, "pull", 'origin', hopeBranch])
+            except subprocess.CalledProcessError:
+                logger.error("分支%s更新失败" % hopeBranch)
             tag_name = "release-" + datetime.datetime.now().strftime('%Y.%m.%d')
             try:
                 subprocess.check_output([gitCmd, "tag", "-d", tag_name])
