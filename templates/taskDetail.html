@@ -123,20 +123,49 @@
                                                             <td id="jenkinsConsole">无</td>
                                                             <td>
                                                                 <div class="layui-btn-group">
-                                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
-                                                                            id="startOneDeploy">
-                                                                        发布
-                                                                    </button>
-                                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
-                                                                            data-toggle="modal"
-                                                                            data-target="#largeModal"
-                                                                            onclick="selectIP({{ project_plan.id }})">
-                                                                        选节点部署
-                                                                    </button>
-                                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
-                                                                            id="rollback">
-                                                                        回滚
-                                                                    </button>
+                                                                    {% if not project_plan.proOnBuilding %}
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="startOneDeploy">
+                                                                            发布
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="select-nodes-deploy"
+                                                                                data-toggle="modal"
+                                                                                data-target="#largeModal"
+                                                                                onclick="selectIP({{ project_plan.id }})">
+                                                                            选节点部署
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="rollback">
+                                                                            回滚
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="stopDeploy" style="display: none">
+                                                                            终止发布
+                                                                        </button>
+                                                                    {% else %}
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="startOneDeploy"
+                                                                                style="display: none">
+                                                                            发布
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="select-nodes-deploy"
+                                                                                data-toggle="modal"
+                                                                                data-target="#largeModal"
+                                                                                onclick="selectIP({{ project_plan.id }})"
+                                                                                style="display: none">
+                                                                            选节点部署
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="rollback">
+                                                                            回滚
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="stopDeploy">
+                                                                            终止发布
+                                                                        </button>
+                                                                    {% endif %}
                                                                 </div>
                                                             </td>
                                                             <td>
@@ -488,20 +517,49 @@
                                                             <td id="jenkinsConsole">无</td>
                                                             <td>
                                                                 <div class="layui-btn-group">
-                                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
-                                                                            id="startOneDeploy">
-                                                                        发布
-                                                                    </button>
-                                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
-                                                                            data-toggle="modal"
-                                                                            data-target="#largeModal"
-                                                                            onclick="selectIP({{ project_plan.id }})">
-                                                                        选节点部署
-                                                                    </button>
-                                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
-                                                                            id="rollback">
-                                                                        回滚
-                                                                    </button>
+                                                                    {% if not project_plan.proOnBuilding %}
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="startOneDeploy">
+                                                                            发布
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="select-nodes-deploy"
+                                                                                data-toggle="modal"
+                                                                                data-target="#largeModal"
+                                                                                onclick="selectIP({{ project_plan.id }})">
+                                                                            选节点部署
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="rollback">
+                                                                            回滚
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="stopDeploy" style="display: none">
+                                                                            终止发布
+                                                                        </button>
+                                                                    {% else %}
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="startOneDeploy"
+                                                                                style="display: none">
+                                                                            发布
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="select-nodes-deploy"
+                                                                                data-toggle="modal"
+                                                                                data-target="#largeModal"
+                                                                                onclick="selectIP({{ project_plan.id }})"
+                                                                                style="display: none">
+                                                                            选节点部署
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="rollback">
+                                                                            回滚
+                                                                        </button>
+                                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                                id="stopDeploy">
+                                                                            终止发布
+                                                                        </button>
+                                                                    {% endif %}
                                                                 </div>
                                                             </td>
                                                             <td>

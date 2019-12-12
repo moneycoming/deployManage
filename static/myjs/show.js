@@ -1198,6 +1198,19 @@ layui.use(['element', 'layer'], function () {
         });
 
         function ok(id, type, step) {
+            $(`#${tr_id} #startOneDeploy`).hide();
+            $(`#${tr_id} #select-nodes-deploy`).hide();
+
+            var second = 5;
+            var time = setInterval(function () {
+                if (second > 0) {
+                    second--;
+                } else {
+                    $(`#${tr_id} #stopDeploy`).show();
+                    clearInterval(time);
+                }
+            }, 1000);
+
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
 
@@ -1227,6 +1240,9 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else if (received_msg[0] === 'already_proCheck') {
                         layer.open({
                             type: 1
@@ -1242,6 +1258,9 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else if (received_msg[0] === 'on_building') {
                         layer.open({
                             type: 1
@@ -1257,6 +1276,9 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else if (received_msg[0] === 'no_reversion') {
                         layer.open({
                             type: 1
@@ -1272,6 +1294,9 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else {
                         var sumPoints = received_msg[0];
                         var realPoints = 0;
@@ -1311,6 +1336,9 @@ layui.use(['element', 'layer'], function () {
                                 $('#buildMessage').html(html2);
                                 $(`#proBuildProgress${num[realPoints]}`).addClass("layui-bg-red");
                                 $(`#${tr_id} #proBuildStatus`).html("部署失败")
+                                $(`#${tr_id} #startOneDeploy`).show();
+                                $(`#${tr_id} #select-nodes-deploy`).show();
+                                $(`#${tr_id} #stopDeploy`).hide();
                             } else if (received_msg[i] === 'deploy_success') {
                                 i += 1;
                                 html2 += "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
@@ -1323,6 +1351,9 @@ layui.use(['element', 'layer'], function () {
                                     "</div>";
                                 $('#buildMessage').html(html2);
                                 $(`#${tr_id} #proBuildStatus`).html("部署成功");
+                                $(`#${tr_id} #startOneDeploy`).show();
+                                $(`#${tr_id} #select-nodes-deploy`).show();
+                                $(`#${tr_id} #stopDeploy`).hide();
                             } else if (received_msg[i] === 'sequence_success') {
                                 $(`#${step} #nextBtn`).show();
                             }
@@ -1369,6 +1400,17 @@ layui.use(['element', 'layer'], function () {
         });
 
         function ok(type, arrayObj, step) {
+            $(`#${tr_id} #startOneDeploy`).hide();
+            $(`#${tr_id} #select-nodes-deploy`).hide();
+            var second = 10;
+            var time = setInterval(function () {
+                if (second > 0) {
+                    second--;
+                } else {
+                    $(`#${tr_id} #stopDeploy`).show();
+                    clearInterval(time);
+                }
+            }, 1000);
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
 
@@ -1398,6 +1440,9 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else if (received_msg[0] === 'already_proCheck') {
                         layer.open({
                             type: 1
@@ -1413,6 +1458,9 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else if (received_msg[0] === 'on_building') {
                         layer.open({
                             type: 1
@@ -1428,6 +1476,9 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else if (received_msg[0] === 'no_reversion') {
                         layer.open({
                             type: 1
@@ -1443,6 +1494,9 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else {
                         var sumPoints = received_msg[0];
                         var realPoints = 0;
@@ -1465,6 +1519,9 @@ layui.use(['element', 'layer'], function () {
                                     layer.closeAll();
                                 }
                             });
+                            $(`#${tr_id} #startOneDeploy`).show();
+                            $(`#${tr_id} #select-nodes-deploy`).show();
+                            $(`#${tr_id} #stopDeploy`).hide();
                         } else {
                             for (var j = 1; j <= sumPoints; j++) {
                                 num[j] = RandomNumBoth(10000, 100000);
@@ -1498,6 +1555,9 @@ layui.use(['element', 'layer'], function () {
                                     $('#buildMessage').html(html2);
                                     $(`#proBuildProgress${num[realPoints]}`).addClass("layui-bg-red");
                                     $(`#${tr_id} #proBuildStatus`).html("部署失败")
+                                    $(`#${tr_id} #startOneDeploy`).show();
+                                    $(`#${tr_id} #select-nodes-deploy`).show();
+                                    $(`#${tr_id} #stopDeploy`).hide();
                                 } else if (received_msg[i] === 'deploy_success') {
                                     i += 1;
                                     html2 += "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
@@ -1510,6 +1570,10 @@ layui.use(['element', 'layer'], function () {
                                         "</div>";
                                     $('#buildMessage').html(html2);
                                     $(`#${tr_id} #proBuildStatus`).html("部署成功");
+                                    $(`#${tr_id} #startOneDeploy`).show();
+                                    $(`#${tr_id} #select-nodes-deploy`).show();
+                                    $(`#${tr_id} #stopDeploy`).hide();
+                                    ;
                                 } else if (received_msg[i] === 'sequence_success') {
                                     $(`#${step} #nextBtn`).show();
                                 }
@@ -1531,4 +1595,75 @@ layui.use(['element', 'layer'], function () {
         }
 
     }
+});
+//生产终止发布
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", "#stopDeploy", function () {
+        var tr = $(this).parent().parent().parent();
+        var tr_id = tr.attr("id");
+        var id = tr.children().eq(1).text();
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok(tr, id, tr_id);
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok(tr, id, tr_id) {
+            $.ajax({
+                url: '/ajax_stopDeploy',
+                type: 'POST',
+                data: {'id': id},
+
+                success: function (data) {
+                    if (data.role === 0) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "你没有终止发布的权限" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else if (data.stop === true) {
+                        var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                            data.project + "已经终止发布！" +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#buildMessage').html(html);
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
+                        tr.children("td#progress").html("已终止");
+                        tr.children("td#jenkinsConsole").html("无");
+                    } else {
+                        var html2 = "<div class=\"sufee-alert alert with-close alert-warning alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Fail</span>\n" +
+                            data.project + "终止发布失败！" +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#buildMessage').html(html2);
+                    }
+                },
+                error: function () {
+                    console.log("error");
+                }
+            })
+        }
+    });
 });

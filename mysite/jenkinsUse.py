@@ -32,15 +32,34 @@ class pythonJenkins:
             consoleOpt = server.get_build_console_output(jenkinsJob, next_build_number)
             isSuccess = consoleOpt.find("Finished: SUCCESS")
             isFailure = consoleOpt.find("Finished: FAILURE")
-            while isSuccess == -1 and isFailure == -1:
+            isAbort = consoleOpt.find("Finished: ABORTED")
+            while isSuccess == -1 and isFailure == -1 and isAbort == -1:
                 time.sleep(5)
                 consoleOpt = server.get_build_console_output(jenkinsJob, next_build_number)
                 isSuccess = consoleOpt.find("Finished: SUCCESS")
                 isFailure = consoleOpt.find("Finished: FAILURE")
+                isAbort = consoleOpt.find("Finished: ABORTED")
             info['buildId'] = next_build_number
             info['consoleOpt'] = consoleOpt
         except jenkins.NotFoundException:
             logger.error("jenkins项目未找到，请检查项目是否存在")
+        return info
+
+    def stop_build(self, number):
+        token = models.paramConfig.objects.get(name='jenkins_token')
+        jenkins_url = models.paramConfig.objects.get(name='jenkins_url')
+        user = models.paramConfig.objects.get(name='jenkins_user')
+        jenkinsJob = self.jenkinsJob
+        url = "http://" + user.param + ":" + token.param + "@" + jenkins_url.param.split("//")[
+            1] + "job/" + jenkinsJob + "/" + str(number) + "/stop"
+        info = dict()
+        try:
+            subprocess.check_output(['curl', "-X", "POST", url])
+            info['result'] = True
+        except subprocess.CalledProcessError:
+            logger.error("job %s终止失败！" % jenkinsJob)
+            info['result'] = False
+
         return info
 
     def realConsole(self):
@@ -51,6 +70,18 @@ class pythonJenkins:
             return next_build_number
         except jenkins.NotFoundException:
             logger.error("jenkins项目未找到，请检查项目是否存在")
+
+    def get_building_info(self):
+        jenkinsJob = self.jenkinsJob
+        server = self.server
+        jobs = server.get_running_builds()
+        searchedJob = dict()
+        for i in range(len(jobs)):
+            if jobs[i]['name'] == jenkinsJob:
+                searchedJob = jobs[i]
+                break
+        if searchedJob:
+            return searchedJob
 
 
 class projectBean:
