@@ -366,7 +366,22 @@ layui.use(['element', 'layer'], function () {
                         "  <div class=\"layui-progress-bar\" id='uatBuildProgress' lay-percent=\"0%\"></div>\n" +
                         "</div>";
                     $(`#${tr_id} #uatProgress`).html(html);
+                    $(`#${tr_id} #uatJenkinsConsole`).html("准备中...");
                     for (var i = 0; i < received_msg.length; i++) {
+                        if (received_msg[i] === 'no_jenkinsJob') {
+                            i += 1;
+                            var html4 = "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
+                                "<span class=\"badge badge-pill badge-primary\">Failure</span>\n" +
+                                received_msg[i] +
+                                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                "aria-label=\"Close\">\n" +
+                                "<span aria-hidden=\"true\">&times;</span>\n" +
+                                "</button>\n" +
+                                "</div>";
+                            $('#uatBuildMessage').html(html4);
+                            $('#uatBuildProgress').addClass("layui-bg-red");
+                            $(`#${tr_id} #uatBuildStatus`).html("部署终止")
+                        }
                         if (received_msg[i] === 'deploy') {
                             i += 1;
                             element.progress('uatDeploy', '40%');
@@ -1210,7 +1225,6 @@ layui.use(['element', 'layer'], function () {
                     clearInterval(time);
                 }
             }, 1000);
-
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
 
@@ -1310,11 +1324,28 @@ layui.use(['element', 'layer'], function () {
                                 "<div class=\"layui-progress\" lay-filter=\"proOneDeploy" + num[j] + "\">\n" +
                                 "<div class=\"layui-progress-bar\"\n" +
                                 "id=\"proBuildProgress" + num[j] + "\" lay-percent=\"0%\"></div>\n" +
-                                "</div>"
+                                "</div>";
                         }
                         $(`#${tr_id} #progress`).html(html);
+                        $(`#${tr_id} #jenkinsConsole`).html("准备中...");
                         for (var i = 1; i < received_msg.length; i++) {
-                            if (received_msg[i] === 'start_deploy') {
+                            if (received_msg[i] === 'no_jenkinsJob') {
+                                i += 1;
+                                html4 += "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
+                                    "<span class=\"badge badge-pill badge-primary\">Failure</span>\n" +
+                                    received_msg[i] +
+                                    "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                    "aria-label=\"Close\">\n" +
+                                    "<span aria-hidden=\"true\">&times;</span>\n" +
+                                    "</button>\n" +
+                                    "</div>";
+                                $('#buildMessage').html(html4);
+                                $(`#proBuildProgress${num[realPoints]}`).addClass("layui-bg-red");
+                                $(`#${tr_id} #proBuildStatus`).html("部署终止");
+                                $(`#${tr_id} #startOneDeploy`).show();
+                                $(`#${tr_id} #select-nodes-deploy`).show();
+                                $(`#${tr_id} #stopDeploy`).hide();
+                            } else if (received_msg[i] === 'start_deploy') {
                                 realPoints++;
                                 i += 1;
                                 element.progress(`proOneDeploy${num[realPoints]}`, '40%');
@@ -1402,7 +1433,7 @@ layui.use(['element', 'layer'], function () {
         function ok(type, arrayObj, step) {
             $(`#${tr_id} #startOneDeploy`).hide();
             $(`#${tr_id} #select-nodes-deploy`).hide();
-            var second = 10;
+            var second = 5;
             var time = setInterval(function () {
                 if (second > 0) {
                     second--;
@@ -1503,6 +1534,7 @@ layui.use(['element', 'layer'], function () {
                         var html = "";
                         var html2 = "";
                         var html3 = "";
+                        var html4 = "";
                         var num = new Array(sumPoints);
                         if (sumPoints === 0) {
                             layer.open({
@@ -1531,9 +1563,26 @@ layui.use(['element', 'layer'], function () {
                                     "id=\"proBuildProgress" + num[j] + "\" lay-percent=\"0%\"></div>\n" +
                                     "</div>"
                             }
+                            $(`#${tr_id} #jenkinsConsole`).html("准备中...");
                             $(`#${tr_id} #progress`).html(html);
                             for (var i = 1; i < received_msg.length; i++) {
-                                if (received_msg[i] === 'start_deploy') {
+                                if (received_msg[i] === 'no_jenkinsJob') {
+                                    i += 1;
+                                    html4 += "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
+                                        "<span class=\"badge badge-pill badge-primary\">Failure</span>\n" +
+                                        received_msg[i] +
+                                        "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                        "aria-label=\"Close\">\n" +
+                                        "<span aria-hidden=\"true\">&times;</span>\n" +
+                                        "</button>\n" +
+                                        "</div>";
+                                    $('#buildMessage').html(html4);
+                                    $(`#proBuildProgress${num[realPoints]}`).addClass("layui-bg-red");
+                                    $(`#${tr_id} #proBuildStatus`).html("部署终止");
+                                    $(`#${tr_id} #startOneDeploy`).show();
+                                    $(`#${tr_id} #select-nodes-deploy`).show();
+                                    $(`#${tr_id} #stopDeploy`).hide();
+                                } else if (received_msg[i] === 'start_deploy') {
                                     realPoints++;
                                     i += 1;
                                     element.progress(`proOneDeploy${num[realPoints]}`, '40%');
@@ -1633,7 +1682,7 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
-                    } else if (data.start === false){
+                    } else if (data.start === false) {
                         var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
                             "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
                             data.project + "未进行发布！" +
@@ -1664,7 +1713,7 @@ layui.use(['element', 'layer'], function () {
                         $(`#${tr_id} #stopDeploy`).hide();
                         tr.children("td#progress").html("已终止");
                         tr.children("td#jenkinsConsole").html("无");
-                    } else if (data.build === true){
+                    } else if (data.build === true) {
                         var html3 = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
                             "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
                             data.project + "已经发布完成！" +

@@ -24,26 +24,14 @@ class pythonJenkins:
         jenkinsJob = self.jenkinsJob
         param = self.param
         server = self.server
-        info = {}
+        status = True
         try:
-            next_build_number = server.get_job_info(jenkinsJob)['nextBuildNumber']
             server.build_job(jenkinsJob, param)
-            time.sleep(15)
-            consoleOpt = server.get_build_console_output(jenkinsJob, next_build_number)
-            isSuccess = consoleOpt.find("Finished: SUCCESS")
-            isFailure = consoleOpt.find("Finished: FAILURE")
-            isAbort = consoleOpt.find("Finished: ABORTED")
-            while isSuccess == -1 and isFailure == -1 and isAbort == -1:
-                time.sleep(5)
-                consoleOpt = server.get_build_console_output(jenkinsJob, next_build_number)
-                isSuccess = consoleOpt.find("Finished: SUCCESS")
-                isFailure = consoleOpt.find("Finished: FAILURE")
-                isAbort = consoleOpt.find("Finished: ABORTED")
-            info['buildId'] = next_build_number
-            info['consoleOpt'] = consoleOpt
         except jenkins.NotFoundException:
             logger.error("jenkins项目未找到，请检查项目是否存在")
-        return info
+            status = False
+
+        return status
 
     def stop_build(self, number):
         token = models.paramConfig.objects.get(name='jenkins_token')
@@ -93,6 +81,29 @@ class pythonJenkins:
                 break
         if searchedJob:
             return searchedJob
+
+    def get_build_console(self, number):
+        jenkinsJob = self.jenkinsJob
+        server = self.server
+        info = dict()
+        info['jenkinsJob'] = True
+        try:
+            consoleOpt = server.get_build_console_output(jenkinsJob, number)
+            isSuccess = consoleOpt.find("Finished: SUCCESS")
+            isFailure = consoleOpt.find("Finished: FAILURE")
+            isAbort = consoleOpt.find("Finished: ABORTED")
+            while isSuccess == -1 and isFailure == -1 and isAbort == -1:
+                time.sleep(1)
+                consoleOpt = server.get_build_console_output(jenkinsJob, number)
+                isSuccess = consoleOpt.find("Finished: SUCCESS")
+                isFailure = consoleOpt.find("Finished: FAILURE")
+                isAbort = consoleOpt.find("Finished: ABORTED")
+            info['consoleOpt'] = consoleOpt
+        except jenkins.NotFoundException:
+            logger.error("jenkins项目未找到，请检查项目是否存在")
+            info['jenkinsJob'] = False
+
+        return info
 
 
 class projectBean:

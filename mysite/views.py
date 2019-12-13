@@ -936,6 +936,10 @@ def ws_uatDeploy(request):
                                 project_plan_obj.exclusiveKey = True
                                 project_plan_obj.uatOnBuilding = True
                                 project_plan_obj.save()
+                                deployDetails = models.deployDetail.objects.filter(project_plan=project_plan_obj)
+                                for j in range(len(deployDetails)):
+                                    deployDetails[j].buildStatus = False
+                                    deployDetails[j].save()
                                 for i in range(len(project_servers)):
                                     params = eval(jenkinsUat_obj.param)
                                     server_obj = project_servers[i].server
@@ -946,19 +950,23 @@ def ws_uatDeploy(request):
                                     logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
                                     request.websocket.send(json.dumps(buildMessage))
                                     buildNumber = pythonJenkins_obj.realConsole()
-                                    url = "http://jenkinspro.bestjlb.cn/view/UAT-Server/job/" + jenkinsUat_obj.name + "/" + str(
-                                        buildNumber) + "/console"
-                                    buildMessage.append("deploy")
-                                    buildMessage.append(url)
-                                    request.websocket.send(json.dumps(buildMessage))
-                                    info = pythonJenkins_obj.deploy()
-                                    if info:
+                                    status = pythonJenkins_obj.deploy()
+                                    if status:
+                                        buildInfo = pythonJenkins_obj.get_building_info()
+                                        while not buildInfo:
+                                            time.sleep(1)
+                                            buildInfo = pythonJenkins_obj.get_building_info()
+                                        url = buildInfo['url'] + "console"
+                                        buildMessage.append("deploy")
+                                        buildMessage.append(url)
+                                        request.websocket.send(json.dumps(buildMessage))
+                                        info = pythonJenkins_obj.get_build_console(buildNumber)
                                         consoleOpt = info['consoleOpt']
                                         isSuccess = consoleOpt.find("Finished: SUCCESS")
                                         if isSuccess != -1:
                                             result = True
                                             project_plan_obj.uatBuildStatus = True
-                                            project_plan_obj.lastPackageId = info['buildId']
+                                            project_plan_obj.lastPackageId = buildNumber
                                             project_plan_obj.save()
                                             res = "分支%s部署成功" % project_plan_obj.uatBranch
                                             logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
@@ -967,6 +975,9 @@ def ws_uatDeploy(request):
                                             buildMessage.append(buildNumber)
                                             request.websocket.send(json.dumps(buildMessage))
                                             request.websocket.close()
+                                            if project_plan_obj.proBuildStatus:
+                                                project_plan_obj.proBuildStatus = False
+                                                project_plan_obj.save()
                                         else:
                                             result = False
                                             res = "分支%s部署失败" % project_plan_obj.uatBranch
@@ -986,6 +997,13 @@ def ws_uatDeploy(request):
                                         consoleOpt_obj.save()
                                         project_plan_obj.deployBranch = project_plan_obj.uatBranch
                                         project_plan_obj.save()
+                                    else:
+                                        logger.info("jenkins Job %s不存在！" % jenkinsUat_obj.name)
+                                        res = "jenkins Job %s不存在！" % jenkinsUat_obj.name
+                                        buildMessage.append("no_jenkinsJob")
+                                        buildMessage.append(res)
+                                        request.websocket.send(json.dumps(buildMessage))
+                                        request.websocket.close()
                                 project_plan_obj.uatOnBuilding = False
                                 project_plan_obj.save()
                             else:
@@ -1202,55 +1220,69 @@ def ws_proOneProjectDeploy(request):
                                 params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                 pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
                                 buildNumber = pythonJenkins_obj.realConsole()
-                                url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(
-                                    buildNumber) + "/console"
-                                buildMessages.append('start_deploy')
-                                buildMessages.append(url)
-                                request.websocket.send(json.dumps(buildMessages))
-                                info = pythonJenkins_obj.deploy()
-                                consoleOpt = info['consoleOpt']
-                                isAbort = consoleOpt.find("Finished: ABORTED")
-                                if isAbort == -1:
-                                    isSuccess = consoleOpt.find("Finished: SUCCESS")
-                                    if isSuccess == -1:
-                                        project_plan_obj.proOnBuilding = False
-                                        project_plan_obj.proBuildStatus = False
-                                        project_plan_obj.save()
-                                        deployDetails[i].buildStatus = False
-                                        deployDetails[i].save()
-                                        res = "项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % (
-                                            project_obj.name, relVersion, server_obj.name)
-                                        logger.info(res)
-                                        buildMessages.append('deploy_failed')
-                                        buildMessages.append(res)
-                                        buildMessages.append(uniqueKey)
-                                        request.websocket.send(json.dumps(buildMessages))
-                                        request.websocket.close()
-                                        consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
-                                                                           project=project_obj,
-                                                                           content=consoleOpt, packageId=relVersion,
-                                                                           buildStatus=False, deployUser=member_obj,
-                                                                           uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                        consoleOpt_obj.save()
-                                        break
+                                status = pythonJenkins_obj.deploy()
+                                if status:
+                                    buildInfo = pythonJenkins_obj.get_building_info()
+                                    while not buildInfo:
+                                        time.sleep(1)
+                                        buildInfo = pythonJenkins_obj.get_building_info()
+                                    url = buildInfo['url'] + "console"
+                                    buildMessages.append("start_deploy")
+                                    buildMessages.append(url)
+                                    request.websocket.send(json.dumps(buildMessages))
+                                    info = pythonJenkins_obj.get_build_console(buildNumber)
+                                    consoleOpt = info['consoleOpt']
+                                    isAbort = consoleOpt.find("Finished: ABORTED")
+                                    if isAbort == -1:
+                                        isSuccess = consoleOpt.find("Finished: SUCCESS")
+                                        if isSuccess == -1:
+                                            project_plan_obj.proOnBuilding = False
+                                            project_plan_obj.proBuildStatus = False
+                                            project_plan_obj.save()
+                                            deployDetails[i].buildStatus = False
+                                            deployDetails[i].save()
+                                            res = "项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % (
+                                                project_obj.name, relVersion, server_obj.name)
+                                            logger.info(res)
+                                            buildMessages.append('deploy_failed')
+                                            buildMessages.append(res)
+                                            buildMessages.append(uniqueKey)
+                                            request.websocket.send(json.dumps(buildMessages))
+                                            request.websocket.close()
+                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                               project=project_obj,
+                                                                               content=consoleOpt, packageId=relVersion,
+                                                                               buildStatus=False, deployUser=member_obj,
+                                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                            consoleOpt_obj.save()
+                                            break
+                                        else:
+                                            res = "项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
+                                                project_obj.name, relVersion, server_obj.name)
+                                            logger.info(res)
+                                            buildMessages.append(res)
+                                            buildMessages.append(uniqueKey)
+                                            request.websocket.send(json.dumps(buildMessages))
+                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                               project=project_obj, content=consoleOpt,
+                                                                               packageId=relVersion, buildStatus=True,
+                                                                               deployUser=member_obj,
+                                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                            consoleOpt_obj.save()
+                                            deployDetails[i].buildStatus = True
+                                            deployDetails[i].save()
                                     else:
-                                        res = "项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
-                                            project_obj.name, relVersion, server_obj.name)
-                                        logger.info(res)
-                                        buildMessages.append(res)
-                                        buildMessages.append(uniqueKey)
-                                        request.websocket.send(json.dumps(buildMessages))
-                                        consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
-                                                                           project=project_obj, content=consoleOpt,
-                                                                           packageId=relVersion, buildStatus=True,
-                                                                           deployUser=member_obj,
-                                                                           uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                        consoleOpt_obj.save()
-                                        deployDetails[i].buildStatus = True
-                                        deployDetails[i].save()
+                                        flag = False
+                                        logger.info("项目%s已终止！" % project_obj.name)
+                                        break
                                 else:
+                                    logger.error("Jenkins JOB %s不存在" % jenkinsPro_obj.name)
+                                    res = "Jenkins JOB %s不存在" % jenkinsPro_obj.name
+                                    buildMessages.append('no_jenkinsJob')
+                                    buildMessages.append(res)
+                                    request.websocket.send(json.dumps(buildMessages))
+                                    request.websocket.close()
                                     flag = False
-                                    logger.info("项目%s已终止！" % project_obj.name)
                                     break
                             project_plan_obj.proOnBuilding = False
                             project_plan_obj.save()
@@ -1423,56 +1455,70 @@ def ws_selectNodesDeploy(request):
                                 params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
                                 pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
                                 buildNumber = pythonJenkins_obj.realConsole()
-                                url = "http://jenkinspro.bestjlb.cn/view/PRO-Server/job/" + jenkinsPro_obj.name + "/" + str(
-                                    buildNumber) + "/console"
-                                buildMessages.append('start_deploy')
-                                buildMessages.append(url)
-                                request.websocket.send(json.dumps(buildMessages))
-                                info = pythonJenkins_obj.deploy()
-                                consoleOpt = info['consoleOpt']
-                                isSuccess = consoleOpt.find("Finished: SUCCESS")
-                                isAbort = consoleOpt.find("Finished: ABORTED")
-                                if isAbort == -1:
-                                    if isSuccess == -1:
-                                        fail_deploys = False
-                                        project_plan_obj.proOnBuilding = False
-                                        project_plan_obj.proBuildStatus = False
-                                        project_plan_obj.save()
-                                        deployDetail_obj.buildStatus = False
-                                        deployDetail_obj.save()
-                                        res = "项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % (
-                                            project_plan_obj.project.name, relVersion, server_obj.name)
-                                        logger.info(res)
-                                        buildMessages.append('deploy_failed')
-                                        buildMessages.append(res)
-                                        buildMessages.append(uniqueKey)
-                                        request.websocket.send(json.dumps(buildMessages))
-                                        request.websocket.close()
-                                        consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
-                                                                           project=project_plan_obj.project,
-                                                                           content=consoleOpt, packageId=relVersion,
-                                                                           buildStatus=False, deployUser=member_obj,
-                                                                           uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                        consoleOpt_obj.save()
-                                        break
+                                status = pythonJenkins_obj.deploy()
+                                if status:
+                                    buildInfo = pythonJenkins_obj.get_building_info()
+                                    while not buildInfo:
+                                        time.sleep(1)
+                                        buildInfo = pythonJenkins_obj.get_building_info()
+                                    url = buildInfo['url'] + "console"
+                                    buildMessages.append("start_deploy")
+                                    buildMessages.append(url)
+                                    request.websocket.send(json.dumps(buildMessages))
+                                    info = pythonJenkins_obj.get_build_console(buildNumber)
+                                    consoleOpt = info['consoleOpt']
+                                    isAbort = consoleOpt.find("Finished: ABORTED")
+                                    if isAbort == -1:
+                                        isSuccess = consoleOpt.find("Finished: SUCCESS")
+                                        if isSuccess == -1:
+                                            fail_deploys = False
+                                            project_plan_obj.proOnBuilding = False
+                                            project_plan_obj.proBuildStatus = False
+                                            project_plan_obj.save()
+                                            deployDetail_obj.buildStatus = False
+                                            deployDetail_obj.save()
+                                            res = "项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % (
+                                                project_plan_obj.project.name, relVersion, server_obj.name)
+                                            logger.info(res)
+                                            buildMessages.append('deploy_failed')
+                                            buildMessages.append(res)
+                                            buildMessages.append(uniqueKey)
+                                            request.websocket.send(json.dumps(buildMessages))
+                                            request.websocket.close()
+                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                               project=project_plan_obj.project,
+                                                                               content=consoleOpt, packageId=relVersion,
+                                                                               buildStatus=False, deployUser=member_obj,
+                                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                            consoleOpt_obj.save()
+                                            break
+                                        else:
+                                            res = "项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
+                                                project_plan_obj.project.name, relVersion, server_obj.name)
+                                            logger.info(res)
+                                            buildMessages.append(res)
+                                            buildMessages.append(uniqueKey)
+                                            request.websocket.send(json.dumps(buildMessages))
+                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                               project=project_plan_obj.project,
+                                                                               content=consoleOpt, packageId=relVersion,
+                                                                               buildStatus=True, deployUser=member_obj,
+                                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                            consoleOpt_obj.save()
+                                            deployDetail_obj.buildStatus = True
+                                            deployDetail_obj.save()
                                     else:
-                                        res = "项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
-                                            project_plan_obj.project.name, relVersion, server_obj.name)
-                                        logger.info(res)
-                                        buildMessages.append(res)
-                                        buildMessages.append(uniqueKey)
-                                        request.websocket.send(json.dumps(buildMessages))
-                                        consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
-                                                                           project=project_plan_obj.project,
-                                                                           content=consoleOpt, packageId=relVersion,
-                                                                           buildStatus=True, deployUser=member_obj,
-                                                                           uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                        consoleOpt_obj.save()
-                                        deployDetail_obj.buildStatus = True
-                                        deployDetail_obj.save()
+                                        flag = False
+                                        logger.info("项目%s已终止发布！" % project_plan_obj.project.name)
+                                        break
                                 else:
+                                    logger.error("Jenkins JOB %s不存在" % jenkinsPro_obj.name)
+                                    res = "Jenkins JOB %s不存在" % jenkinsPro_obj.name
+                                    buildMessages.append('no_jenkinsJob')
+                                    buildMessages.append(res)
+                                    request.websocket.send(json.dumps(buildMessages))
+                                    request.websocket.close()
                                     flag = False
-                                    logger.info("项目%s已终止发布！" % project_plan_obj.project.name)
                                     break
                             project_plan_obj.proOnBuilding = False
                             project_plan_obj.save()
