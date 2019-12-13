@@ -50,15 +50,26 @@ class pythonJenkins:
         jenkins_url = models.paramConfig.objects.get(name='jenkins_url')
         user = models.paramConfig.objects.get(name='jenkins_user')
         jenkinsJob = self.jenkinsJob
+        server = self.server
         url = "http://" + user.param + ":" + token.param + "@" + jenkins_url.param.split("//")[
             1] + "job/" + jenkinsJob + "/" + str(number) + "/stop"
         info = dict()
         try:
             subprocess.check_output(['curl', "-X", "POST", url])
-            info['result'] = True
+            consoleOpt = server.get_build_console_output(jenkinsJob, number)
+            isSuccess = consoleOpt.find("Finished: SUCCESS")
+            isFailure = consoleOpt.find("Finished: FAILURE")
+            isAbort = consoleOpt.find("Finished: ABORTED")
+            while isSuccess == -1 and isFailure == -1 and isAbort == -1:
+                time.sleep(1)
+                consoleOpt = server.get_build_console_output(jenkinsJob, number)
+                isSuccess = consoleOpt.find("Finished: SUCCESS")
+                isFailure = consoleOpt.find("Finished: FAILURE")
+                isAbort = consoleOpt.find("Finished: ABORTED")
+            info['consoleOpt'] = consoleOpt
         except subprocess.CalledProcessError:
             logger.error("job %s终止失败！" % jenkinsJob)
-            info['result'] = False
+            info['consoleOpt'] = None
 
         return info
 

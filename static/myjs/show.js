@@ -1633,10 +1633,10 @@ layui.use(['element', 'layer'], function () {
                                 layer.closeAll();
                             }
                         });
-                    } else if (data.stop === true) {
+                    } else if (data.start === false){
                         var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
                             "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
-                            data.project + "已经终止发布！" +
+                            data.project + "未进行发布！" +
                             "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
                             "aria-label=\"Close\">\n" +
                             "<span aria-hidden=\"true\">&times;</span>\n" +
@@ -1646,18 +1646,55 @@ layui.use(['element', 'layer'], function () {
                         $(`#${tr_id} #startOneDeploy`).show();
                         $(`#${tr_id} #select-nodes-deploy`).show();
                         $(`#${tr_id} #stopDeploy`).hide();
-                        tr.children("td#progress").html("已终止");
+                        tr.children("td#progress").html("无");
                         tr.children("td#jenkinsConsole").html("无");
-                    } else {
-                        var html2 = "<div class=\"sufee-alert alert with-close alert-warning alert-dismissible\">\n" +
-                            "<span class=\"badge badge-pill badge-primary\">Fail</span>\n" +
-                            data.project + "终止发布失败！" +
+                    }
+                    else if (data.stop === true) {
+                        var html2 = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                            data.project + "已经终止发布！" +
                             "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
                             "aria-label=\"Close\">\n" +
                             "<span aria-hidden=\"true\">&times;</span>\n" +
                             "</button>\n" +
                             "</div>";
                         $('#buildMessage').html(html2);
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
+                        tr.children("td#progress").html("已终止");
+                        tr.children("td#jenkinsConsole").html("无");
+                    } else if (data.build === true){
+                        var html3 = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                            data.project + "已经发布完成！" +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#buildMessage').html(html3);
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
+                        tr.children("td#progress").html("发布成功");
+                        tr.children("td#jenkinsConsole").html("无");
+                    }
+                    else {
+                        var html4 = "<div class=\"sufee-alert alert with-close alert-warning alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Fail</span>\n" +
+                            data.project + "已经发布，并且发布失败！" +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#buildMessage').html(html4);
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
+                        tr.children("td#progress").html("发布失败");
+                        tr.children("td#jenkinsConsole").html("无");
                     }
                 },
                 error: function () {

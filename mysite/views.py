@@ -1552,28 +1552,41 @@ def ajax_stopDeploy(request):
             pythonJenkins_obj = pythonJenkins(proJenkins_obj.name, {})
             buildNumber = pythonJenkins_obj.get_building_info()['number']
             if buildNumber:
-                status = pythonJenkins_obj.stop_build(buildNumber)
-                if status:
-                    ret = {
-                        'role': True,
-                        'stop': True,
-                        'project': project_plan_obj.project.name
-                    }
+                info = pythonJenkins_obj.stop_build(buildNumber)
+                consoleOpt = info['consoleOpt']
+                isAbort = consoleOpt.find("Finished: ABORTED")
+                isSuccess = consoleOpt.find("Finished: SUCCESS")
+                if isAbort == -1:
+                    if isSuccess == -1:
+                        ret = {
+                            'role': True,
+                            'stop': False,
+                            'build': False,
+                            'project': project_plan_obj.project.name
+                        }
+                    else:
+                        ret = {
+                            'role': True,
+                            'stop': False,
+                            'build': True,
+                            'project': project_plan_obj.project.name
+                        }
                 else:
                     ret = {
                         'role': True,
-                        'stop': False,
+                        'stop': True,
+                        'build': False,
                         'project': project_plan_obj.project.name
                     }
             else:
                 ret = {
                     'role': True,
-                    'stop': True
+                    'start': False,
                 }
         else:
             ret = {
                 'role': True,
-                'stop': True
+                'start': False
             }
     else:
         ret = {
