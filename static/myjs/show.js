@@ -528,7 +528,6 @@ layui.use(['element', 'layer'], function () {
         function ok() {
             var postData = {};
             var planId = getQueryVariable('pid');
-            console.log(planId);
             postData['planId'] = planId;
 
             $.ajax({
@@ -1751,5 +1750,58 @@ layui.use(['element', 'layer'], function () {
                 }
             })
         }
+    });
+});
+//释放预发独占锁
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", "#releaseExclusiveKey", function () {
+        var arrayObj = new Array();
+        $.each($('input:checkbox:checked'), function () {
+            arrayObj.push($(this).parent().parent().children().eq(1).html());
+        });
+        console.log(arrayObj[0]);
+
+        $.ajax({
+            url: '/ajax_releaseExclusiveKey',
+            type: 'POST',
+            traditional:true,
+            dataType: "json",
+            data: {'ids': arrayObj},
+
+            success: function (data) {
+                if (data.role === false) {
+                    layer.open({
+                        type: 1
+                        , title: '警告'
+                        , content: '<div style="padding: 20px 100px;">' + "你没有释放预发独占锁的权限" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                } else if (data.release === true) {
+                    layer.open({
+                        type: 1
+                        , title: '警告'
+                        , content: '<div style="padding: 20px 100px;">' + "预发独占锁已经释放！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                }
+            },
+            error: function () {
+                console.log("error");
+            }
+        })
     });
 });

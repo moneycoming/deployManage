@@ -752,6 +752,26 @@ def ajax_get_ip(request):
         return HttpResponse(json.dumps(d), "application/json")
 
 
+# 释放预发独占锁
+@login_required
+@csrf_exempt
+@require_http_methods(["GET"])
+def ajax_get_project(request):
+    planId = request.GET['id']
+    plan_obj = models.plan.objects.get(id=planId)
+    project_plans = models.project_plan.objects.filter(plan=plan_obj)
+    d = dict()
+    names = list()
+    codes = list()
+    for i in range(len(project_plans)):
+        names.append(project_plans[i].project.name)
+        codes.append(project_plans[i].id)
+    d['code'] = codes
+    d['name'] = names
+
+    return HttpResponse(json.dumps(d), "application/json")
+
+
 @login_required
 def fileKeySearch(request):
     if request.method == 'POST':
@@ -1640,3 +1660,34 @@ def ajax_stopDeploy(request):
         }
 
     return HttpResponse(json.dumps(ret), "application/json")
+
+
+# 释放预发独占锁
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def ajax_releaseExclusiveKey(request):
+    ids = request.POST.getlist('ids')
+    if ids:
+        project_plan_obj = models.project_plan.objects.get(id=ids[0])
+        production_members = models.production_member.objects.filter(production=project_plan_obj.plan.production)
+        member_obj = models.member.objects.get(user=request.user)
+        isMember = False
+        for m in range(len(production_members)):
+            if member_obj == production_members[m].member:
+                isMember = True
+        if isMember and member_obj.user.has_perm('mysite.can_check_project'):
+            for project_plan_id in ids:
+                project_plan_obj = models.project_plan.objects.get(id=project_plan_id)
+                if project_plan_obj.exclusiveKey:
+                    project_plan_obj.exclusiveKey = False
+                    project_plan_obj.save()
+            ret = {
+                'role': True,
+                'release': True
+            }
+        else:
+            ret = {
+                'role': False
+            }
+        return HttpResponse(json.dumps(ret), "application/json")

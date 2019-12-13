@@ -421,6 +421,7 @@
         }
     };
 </script>
+<!--选节点部署-->
 <script>
     function selectIP(id) {
 
@@ -438,6 +439,29 @@
                         "<td>" + data.project_plan_id + "</td>\n" +
                         "<td>" + data.name[i] + "</td>\n" +
                         "<td>" + data.ip[i] + "</td>\n" +
+                        "</tr>");
+                }
+            }
+        })
+    }
+</script>
+<!--释放预发独占锁-->
+<script>
+    function selectProject(id) {
+
+        $('#select-project tbody tr').remove();
+        $.ajax({
+            url: '/ajax_get_project',
+            type: 'GET',
+            dataType: 'json',
+            data: {'id': id},
+
+            success: function (data) {
+                for (var i = 0; i < data.name.length; i++) {
+                    $('#select-project tbody').append("<tr>\n" +
+                        "<td><input type=\"checkbox\" title=\"node\"></td>\n" +
+                        "<td>" + data.code[i] + "</td>\n" +
+                        "<td>" + data.name[i] + "</td>\n" +
                         "</tr>");
                 }
             }
