@@ -577,7 +577,6 @@ def ajax_uatCheck(request):
 def ajax_createUatBranch(request):
     planId = request.POST.get('pid')
     projectId = request.POST.get('prjId')
-
     if projectId and planId:
         project_obj = models.project.objects.get(id=projectId)
         plan_obj = models.plan.objects.get(id=planId)
@@ -590,38 +589,46 @@ def ajax_createUatBranch(request):
             if member_obj == production_members[m].member:
                 isMember = True
         if isMember and member_obj.user.has_perm("mysite.can_check_project"):
-            option = request.POST.get('radio')
-            if option == "option1":
-                uatBranch = request.POST.get('uatBranch')
-                status = True
-            else:
-                now = datetime.datetime.now()
-                branchCode = now.strftime('%Y%m%d%I%M')
-                uatBranch = "uat-"
-                uatBranch += branchCode
-                branch_obj.create_branch(uatBranch)
-                status = branch_obj.merge_branch(project_plan_obj.devBranch, uatBranch)
+            if not plan_obj.uatCheck:
+                option = request.POST.get('radio')
+                if option == "option1":
+                    uatBranch = request.POST.get('uatBranch')
+                    status = True
+                else:
+                    now = datetime.datetime.now()
+                    branchCode = now.strftime('%Y%m%d%I%M')
+                    uatBranch = "uat-"
+                    uatBranch += branchCode
+                    branch_obj.create_branch(uatBranch)
+                    status = branch_obj.merge_branch(project_plan_obj.devBranch, uatBranch)
 
-            if status:
-                if project_plan_obj.uatBranch:
-                    delStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
-                    if not delStatus:
-                        logger.info("原预发分支%s删除失败！" % project_plan_obj.uatBranch)
-                project_plan_obj.uatBranch = uatBranch
-                project_plan_obj.save()
-                res = "预发分支：%s创建成功！" % uatBranch
-                ret = {
-                    'role': 1,
-                    'result': 1,
-                    'res': res,
-                    'uatBranch': uatBranch
-                }
+                if status:
+                    if project_plan_obj.uatBranch:
+                        delStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
+                        if not delStatus:
+                            logger.info("原预发分支%s删除失败！" % project_plan_obj.uatBranch)
+                    project_plan_obj.uatBranch = uatBranch
+                    project_plan_obj.save()
+                    res = "预发分支：%s创建成功！" % uatBranch
+                    ret = {
+                        'role': 1,
+                        'result': 1,
+                        'res': res,
+                        'check': 0,
+                        'uatBranch': uatBranch
+                    }
+                else:
+                    res = "预发分支：%s创建失败,分支合并冲突，请手工处理！" % uatBranch
+                    ret = {
+                        'role': 1,
+                        'result': 0,
+                        'check': 0,
+                        'res': res
+                    }
             else:
-                res = "预发分支：%s创建失败,分支合并冲突，请手工处理！" % uatBranch
                 ret = {
                     'role': 1,
-                    'result': 0,
-                    'res': res
+                    'check': 1
                 }
         else:
             ret = {
@@ -949,87 +956,108 @@ def ws_uatDeploy(request):
                         exclusivePlan.append(project_plans[k].plan.name)
                     if not project_plans or project_plan_obj.exclusiveKey:
                         if project_plan_obj.uatBranch:
-                            if not project_plan_obj.uatOnBuilding:
-                                project_servers = models.project_server.objects.filter(project=project_obj,
-                                                                                       server__type=0)
-                                jenkinsUat_obj = models.jenkinsUat.objects.get(project=project_obj)
-                                project_plan_obj.exclusiveKey = True
-                                project_plan_obj.uatOnBuilding = True
-                                project_plan_obj.save()
-                                deployDetails = models.deployDetail.objects.filter(project_plan=project_plan_obj)
-                                for j in range(len(deployDetails)):
-                                    deployDetails[j].buildStatus = False
-                                    deployDetails[j].save()
-                                for i in range(len(project_servers)):
-                                    params = eval(jenkinsUat_obj.param)
-                                    server_obj = project_servers[i].server
-                                    uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
-                                    params.update(SERVER_IP=server_obj.ip, BRANCH=project_plan_obj.uatBranch)
-                                    logger.info("param：%s" % params)
-                                    pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, params)
-                                    logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
-                                    request.websocket.send(json.dumps(buildMessage))
-                                    buildNumber = pythonJenkins_obj.realConsole()
-                                    status = pythonJenkins_obj.deploy()
-                                    if status:
-                                        buildInfo = pythonJenkins_obj.get_building_info()
-                                        while not buildInfo:
-                                            time.sleep(1)
+                            uatBranch_createDate = int(project_plan_obj.uatBranch.split('-')[1])
+                            post_project_plans = models.project_plan.objects.filter(project=project_obj,
+                                                                                    proBuildStatus=True)
+                            isBranchOutOfDate = False
+                            for item in range(len(post_project_plans)):
+                                post_deployBranch_createDate = int(post_project_plans[item].deployBranch.split('-')[1])
+                                if post_deployBranch_createDate > uatBranch_createDate:
+                                    isBranchOutOfDate = True
+                                    break
+                            if not isBranchOutOfDate:
+                                if not project_plan_obj.uatOnBuilding:
+                                    project_servers = models.project_server.objects.filter(project=project_obj,
+                                                                                           server__type=0)
+                                    jenkinsUat_obj = models.jenkinsUat.objects.get(project=project_obj)
+                                    project_plan_obj.exclusiveKey = True
+                                    project_plan_obj.uatOnBuilding = True
+                                    project_plan_obj.save()
+                                    deployDetails = models.deployDetail.objects.filter(project_plan=project_plan_obj)
+                                    for j in range(len(deployDetails)):
+                                        deployDetails[j].buildStatus = False
+                                        deployDetails[j].save()
+                                    for i in range(len(project_servers)):
+                                        params = eval(jenkinsUat_obj.param)
+                                        server_obj = project_servers[i].server
+                                        uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
+                                        params.update(SERVER_IP=server_obj.ip, BRANCH=project_plan_obj.uatBranch)
+                                        logger.info("param：%s" % params)
+                                        pythonJenkins_obj = pythonJenkins(jenkinsUat_obj.name, params)
+                                        logger.info("分支%s执行部署" % project_plan_obj.uatBranch)
+                                        request.websocket.send(json.dumps(buildMessage))
+                                        buildNumber = pythonJenkins_obj.realConsole()
+                                        status = pythonJenkins_obj.deploy()
+                                        if status:
                                             buildInfo = pythonJenkins_obj.get_building_info()
-                                        url = buildInfo['url'] + "console"
-                                        buildMessage.append("deploy")
-                                        buildMessage.append(url)
-                                        request.websocket.send(json.dumps(buildMessage))
-                                        info = pythonJenkins_obj.get_build_console(buildNumber)
-                                        consoleOpt = info['consoleOpt']
-                                        isSuccess = consoleOpt.find("Finished: SUCCESS")
-                                        if isSuccess != -1:
-                                            result = True
-                                            project_plan_obj.uatBuildStatus = True
-                                            project_plan_obj.lastPackageId = buildNumber
-                                            project_plan_obj.save()
-                                            res = "分支%s部署成功" % project_plan_obj.uatBranch
-                                            logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
-                                            buildMessage.append("success")
-                                            buildMessage.append(res)
-                                            buildMessage.append(buildNumber)
+                                            while not buildInfo:
+                                                time.sleep(1)
+                                                buildInfo = pythonJenkins_obj.get_building_info()
+                                            url = buildInfo['url'] + "console"
+                                            buildMessage.append("deploy")
+                                            buildMessage.append(url)
                                             request.websocket.send(json.dumps(buildMessage))
-                                            request.websocket.close()
-                                            if project_plan_obj.proBuildStatus:
-                                                project_plan_obj.proBuildStatus = False
+                                            info = pythonJenkins_obj.get_build_console(buildNumber)
+                                            consoleOpt = info['consoleOpt']
+                                            isSuccess = consoleOpt.find("Finished: SUCCESS")
+                                            if isSuccess != -1:
+                                                result = True
+                                                project_plan_obj.uatBuildStatus = True
+                                                project_plan_obj.lastPackageId = buildNumber
                                                 project_plan_obj.save()
-                                        else:
-                                            result = False
-                                            res = "分支%s部署失败" % project_plan_obj.uatBranch
-                                            logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
-                                            project_plan_obj.uatBuildStatus = False
+                                                res = "分支%s部署成功" % project_plan_obj.uatBranch
+                                                logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
+                                                buildMessage.append("success")
+                                                buildMessage.append(res)
+                                                buildMessage.append(buildNumber)
+                                                request.websocket.send(json.dumps(buildMessage))
+                                                request.websocket.close()
+                                                if project_plan_obj.proBuildStatus:
+                                                    project_plan_obj.proBuildStatus = False
+                                                    project_plan_obj.save()
+                                            else:
+                                                result = False
+                                                res = "分支%s部署失败" % project_plan_obj.uatBranch
+                                                logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
+                                                project_plan_obj.uatBuildStatus = False
+                                                project_plan_obj.save()
+                                                buildMessage.append("fail")
+                                                buildMessage.append(res)
+                                                buildMessage.append(uniqueKey)
+                                                request.websocket.send(json.dumps(buildMessage))
+                                                request.websocket.close()
+                                            consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj,
+                                                                               project=project_obj,
+                                                                               content=consoleOpt,
+                                                                               packageId=buildNumber,
+                                                                               buildStatus=result,
+                                                                               deployTime=deployTime,
+                                                                               deployUser=member_obj,
+                                                                               uniqueKey=uniqueKey,
+                                                                               uniteKey=uniteKey)
+                                            consoleOpt_obj.save()
+                                            project_plan_obj.deployBranch = project_plan_obj.uatBranch
                                             project_plan_obj.save()
-                                            buildMessage.append("fail")
+                                        else:
+                                            logger.info("jenkins Job %s不存在！" % jenkinsUat_obj.name)
+                                            res = "jenkins Job %s不存在！" % jenkinsUat_obj.name
+                                            buildMessage.append("no_jenkinsJob")
                                             buildMessage.append(res)
-                                            buildMessage.append(uniqueKey)
                                             request.websocket.send(json.dumps(buildMessage))
                                             request.websocket.close()
-                                        consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj, project=project_obj,
-                                                                           content=consoleOpt, packageId=buildNumber,
-                                                                           buildStatus=result, deployTime=deployTime,
-                                                                           deployUser=member_obj, uniqueKey=uniqueKey,
-                                                                           uniteKey=uniteKey)
-                                        consoleOpt_obj.save()
-                                        project_plan_obj.deployBranch = project_plan_obj.uatBranch
-                                        project_plan_obj.save()
-                                    else:
-                                        logger.info("jenkins Job %s不存在！" % jenkinsUat_obj.name)
-                                        res = "jenkins Job %s不存在！" % jenkinsUat_obj.name
-                                        buildMessage.append("no_jenkinsJob")
-                                        buildMessage.append(res)
-                                        request.websocket.send(json.dumps(buildMessage))
-                                        request.websocket.close()
-                                project_plan_obj.uatOnBuilding = False
-                                project_plan_obj.save()
+                                    project_plan_obj.uatOnBuilding = False
+                                    project_plan_obj.save()
+                                else:
+                                    logger.info("预发部署中，请不要重复执行！")
+                                    res = "预发部署中，请不要重复执行！"
+                                    buildMessage.append("on_building")
+                                    buildMessage.append(res)
+                                    request.websocket.send(json.dumps(buildMessage))
+                                    request.websocket.close()
                             else:
-                                logger.info("预发部署中，请不要重复执行！")
-                                res = "预发部署中，请不要重复执行！"
-                                buildMessage.append("on_building")
+                                logger.info("该预发分支已经过时，请重新创建！")
+                                res = "该预发分支已经过时，请重新创建！"
+                                buildMessage.append("out_of_date")
                                 buildMessage.append(res)
                                 request.websocket.send(json.dumps(buildMessage))
                                 request.websocket.close()
@@ -1221,128 +1249,142 @@ def ws_proOneProjectDeploy(request):
                 sequence_obj = models.sequence.objects.get(task=task_obj, segment__isCheck=True)
                 if not sequence_obj.implemented:
                     if not project_plan_obj.proOnBuilding:
-                        project_obj = project_plan_obj.project
-                        deployDetails = models.deployDetail.objects.filter(project_plan=project_plan_obj).order_by(
-                            'buildStatus')
-                        jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_obj)
-                        params = {}
-                        params.update(eval(jenkinsPro_obj.param))
-                        relVersion = project_plan_obj.lastPackageId
-                        project_plan_obj.proOnBuilding = True
-                        project_plan_obj.save()
-                        total = len(deployDetails)
-                        buildMessages.append(total)
-                        request.websocket.send(json.dumps(buildMessages))
-                        if relVersion:
-                            for i in range(len(deployDetails)):
-                                server_obj = deployDetails[i].server
-                                uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
-                                params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
-                                pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
-                                buildNumber = pythonJenkins_obj.realConsole()
-                                status = pythonJenkins_obj.deploy()
-                                if status:
-                                    buildInfo = pythonJenkins_obj.get_building_info()
-                                    while not buildInfo:
-                                        time.sleep(1)
-                                        buildInfo = pythonJenkins_obj.get_building_info()
-                                    url = buildInfo['url'] + "console"
-                                    buildMessages.append("start_deploy")
-                                    buildMessages.append(url)
-                                    request.websocket.send(json.dumps(buildMessages))
-                                    info = pythonJenkins_obj.get_build_console(buildNumber)
-                                    consoleOpt = info['consoleOpt']
-                                    isAbort = consoleOpt.find("Finished: ABORTED")
-                                    if isAbort == -1:
-                                        isSuccess = consoleOpt.find("Finished: SUCCESS")
-                                        if isSuccess == -1:
-                                            project_plan_obj.proOnBuilding = False
-                                            project_plan_obj.proBuildStatus = False
-                                            project_plan_obj.save()
-                                            deployDetails[i].buildStatus = False
-                                            deployDetails[i].save()
-                                            res = "项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % (
-                                                project_obj.name, relVersion, server_obj.name)
-                                            logger.info(res)
-                                            buildMessages.append('deploy_failed')
-                                            buildMessages.append(res)
-                                            buildMessages.append(uniqueKey)
-                                            request.websocket.send(json.dumps(buildMessages))
-                                            request.websocket.close()
-                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
-                                                                               project=project_obj,
-                                                                               content=consoleOpt, packageId=relVersion,
-                                                                               buildStatus=False, deployUser=member_obj,
-                                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                            consoleOpt_obj.save()
-                                            break
-                                        else:
-                                            res = "项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
-                                                project_obj.name, relVersion, server_obj.name)
-                                            logger.info(res)
-                                            buildMessages.append(res)
-                                            buildMessages.append(uniqueKey)
-                                            request.websocket.send(json.dumps(buildMessages))
-                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
-                                                                               project=project_obj, content=consoleOpt,
-                                                                               packageId=relVersion, buildStatus=True,
-                                                                               deployUser=member_obj,
-                                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                            consoleOpt_obj.save()
-                                            deployDetails[i].buildStatus = True
-                                            deployDetails[i].save()
-                                    else:
-                                        flag = False
-                                        logger.info("项目%s已终止！" % project_obj.name)
-                                        break
-                                else:
-                                    logger.error("Jenkins JOB %s不存在" % jenkinsPro_obj.name)
-                                    res = "Jenkins JOB %s不存在" % jenkinsPro_obj.name
-                                    buildMessages.append('no_jenkinsJob')
-                                    buildMessages.append(res)
-                                    request.websocket.send(json.dumps(buildMessages))
-                                    request.websocket.close()
-                                    flag = False
-                                    break
-                            project_plan_obj.proOnBuilding = False
+                        deployBranch_createDate = int(project_plan_obj.deployBranch.split('-')[1])
+                        post_project_plans = models.project_plan.objects.filter(project=project_plan_obj.project,
+                                                                                proBuildStatus=True)
+                        isBranchOutOfDate = False
+                        for item in range(len(post_project_plans)):
+                            post_deployBranch_createDate = int(post_project_plans[item].deployBranch.split('-')[1])
+                            if post_deployBranch_createDate > deployBranch_createDate:
+                                isBranchOutOfDate = True
+                                break
+                        if not isBranchOutOfDate:
+                            project_obj = project_plan_obj.project
+                            deployDetails = models.deployDetail.objects.filter(project_plan=project_plan_obj).order_by(
+                                'buildStatus')
+                            jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_obj)
+                            params = {}
+                            params.update(eval(jenkinsPro_obj.param))
+                            relVersion = project_plan_obj.lastPackageId
+                            project_plan_obj.proOnBuilding = True
                             project_plan_obj.save()
-                            fail_deploys = models.deployDetail.objects.filter(project_plan=project_plan_obj,
-                                                                              buildStatus=False)
-                            taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
-                                                                           deployUser=member_obj)
-                            taskBuildHistory_obj.save()
-                            if flag:
-                                if not fail_deploys:
-                                    project_plan_obj.proBuildStatus = True
-                                    project_plan_obj.save()
-                                    res = "项目：%s，部署完成！" % project_obj.name
-                                    buildMessages.append('deploy_success')
-                                    buildMessages.append(res)
-                                    request.websocket.send(json.dumps(buildMessages))
-                                    project_plans = models.project_plan.objects.filter(plan=project_plan_obj.plan,
-                                                                                       proBuildStatus=False)
-                                    if not project_plans:
-                                        sequence_obj = models.sequence.objects.filter(task=task_obj).get(
-                                            segment__isDeploy=True)
-                                        sequence_obj.implemented = True
-                                        sequence_obj.executor = member_obj
-                                        sequence_obj.executeDate = datetime.datetime.now()
-                                        sequence_obj.remarks = "已部署"
-                                        sequence_obj.executeCursor = False
-                                        sequence_obj.save()
-                                        nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task,
-                                                                                          priority__gt=sequence_obj.priority).order_by(
-                                            'priority')[0]
-                                        nextSequence_obj.executeCursor = True
-                                        nextSequence_obj.save()
-                                        buildMessages.append('sequence_success')
+                            total = len(deployDetails)
+                            buildMessages.append(total)
+                            request.websocket.send(json.dumps(buildMessages))
+                            if relVersion:
+                                for i in range(len(deployDetails)):
+                                    server_obj = deployDetails[i].server
+                                    uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
+                                    params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
+                                    pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
+                                    buildNumber = pythonJenkins_obj.realConsole()
+                                    status = pythonJenkins_obj.deploy()
+                                    if status:
+                                        buildInfo = pythonJenkins_obj.get_building_info()
+                                        while not buildInfo:
+                                            time.sleep(1)
+                                            buildInfo = pythonJenkins_obj.get_building_info()
+                                        url = buildInfo['url'] + "console"
+                                        buildMessages.append("start_deploy")
+                                        buildMessages.append(url)
                                         request.websocket.send(json.dumps(buildMessages))
-                                    request.websocket.close()
+                                        info = pythonJenkins_obj.get_build_console(buildNumber)
+                                        consoleOpt = info['consoleOpt']
+                                        isAbort = consoleOpt.find("Finished: ABORTED")
+                                        if isAbort == -1:
+                                            isSuccess = consoleOpt.find("Finished: SUCCESS")
+                                            if isSuccess == -1:
+                                                project_plan_obj.proOnBuilding = False
+                                                project_plan_obj.proBuildStatus = False
+                                                project_plan_obj.save()
+                                                deployDetails[i].buildStatus = False
+                                                deployDetails[i].save()
+                                                res = "项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % (
+                                                    project_obj.name, relVersion, server_obj.name)
+                                                logger.info(res)
+                                                buildMessages.append('deploy_failed')
+                                                buildMessages.append(res)
+                                                buildMessages.append(uniqueKey)
+                                                request.websocket.send(json.dumps(buildMessages))
+                                                request.websocket.close()
+                                                consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                                   project=project_obj,
+                                                                                   content=consoleOpt, packageId=relVersion,
+                                                                                   buildStatus=False, deployUser=member_obj,
+                                                                                   uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                                consoleOpt_obj.save()
+                                                break
+                                            else:
+                                                res = "项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
+                                                    project_obj.name, relVersion, server_obj.name)
+                                                logger.info(res)
+                                                buildMessages.append(res)
+                                                buildMessages.append(uniqueKey)
+                                                request.websocket.send(json.dumps(buildMessages))
+                                                consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                                   project=project_obj, content=consoleOpt,
+                                                                                   packageId=relVersion, buildStatus=True,
+                                                                                   deployUser=member_obj,
+                                                                                   uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                                consoleOpt_obj.save()
+                                                deployDetails[i].buildStatus = True
+                                                deployDetails[i].save()
+                                        else:
+                                            flag = False
+                                            logger.info("项目%s已终止！" % project_obj.name)
+                                            break
+                                    else:
+                                        logger.error("Jenkins JOB %s不存在" % jenkinsPro_obj.name)
+                                        res = "Jenkins JOB %s不存在" % jenkinsPro_obj.name
+                                        buildMessages.append('no_jenkinsJob')
+                                        buildMessages.append(res)
+                                        request.websocket.send(json.dumps(buildMessages))
+                                        request.websocket.close()
+                                        flag = False
+                                        break
+                                project_plan_obj.proOnBuilding = False
+                                project_plan_obj.save()
+                                fail_deploys = models.deployDetail.objects.filter(project_plan=project_plan_obj,
+                                                                                  buildStatus=False)
+                                taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
+                                                                               deployUser=member_obj)
+                                taskBuildHistory_obj.save()
+                                if flag:
+                                    if not fail_deploys:
+                                        project_plan_obj.proBuildStatus = True
+                                        project_plan_obj.save()
+                                        res = "项目：%s，部署完成！" % project_obj.name
+                                        buildMessages.append('deploy_success')
+                                        buildMessages.append(res)
+                                        request.websocket.send(json.dumps(buildMessages))
+                                        project_plans = models.project_plan.objects.filter(plan=project_plan_obj.plan,
+                                                                                           proBuildStatus=False)
+                                        if not project_plans:
+                                            sequence_obj = models.sequence.objects.filter(task=task_obj).get(
+                                                segment__isDeploy=True)
+                                            sequence_obj.implemented = True
+                                            sequence_obj.executor = member_obj
+                                            sequence_obj.executeDate = datetime.datetime.now()
+                                            sequence_obj.remarks = "已部署"
+                                            sequence_obj.executeCursor = False
+                                            sequence_obj.save()
+                                            nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task,
+                                                                                              priority__gt=sequence_obj.priority).order_by(
+                                                'priority')[0]
+                                            nextSequence_obj.executeCursor = True
+                                            nextSequence_obj.save()
+                                            buildMessages.append('sequence_success')
+                                            request.websocket.send(json.dumps(buildMessages))
+                                        request.websocket.close()
+                            else:
+                                logger.info("项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name)
+                                res = "项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name
+                                buildMessages.append(res)
+                                buildMessages.append('no_reversion')
+                                request.websocket.send(json.dumps(buildMessages))
+                                request.websocket.close()
                         else:
-                            logger.info("项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name)
-                            res = "项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_obj.name
-                            buildMessages.append(res)
-                            buildMessages.append('no_reversion')
+                            buildMessages.append('out_of_date')
                             request.websocket.send(json.dumps(buildMessages))
                             request.websocket.close()
                     else:
@@ -1454,133 +1496,147 @@ def ws_selectNodesDeploy(request):
             sequence_obj = models.sequence.objects.get(task=task_obj, segment__isCheck=True)
             if not sequence_obj.implemented:
                 if not project_plan_obj.proOnBuilding:
-                    jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_plan_obj.project)
-                    params = dict()
-                    params.update(eval(jenkinsPro_obj.param))
-                    relVersion = project_plan_obj.lastPackageId
-                    project_plan_obj.proOnBuilding = True
-                    project_plan_obj.save()
-                    servers = str(ips, encoding="utf-8").split(',')[1:]
-                    total = len(servers)
-                    buildMessages.append(total)
-                    request.websocket.send(json.dumps(buildMessages))
-                    if relVersion:
-                        if servers:
-                            fail_deploys = True
-                            for i in servers:
-                                server_obj = models.server.objects.get(ip=i)
-                                deployDetail_obj = models.deployDetail.objects.get(project_plan=project_plan_obj,
-                                                                                   server=server_obj)
-                                uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
-                                params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
-                                pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
-                                buildNumber = pythonJenkins_obj.realConsole()
-                                status = pythonJenkins_obj.deploy()
-                                if status:
-                                    buildInfo = pythonJenkins_obj.get_building_info()
-                                    while not buildInfo:
-                                        time.sleep(1)
+                    deployBranch_createDate = int(project_plan_obj.deployBranch.split('-')[1])
+                    post_project_plans = models.project_plan.objects.filter(project=project_plan_obj.project,
+                                                                            proBuildStatus=True)
+                    isBranchOutOfDate = False
+                    for item in range(len(post_project_plans)):
+                        post_deployBranch_createDate = int(post_project_plans[item].deployBranch.split('-')[1])
+                        if post_deployBranch_createDate > deployBranch_createDate:
+                            isBranchOutOfDate = True
+                            break
+                    if not isBranchOutOfDate:
+                        jenkinsPro_obj = models.jenkinsPro.objects.get(project=project_plan_obj.project)
+                        params = dict()
+                        params.update(eval(jenkinsPro_obj.param))
+                        relVersion = project_plan_obj.lastPackageId
+                        project_plan_obj.proOnBuilding = True
+                        project_plan_obj.save()
+                        servers = str(ips, encoding="utf-8").split(',')[1:]
+                        total = len(servers)
+                        buildMessages.append(total)
+                        request.websocket.send(json.dumps(buildMessages))
+                        if relVersion:
+                            if servers:
+                                fail_deploys = True
+                                for i in servers:
+                                    server_obj = models.server.objects.get(ip=i)
+                                    deployDetail_obj = models.deployDetail.objects.get(project_plan=project_plan_obj,
+                                                                                       server=server_obj)
+                                    uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]
+                                    params.update(SERVER_IP=server_obj.ip, REL_VERSION=relVersion)
+                                    pythonJenkins_obj = pythonJenkins(jenkinsPro_obj.name, params)
+                                    buildNumber = pythonJenkins_obj.realConsole()
+                                    status = pythonJenkins_obj.deploy()
+                                    if status:
                                         buildInfo = pythonJenkins_obj.get_building_info()
-                                    url = buildInfo['url'] + "console"
-                                    buildMessages.append("start_deploy")
-                                    buildMessages.append(url)
-                                    request.websocket.send(json.dumps(buildMessages))
-                                    info = pythonJenkins_obj.get_build_console(buildNumber)
-                                    consoleOpt = info['consoleOpt']
-                                    isAbort = consoleOpt.find("Finished: ABORTED")
-                                    if isAbort == -1:
-                                        isSuccess = consoleOpt.find("Finished: SUCCESS")
-                                        if isSuccess == -1:
-                                            fail_deploys = False
-                                            project_plan_obj.proOnBuilding = False
-                                            project_plan_obj.proBuildStatus = False
-                                            project_plan_obj.save()
-                                            deployDetail_obj.buildStatus = False
-                                            deployDetail_obj.save()
-                                            res = "项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % (
-                                                project_plan_obj.project.name, relVersion, server_obj.name)
-                                            logger.info(res)
-                                            buildMessages.append('deploy_failed')
-                                            buildMessages.append(res)
-                                            buildMessages.append(uniqueKey)
-                                            request.websocket.send(json.dumps(buildMessages))
-                                            request.websocket.close()
-                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
-                                                                               project=project_plan_obj.project,
-                                                                               content=consoleOpt, packageId=relVersion,
-                                                                               buildStatus=False, deployUser=member_obj,
-                                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                            consoleOpt_obj.save()
-                                            break
-                                        else:
-                                            res = "项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
-                                                project_plan_obj.project.name, relVersion, server_obj.name)
-                                            logger.info(res)
-                                            buildMessages.append(res)
-                                            buildMessages.append(uniqueKey)
-                                            request.websocket.send(json.dumps(buildMessages))
-                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
-                                                                               project=project_plan_obj.project,
-                                                                               content=consoleOpt, packageId=relVersion,
-                                                                               buildStatus=True, deployUser=member_obj,
-                                                                               uniqueKey=uniqueKey, uniteKey=uniteKey)
-                                            consoleOpt_obj.save()
-                                            deployDetail_obj.buildStatus = True
-                                            deployDetail_obj.save()
-                                    else:
-                                        flag = False
-                                        logger.info("项目%s已终止发布！" % project_plan_obj.project.name)
-                                        break
-                                else:
-                                    logger.error("Jenkins JOB %s不存在" % jenkinsPro_obj.name)
-                                    res = "Jenkins JOB %s不存在" % jenkinsPro_obj.name
-                                    buildMessages.append('no_jenkinsJob')
-                                    buildMessages.append(res)
-                                    request.websocket.send(json.dumps(buildMessages))
-                                    request.websocket.close()
-                                    flag = False
-                                    break
-                            project_plan_obj.proOnBuilding = False
-                            project_plan_obj.save()
-                            taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
-                                                                           deployUser=member_obj)
-                            taskBuildHistory_obj.save()
-
-                            if flag:
-                                if fail_deploys:
-                                    res = "项目：%s，部署完成！" % project_plan_obj.project.name
-                                    buildMessages.append('deploy_success')
-                                    buildMessages.append(res)
-                                    request.websocket.send(json.dumps(buildMessages))
-                                    all_fail_deploys = models.deployDetail.objects.filter(project_plan=project_plan_obj,
-                                                                                          buildStatus=False)
-                                    if not all_fail_deploys:
-                                        project_plan_obj.proBuildStatus = True
-                                        project_plan_obj.save()
-                                    project_plans = models.project_plan.objects.filter(plan=project_plan_obj.plan,
-                                                                                       proBuildStatus=False)
-                                    if not project_plans:
-                                        sequence_obj = models.sequence.objects.filter(task=task_obj).get(
-                                            segment__isDeploy=True)
-                                        sequence_obj.implemented = True
-                                        sequence_obj.executor = member_obj
-                                        sequence_obj.executeDate = datetime.datetime.now()
-                                        sequence_obj.remarks = "已部署"
-                                        sequence_obj.executeCursor = False
-                                        sequence_obj.save()
-                                        nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task,
-                                                                                          priority__gt=sequence_obj.priority).order_by(
-                                            'priority')[0]
-                                        nextSequence_obj.executeCursor = True
-                                        nextSequence_obj.save()
-                                        buildMessages.append('sequence_success')
+                                        while not buildInfo:
+                                            time.sleep(1)
+                                            buildInfo = pythonJenkins_obj.get_building_info()
+                                        url = buildInfo['url'] + "console"
+                                        buildMessages.append("start_deploy")
+                                        buildMessages.append(url)
                                         request.websocket.send(json.dumps(buildMessages))
-                                    request.websocket.close()
+                                        info = pythonJenkins_obj.get_build_console(buildNumber)
+                                        consoleOpt = info['consoleOpt']
+                                        isAbort = consoleOpt.find("Finished: ABORTED")
+                                        if isAbort == -1:
+                                            isSuccess = consoleOpt.find("Finished: SUCCESS")
+                                            if isSuccess == -1:
+                                                fail_deploys = False
+                                                project_plan_obj.proOnBuilding = False
+                                                project_plan_obj.proBuildStatus = False
+                                                project_plan_obj.save()
+                                                deployDetail_obj.buildStatus = False
+                                                deployDetail_obj.save()
+                                                res = "项目: %s ,版本号: %s, 服务器: %s, 发布出错!" % (
+                                                    project_plan_obj.project.name, relVersion, server_obj.name)
+                                                logger.info(res)
+                                                buildMessages.append('deploy_failed')
+                                                buildMessages.append(res)
+                                                buildMessages.append(uniqueKey)
+                                                request.websocket.send(json.dumps(buildMessages))
+                                                request.websocket.close()
+                                                consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                                   project=project_plan_obj.project,
+                                                                                   content=consoleOpt, packageId=relVersion,
+                                                                                   buildStatus=False, deployUser=member_obj,
+                                                                                   uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                                consoleOpt_obj.save()
+                                                break
+                                            else:
+                                                res = "项目: %s ,版本号: %s, 服务器: %s, 发布完成！" % (
+                                                    project_plan_obj.project.name, relVersion, server_obj.name)
+                                                logger.info(res)
+                                                buildMessages.append(res)
+                                                buildMessages.append(uniqueKey)
+                                                request.websocket.send(json.dumps(buildMessages))
+                                                consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                                   project=project_plan_obj.project,
+                                                                                   content=consoleOpt, packageId=relVersion,
+                                                                                   buildStatus=True, deployUser=member_obj,
+                                                                                   uniqueKey=uniqueKey, uniteKey=uniteKey)
+                                                consoleOpt_obj.save()
+                                                deployDetail_obj.buildStatus = True
+                                                deployDetail_obj.save()
+                                        else:
+                                            flag = False
+                                            logger.info("项目%s已终止发布！" % project_plan_obj.project.name)
+                                            break
+                                    else:
+                                        logger.error("Jenkins JOB %s不存在" % jenkinsPro_obj.name)
+                                        res = "Jenkins JOB %s不存在" % jenkinsPro_obj.name
+                                        buildMessages.append('no_jenkinsJob')
+                                        buildMessages.append(res)
+                                        request.websocket.send(json.dumps(buildMessages))
+                                        request.websocket.close()
+                                        flag = False
+                                        break
+                                project_plan_obj.proOnBuilding = False
+                                project_plan_obj.save()
+                                taskBuildHistory_obj = models.taskBuildHistory(task=task_obj, uniteKey=uniteKey,
+                                                                               deployUser=member_obj)
+                                taskBuildHistory_obj.save()
+
+                                if flag:
+                                    if fail_deploys:
+                                        res = "项目：%s，部署完成！" % project_plan_obj.project.name
+                                        buildMessages.append('deploy_success')
+                                        buildMessages.append(res)
+                                        request.websocket.send(json.dumps(buildMessages))
+                                        all_fail_deploys = models.deployDetail.objects.filter(project_plan=project_plan_obj,
+                                                                                              buildStatus=False)
+                                        if not all_fail_deploys:
+                                            project_plan_obj.proBuildStatus = True
+                                            project_plan_obj.save()
+                                        project_plans = models.project_plan.objects.filter(plan=project_plan_obj.plan,
+                                                                                           proBuildStatus=False)
+                                        if not project_plans:
+                                            sequence_obj = models.sequence.objects.filter(task=task_obj).get(
+                                                segment__isDeploy=True)
+                                            sequence_obj.implemented = True
+                                            sequence_obj.executor = member_obj
+                                            sequence_obj.executeDate = datetime.datetime.now()
+                                            sequence_obj.remarks = "已部署"
+                                            sequence_obj.executeCursor = False
+                                            sequence_obj.save()
+                                            nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task,
+                                                                                              priority__gt=sequence_obj.priority).order_by(
+                                                'priority')[0]
+                                            nextSequence_obj.executeCursor = True
+                                            nextSequence_obj.save()
+                                            buildMessages.append('sequence_success')
+                                            request.websocket.send(json.dumps(buildMessages))
+                                        request.websocket.close()
+                        else:
+                            logger.info("项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_plan_obj.project.name)
+                            res = "项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_plan_obj.project.name
+                            buildMessages.append(res)
+                            buildMessages.append('no_reversion')
+                            request.websocket.send(json.dumps(buildMessages))
+                            request.websocket.close()
                     else:
-                        logger.info("项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_plan_obj.project.name)
-                        res = "项目：%s，没有发布版本号，请先在预发创建，或者没有发布服务器，请核实！" % project_plan_obj.project.name
-                        buildMessages.append(res)
-                        buildMessages.append('no_reversion')
+                        buildMessages.append('out_of_date')
                         request.websocket.send(json.dumps(buildMessages))
                         request.websocket.close()
                 else:

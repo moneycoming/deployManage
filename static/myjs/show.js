@@ -193,7 +193,6 @@ layui.use(['element', 'layer'], function () {
 //创建预发分支
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
-
     $("body").on("click", ".createUatBranch", function () {
         $('.createUatBranch').hide();
         $('#createUatBranchText').html("分支创建中，请等待...");
@@ -220,20 +219,36 @@ layui.use(['element', 'layer'], function () {
 
             success: function (data) {
                 if (data.role === 1) {
-                    var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
-                        "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
-                        data.res +
-                        "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
-                        "aria-label=\"Close\">\n" +
-                        "<span aria-hidden=\"true\">&times;</span>\n" +
-                        "</button>\n" +
-                        "</div>";
-                    $('#create-uatBranch-message').html(html);
-                    if (data.result === 1) {
-                        $('#createUatBranchText').html("分支创建完成");
-                        $(`#uatBranch`).html(data.uatBranch);
+                    if (data.check === 0) {
+                        var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                            data.res +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#create-uatBranch-message').html(html);
+                        if (data.result === 1) {
+                            $('#createUatBranchText').html("分支创建完成");
+                            $(`#uatBranch`).html(data.uatBranch);
+                        } else {
+                            $('#createUatBranchText').html("分支创建失败");
+                        }
                     } else {
-                        $('#createUatBranchText').html("分支创建失败");
+                        layer.open({
+                            type: 1
+                            , title: '结果'
+                            , content: '<div style="padding: 20px 100px;">' + "预发验收已通过，不能再创建分支！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $('#createUatBranchText').hide();
                     }
                 } else {
                     layer.open({
@@ -248,6 +263,7 @@ layui.use(['element', 'layer'], function () {
                             layer.closeAll();
                         }
                     });
+                    $('#createUatBranchText').hide();
                 }
 
             },
@@ -353,6 +369,21 @@ layui.use(['element', 'layer'], function () {
                         , title: '发布结果'
                         , id: 'layerDemo' + type//防止重复弹出
                         , content: '<div style="padding: 20px 100px;">' + "没有预发分支，请先创建！" + '</div>'
+                        , btn: '关闭'
+                        , btnAlign: 'c' //按钮居中
+                        , area: '500px;'
+                        , shade: 0.5 //不显示遮罩
+                        , yes: function () {
+                            layer.closeAll();
+                        }
+                    });
+                } else if (received_msg[0] === 'out_of_date') {
+                    layer.open({
+                        type: 1
+                        , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                        , title: '发布结果'
+                        , id: 'layerDemo' + type//防止重复弹出
+                        , content: '<div style="padding: 20px 100px;">' + "该预发分支已经过时，请重新创建！" + '</div>'
                         , btn: '关闭'
                         , btnAlign: 'c' //按钮居中
                         , area: '500px;'
@@ -1215,15 +1246,6 @@ layui.use(['element', 'layer'], function () {
             $(`#${tr_id} #startOneDeploy`).hide();
             $(`#${tr_id} #select-nodes-deploy`).hide();
 
-            var second = 5;
-            var time = setInterval(function () {
-                if (second > 0) {
-                    second--;
-                } else {
-                    $(`#${tr_id} #stopDeploy`).show();
-                    clearInterval(time);
-                }
-            }, 1000);
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
 
@@ -1310,6 +1332,24 @@ layui.use(['element', 'layer'], function () {
                         $(`#${tr_id} #startOneDeploy`).show();
                         $(`#${tr_id} #select-nodes-deploy`).show();
                         $(`#${tr_id} #stopDeploy`).hide();
+                    } else if (received_msg[0] === 'out_of_date') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "项目预发分支已经过时，请重新创建！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
                     } else {
                         var sumPoints = received_msg[0];
                         var realPoints = 0;
@@ -1351,6 +1391,7 @@ layui.use(['element', 'layer'], function () {
                                 html3 += "IP" + realPoints + "：\n" +
                                     "<a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>去Jenkins上看</a><br>";
                                 $(`#${tr_id} #jenkinsConsole`).html(html3);
+                                $(`#${tr_id} #stopDeploy`).show();
                             } else if (received_msg[i].length === 10) {
                                 element.progress(`proOneDeploy${num[realPoints]}`, '100%');
                             } else if (received_msg[i] === 'deploy_failed') {
@@ -1432,15 +1473,7 @@ layui.use(['element', 'layer'], function () {
         function ok(type, arrayObj, step) {
             $(`#${tr_id} #startOneDeploy`).hide();
             $(`#${tr_id} #select-nodes-deploy`).hide();
-            var second = 5;
-            var time = setInterval(function () {
-                if (second > 0) {
-                    second--;
-                } else {
-                    $(`#${tr_id} #stopDeploy`).show();
-                    clearInterval(time);
-                }
-            }, 1000);
+
             if ("WebSocket" in window) {
                 console.log("您的浏览器支持 WebSocket!");
 
@@ -1498,6 +1531,24 @@ layui.use(['element', 'layer'], function () {
                             , title: '发布结果'
                             , id: 'layerDemo' + type//防止重复弹出
                             , content: '<div style="padding: 20px 100px;">' + "项目正在发布中，不能重复发布，请等待发布完成后再重新发布！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                        $(`#${tr_id} #startOneDeploy`).show();
+                        $(`#${tr_id} #select-nodes-deploy`).show();
+                        $(`#${tr_id} #stopDeploy`).hide();
+                    }else if (received_msg[0] === 'out_of_date') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "项目预发分支已经过时，请重新创建后部署！" + '</div>'
                             , btn: '关闭'
                             , btnAlign: 'c' //按钮居中
                             , area: '500px;'
@@ -1588,6 +1639,7 @@ layui.use(['element', 'layer'], function () {
                                     html3 += "IP" + realPoints + "：\n" +
                                         "<a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>去Jenkins上看</a><br>";
                                     $(`#${tr_id} #jenkinsConsole`).html(html3);
+                                    $(`#${tr_id} #stopDeploy`).show();
                                 } else if (received_msg[i].length === 10) {
                                     element.progress(`proOneDeploy${num[realPoints]}`, '100%');
                                 } else if (received_msg[i] === 'deploy_failed') {
@@ -1766,7 +1818,7 @@ layui.use(['element', 'layer'], function () {
         $.ajax({
             url: '/ajax_releaseExclusiveKey',
             type: 'POST',
-            traditional:true,
+            traditional: true,
             dataType: "json",
             data: {'ids': arrayObj},
 
