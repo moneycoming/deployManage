@@ -1389,7 +1389,7 @@ def ajax_restartUatDeploy(request):
                     deploy_sequence_obj.executor = None
                     deploy_sequence_obj.remarks = None
                     deploy_sequence_obj.save()
-                    sequences = models.sequence.objects.filter(priority__gt=deploy_sequence_obj.priority)
+                    sequences = models.sequence.objects.filter(task=task_obj, priority__gt=deploy_sequence_obj.priority)
                     for i in range(len(sequences)):
                         sequences[i].executeCursor = False
                         sequences[i].implemented = False
