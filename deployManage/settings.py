@@ -140,7 +140,7 @@ WSGI_APPLICATION = 'deployManage.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'deployManage',
+        'NAME': 'deployManage2',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': '192.168.65.10',

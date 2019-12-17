@@ -60,9 +60,12 @@ class kind_admin(object):
 
 
 class plan_admin(object):
-    list_display = ['name', 'kind', 'project', 'description', 'production', 'createUser', 'createDate']
-    search_fields = ['name', 'kind', 'project', 'description', 'production', 'createUser', 'createDate']
-    list_filter = ['name', 'kind', 'project', 'description', 'production', 'createUser', 'createDate']
+    list_display = ['name', 'kind', 'project', 'description', 'production', 'createUser', 'createDate', 'uatCheck',
+                    'uatRemark', 'uatCheckMember', 'uatCheckDate']
+    search_fields = ['name', 'kind', 'project', 'description', 'production', 'createUser', 'createDate', 'uatCheck',
+                     'uatRemark', 'uatCheckMember', 'uatCheckDate']
+    list_filter = ['name', 'kind', 'project', 'description', 'production', 'createUser', 'createDate', 'uatCheck',
+                   'uatRemark', 'uatCheckMember', 'uatCheckDate']
 
 
 class devBranch_admin(object):
@@ -99,12 +102,15 @@ class project_server_admin(object):
 
 
 class project_plan_admin(object):
-    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'lastPackageId', 'cursor',
-                    'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding', 'proOnBuilding', 'mergeStatus', 'exclusiveKey']
-    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'proOnBuilding', 'lastPackageId',
-                     'cursor', 'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding', 'mergeStatus', 'exclusiveKey']
-    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'deployBranch', 'lastPackageId', 'cursor',
-                   'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding', 'proOnBuilding', 'mergeStatus', 'exclusiveKey']
+    list_display = ['plan', 'project', 'devBranch', 'uatBranch', 'uatBranchCreateDate', 'deployBranch', 'lastPackageId',
+                    'cursor', 'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding', 'proOnBuilding', 'mergeStatus',
+                    'mergeDate', 'exclusiveKey']
+    search_fields = ['plan', 'project', 'devBranch', 'uatBranch', 'uatBranchCreateDate', 'deployBranch',
+                     'proOnBuilding', 'lastPackageId', 'cursor', 'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding',
+                     'mergeStatus', 'mergeDate', 'exclusiveKey']
+    list_filter = ['plan', 'project', 'devBranch', 'uatBranch', 'uatBranchCreateDate', 'deployBranch', 'lastPackageId',
+                   'cursor', 'proBuildStatus', 'uatBuildStatus', 'uatOnBuilding', 'proOnBuilding', 'mergeStatus',
+                   'mergeDate', 'exclusiveKey']
 
 
 class segment_admin(object):

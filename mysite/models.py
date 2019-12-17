@@ -101,7 +101,7 @@ class plan(models.Model):
     uatCheck = models.BooleanField(default=False, verbose_name="验证通过？")
     uatRemark = models.TextField(null=True, verbose_name="预发验收备注")
     uatCheckMember = models.ForeignKey(member, null=True, related_name="uatCheckMember", verbose_name="预发由谁验收")
-    uatCheckDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="预发验收日期")
+    uatCheckDate = models.DateTimeField(null=True, verbose_name="预发验收日期")
 
     class Meta:
         verbose_name = u'发布计划列表'
@@ -193,7 +193,7 @@ class sequence(models.Model):
     task = models.ForeignKey(task, on_delete=models.CASCADE, verbose_name="所属任务")
     pre_segment = models.IntegerField(null=True, verbose_name="上个节点序号")
     next_segment = models.IntegerField(null=True, verbose_name="下个节点序号")
-    executeDate = models.DateTimeField(auto_now_add=True, null=True, verbose_name="最新操作日期")
+    executeDate = models.DateTimeField(null=True, verbose_name="最新操作日期")
     executor = models.ForeignKey(member, null=True, verbose_name="最新执行者")
     priority = models.IntegerField(null=True, verbose_name="执行顺序")
     implemented = models.BooleanField(default=False, verbose_name="是否已执行")
@@ -252,6 +252,7 @@ class project_plan(models.Model):
     plan = models.ForeignKey(plan, on_delete=models.CASCADE, verbose_name="计划")
     devBranch = models.CharField(max_length=200, verbose_name="开发分支")
     uatBranch = models.CharField(max_length=50, null=True, verbose_name="预发分支")
+    uatBranchCreateDate = models.DateTimeField(null=True, verbose_name="预发分支创建日期")
     deployBranch = models.CharField(max_length=50, null=True, verbose_name="预发部署分支")
     lastPackageId = models.IntegerField(null=True, verbose_name="最新生产发布包编号")
     cursor = models.BooleanField(default=False, verbose_name="生产部署游标")
@@ -260,6 +261,7 @@ class project_plan(models.Model):
     uatOnBuilding = models.BooleanField(default=False, verbose_name="预发是否部署中")
     proOnBuilding = models.BooleanField(default=False, verbose_name="生产是否部署中")
     mergeStatus = models.BooleanField(default=False, verbose_name="代码合并状态")
+    mergeDate = models.DateTimeField(null=True, verbose_name="代码合并时间")
     exclusiveKey = models.BooleanField(default=False, verbose_name="项目预发环境独占锁")
 
     class Meta:
