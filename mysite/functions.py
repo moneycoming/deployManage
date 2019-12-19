@@ -187,6 +187,12 @@ class branch:
             except subprocess.CalledProcessError:
                 status = False
                 logger.error("线上分支%s删除失败！" % hopeBranch)
+            try:
+                subprocess.check_output([gitCmd, "branch", "-D", hopeBranch])
+                logger.info("2.本地分支：%s删除成功！" % hopeBranch)
+            except subprocess.CalledProcessError:
+                status = False
+                logger.error("本地分支%s删除失败！" % hopeBranch)
 
         return status
 
