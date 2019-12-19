@@ -766,8 +766,10 @@ def ajax_createUatBranch(request):
                 else:
                     now = datetime.datetime.now()
                     branchCode = now.strftime('%Y%m%d%H%M')
+                    uid = ''.join(str(uuid.uuid4()).split('-'))[0:5]
                     uatBranch = "uat-"
                     uatBranch += branchCode
+                    uatBranch += uid
                     branch_obj.create_branch(uatBranch)
                     status = branch_obj.merge_branch(project_plan_obj.devBranch, uatBranch)
 
