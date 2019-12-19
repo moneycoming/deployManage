@@ -155,6 +155,7 @@ class branch:
             logger.info("=========分支创建准备工作完成=============")
             repo.create_head(hopeBranch, origin.refs.master)
             origin.push(hopeBranch)
+            logger.info("分支%s，创建成功！" % hopeBranch)
             try:
                 subprocess.check_output([gitCmd, "branch", "-D", hopeBranch])
             except subprocess.CalledProcessError:
