@@ -774,6 +774,7 @@ def ajax_createUatBranch(request):
                 if status:
                     if project_plan_obj.uatBranch:
                         delStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
+                        logger.info("原预发分支：%s删除成功！" % project_plan_obj.uatBranch)
                         if not delStatus:
                             logger.info("原预发分支%s删除失败！" % project_plan_obj.uatBranch)
                     project_plan_obj.uatBranch = uatBranch
@@ -1128,6 +1129,7 @@ def ws_codeMerge(request):
                             project_plans[i].save()
                             res = "项目%s合并完成" % project_plans[i].project.name
                             buildMessages.append(res)
+                            request.websocket.send(json.dumps(buildMessages))
                             branchDelStatus = branch_obj.delete_branch(project_plans[i].deployBranch)
                             if not branchDelStatus:
                                 logger.error('计划：%s，项目：%s，分支：%s删除失败, 请手工删除！' % (
@@ -1136,7 +1138,7 @@ def ws_codeMerge(request):
                             res = "项目%s合并冲突或线上分支%s已被删除，请手工处理！" % (
                                 project_plans[i].project.name, project_plans[i].deployBranch)
                             buildMessages.append(res)
-                        request.websocket.send(json.dumps(buildMessages))
+                            request.websocket.send(json.dumps(buildMessages))
                     buildMessages.append("complete")
                     request.websocket.send(json.dumps(buildMessages))
                     request.websocket.close()
