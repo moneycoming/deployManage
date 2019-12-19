@@ -773,6 +773,7 @@ def ajax_createUatBranch(request):
 
                 if status:
                     if project_plan_obj.uatBranch:
+                        logger.info("原预发分支：%s，将被删除！" % project_plan_obj.uatBranch)
                         delStatus = branch_obj.delete_branch(project_plan_obj.uatBranch)
                         if not delStatus:
                             logger.info("原预发分支%s删除失败！" % project_plan_obj.uatBranch)
