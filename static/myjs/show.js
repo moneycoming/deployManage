@@ -220,19 +220,28 @@ layui.use(['element', 'layer'], function () {
             success: function (data) {
                 if (data.role === 1) {
                     if (data.check === 0) {
-                        var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
-                            "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
-                            data.res +
-                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
-                            "aria-label=\"Close\">\n" +
-                            "<span aria-hidden=\"true\">&times;</span>\n" +
-                            "</button>\n" +
-                            "</div>";
-                        $('#create-uatBranch-message').html(html);
                         if (data.result === 1) {
+                            var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                                "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                                data.res +
+                                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                "aria-label=\"Close\">\n" +
+                                "<span aria-hidden=\"true\">&times;</span>\n" +
+                                "</button>\n" +
+                                "</div>";
+                            $('#create-uatBranch-message').html(html);
                             $('#createUatBranchText').html("分支创建完成");
                             $(`#uatBranch`).html(data.uatBranch);
                         } else {
+                            var html2 = "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
+                                "<span class=\"badge badge-pill badge-primary\">Failure</span>\n" +
+                                data.res +
+                                "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                                "aria-label=\"Close\">\n" +
+                                "<span aria-hidden=\"true\">&times;</span>\n" +
+                                "</button>\n" +
+                                "</div>";
+                            $('#create-uatBranch-message').html(html2);
                             $('#createUatBranchText').html("分支创建失败");
                         }
                     } else {
@@ -1542,7 +1551,7 @@ layui.use(['element', 'layer'], function () {
                         $(`#${tr_id} #startOneDeploy`).show();
                         $(`#${tr_id} #select-nodes-deploy`).show();
                         $(`#${tr_id} #stopDeploy`).hide();
-                    }else if (received_msg[0] === 'out_of_date') {
+                    } else if (received_msg[0] === 'out_of_date') {
                         layer.open({
                             type: 1
                             , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset

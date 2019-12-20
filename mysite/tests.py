@@ -4,10 +4,21 @@ from git import Repo
 repoPath = "D:\codes\jlb-sms"
 repo = Repo(repoPath)
 master = repo.heads.master
-new_branch = "uat-201912171929"
-new_tag = "release-1.00"
+origin = repo.remotes.origin
+new_branch = "uat-2019abc"
+new_tag = "release-2.00"
+git = repo.git
+git.checkout(master)
+git.pull(origin, master)
+repo.create_head(new_branch, origin.refs.master)
+# git.checkout(new_branch)
+git.push(origin, new_branch)
+# new_tag = repo.create_tag(new_tag, message='发布分支%s' % new_branch)
+# git.push(origin, new_tag)
+# git.push(origin, new_branch)
+# repo.delete_head(new_branch)
 
-repo.delete_head(new_branch)
+# repo.delete_head(new_branch)
 # try:
 #     assert not repo.is_dirty()
 # except AssertionError:

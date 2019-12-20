@@ -80,21 +80,23 @@ class branch:
             logger.info("本地旧分支删除完成！")
         except subprocess.CalledProcessError:
             logger.info("本地没有旧分支！")
-        origin.pull(master)
         logger.info("=========合并准备前准备已经完成============")
 
-        try:
-            git.checkout(mergeFrom)
-            logger.info("1.本地开发分支：%s创建成功！" % mergeFrom)
+        if status:
             try:
-                git.checkout(mergeTo)
-                logger.info("2.本地预发分支：%s创建成功！" % mergeTo)
+                git.checkout(mergeFrom)
+                git.pull(origin, mergeFrom)
+                logger.info("1.本地开发分支：%s创建成功！" % mergeFrom)
+                try:
+                    git.checkout(mergeTo)
+                    git.pull(origin, mergeTo)
+                    logger.info("2.本地预发分支：%s创建成功！" % mergeTo)
+                except:
+                    status = False
+                    logger.error("本地分支：%s， 创建失败！" % mergeTo)
             except:
                 status = False
-                logger.error("本地分支：%s， 创建失败！" % mergeTo)
-        except:
-            status = False
-            logger.error("本地分支：%s, 创建失败！" % mergeFrom)
+                logger.error("本地分支：%s, 创建失败！" % mergeFrom)
 
         if status:
             try:
@@ -105,7 +107,7 @@ class branch:
             if status:
                 try:
                     git.merge(mergeFrom)
-                    origin.push(mergeTo)
+                    git.push(origin, mergeTo)
                     logger.info("3.预发分支：%s合并成功！" % mergeTo)
                 except:
                     past_branch = repo.create_head(mergeTo, 'HEAD')
@@ -153,8 +155,9 @@ class branch:
 
         if status:
             logger.info("=========分支创建准备工作完成=============")
+            git.pull(origin, master)
             repo.create_head(hopeBranch, origin.refs.master)
-            origin.push(hopeBranch)
+            git.push(origin, hopeBranch)
             logger.info("分支%s，创建成功！" % hopeBranch)
             try:
                 subprocess.check_output([gitCmd, "branch", "-D", hopeBranch])
@@ -202,7 +205,6 @@ class branch:
         repo = Repo(repoPath)
         os.chdir(repoPath)
         origin = repo.remotes.origin
-        # curBranch = repo.head.reference
         master = repo.heads.master
         git = repo.git
         status = True
@@ -224,6 +226,7 @@ class branch:
                 logger.info("本地没有分支;%s" % hopeBranch)
             try:
                 git.checkout(hopeBranch)
+                git.pull(origin, hopeBranch)
                 logger.info("2.本地分支：%s，创建成功！" % hopeBranch)
             except:
                 status = False
@@ -242,10 +245,10 @@ class branch:
                 logger.warning("线上没有%s！" % tag_name)
             try:
                 new_tag = repo.create_tag(tag_name, message='发布分支%s' % hopeBranch)
-                origin.push(new_tag)
-                logger.info("3.tag%s创建成功！" % tag_name)
+                git.push(origin, new_tag)
+                logger.info("3.tag：%s创建成功！" % tag_name)
             except:
-                logger.error("tag%s创建失败！" % tag_name)
+                logger.error("tag：%s创建失败！" % tag_name)
                 status = False
 
         return status
