@@ -1029,6 +1029,19 @@ def ws_rollback(request):
                             total = len(deployDetails)
                             buildMessages.append(total)
                             request.websocket.send(json.dumps(buildMessages))
+                            deploy_sequence_obj = models.sequence.objects.get(task=task_obj, segment__isDeploy=True)
+                            after_deploy_sequences = models.sequence.objects.filter(task=task_obj,
+                                                                                    priority__gt=deploy_sequence_obj.priority)
+                            for item in range(len(after_deploy_sequences)):
+                                if after_deploy_sequences[item].implemented:
+                                    after_deploy_sequences[item].implemented = False
+                                    after_deploy_sequences[item].save()
+                                if after_deploy_sequences[item].executeCursor:
+                                    after_deploy_sequences[item].executeCursor = False
+                                    after_deploy_sequences[item].save()
+                            deploy_sequence_obj.executeCursor = True
+                            deploy_sequence_obj.implemented = False
+                            deploy_sequence_obj.save()
                             for i in range(len(deployDetails)):
                                 server_obj = deployDetails[i].server
                                 uniqueKey = ''.join(str(uuid.uuid4()).split('-'))[0:10]

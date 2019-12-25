@@ -1714,6 +1714,7 @@ layui.use(['element', 'layer'], function () {
     $("body").on("click", "#rollback", rollback);
 
     function rollback() {
+        var step = $('#build-table').parent().attr('id');
         var type = $(this).data('type');
         var tr = $(this).closest("tr");
         var tr_id = tr.attr('id');
@@ -1722,13 +1723,13 @@ layui.use(['element', 'layer'], function () {
         layer.confirm('确认执行？', {
             btn: ['确认', '取消'] //按钮
         }, function () {
-            ok(id, type, tr_id);
+            ok(id, type, tr_id, step);
             layer.closeAll();
         }, function () {
             console.log('已取消');
         });
 
-        function ok(id, type, tr_id) {
+        function ok(id, type, tr_id, step) {
             $(`#${tr_id} #startOneDeploy`).hide();
             $(`#${tr_id} #select-nodes-deploy`).hide();
 
@@ -1910,6 +1911,7 @@ layui.use(['element', 'layer'], function () {
                                 $(`#${tr_id} #stopDeploy`).hide();
                             }
                         }
+                        $(`#${step} #nextBtn`).hide();
                     }
                 };
 
