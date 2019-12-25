@@ -82,7 +82,8 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane active">
                                                 <h5 class="page-header"></h5>
                                                 <div class="alert alert-primary" role="alert">
-                                                    <h4 class="alert-heading"><i class="layui-icon layui-icon-speaker"></i>说明</h4>
+                                                    <h4 class="alert-heading"><i
+                                                            class="layui-icon layui-icon-speaker"></i>说明</h4>
                                                     <hr>
                                                     <p>1-发布可以单个项目部署，也可以一键全部部署</p>
                                                     <p>2-项目可以选择节点部署，可以回滚到上个版本</p>
@@ -94,7 +95,7 @@
                                                     <thead>
                                                     <tr>
                                                         <th width="5%"><input type="checkbox"
-                                                                               title="projectId"></th>
+                                                                              title="projectId"></th>
                                                         <th width="5%">编号</th>
                                                         <th width="15%">项目</th>
                                                         <th width="8%">构建号</th>
@@ -114,10 +115,12 @@
                                                             <td id="project_plan_id">{{ project_plan.id }}</td>
                                                             <td>{{ project_plan.project.name }}</td>
                                                             <td>{{ project_plan.lastPackageId }}</td>
-                                                            {% if project_plan.proBuildStatus %}
+                                                            {% if project_plan.proBuildStatus == 1 %}
                                                                 <td id="proBuildStatus">已部署</td>
-                                                            {% else %}
+                                                            {% elif project_plan.proBuildStatus == 0 %}
                                                                 <td id="proBuildStatus">未部署</td>
+                                                            {% else %}
+                                                                <td id="proBuildStatus">部署失败</td>
                                                             {% endif %}
                                                             <td id="progress">未进行</td>
                                                             <td id="jenkinsConsole">无</td>
@@ -218,11 +221,11 @@
                                                         </div>
                                                     </div>
                                                 </div>
-{#                                                <div class="layui-btn-group">#}
-{#                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal">#}
-{#                                                        一键部署#}
-{#                                                    </button>#}
-{#                                                </div>#}
+                                                {#                                                <div class="layui-btn-group">#}
+                                                {#                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal">#}
+                                                {#                                                        一键部署#}
+                                                {#                                                    </button>#}
+                                                {#                                                </div>#}
                                                 {% if sequence.implemented == 0 %}
                                                     <div class="layui-btn-group" style="float: right">
                                                         {% if sequence.priority > 1 %}
@@ -268,7 +271,8 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane active">
                                                 <h5 class="page-header"></h5>
                                                 <div class="alert alert-primary" role="alert">
-                                                    <h4 class="alert-heading"><i class="layui-icon layui-icon-speaker"></i>说明</h4>
+                                                    <h4 class="alert-heading"><i
+                                                            class="layui-icon layui-icon-speaker"></i>说明</h4>
                                                     <hr>
                                                     <p>1-在输入框中输入验收细节情况</p>
                                                     <p>2-点击“通过”按钮完成验收</p>
@@ -329,7 +333,8 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane active">
                                                 <h5 class="page-header"></h5>
                                                 <div class="alert alert-primary" role="alert">
-                                                    <h4 class="alert-heading"><i class="layui-icon layui-icon-speaker"></i>说明</h4>
+                                                    <h4 class="alert-heading"><i
+                                                            class="layui-icon layui-icon-speaker"></i>说明</h4>
                                                     <hr>
                                                     <p>1-代码在项目验收后，由任务创建者（开发）进行代码合并</p>
                                                     <p>2-点击“合并代码”按钮，将代码合并入master</p>
@@ -411,7 +416,8 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane active">
                                                 <h5 class="page-header"></h5>
                                                 <div class="alert alert-primary" role="alert">
-                                                    <h4 class="alert-heading"><i class="layui-icon layui-icon-speaker"></i>说明</h4>
+                                                    <h4 class="alert-heading"><i
+                                                            class="layui-icon layui-icon-speaker"></i>说明</h4>
                                                     <hr>
                                                     <p>1-在文本框中填写操作的相关备注</p>
                                                     <p>2-完成后点击“执行”，进入下一环节</p>
@@ -476,7 +482,8 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane fade">
                                                 <h5 class="page-header"></h5>
                                                 <div class="alert alert-primary" role="alert">
-                                                    <h4 class="alert-heading"><i class="layui-icon layui-icon-speaker"></i>说明</h4>
+                                                    <h4 class="alert-heading"><i
+                                                            class="layui-icon layui-icon-speaker"></i>说明</h4>
                                                     <hr>
                                                     <p>1-发布可以单个项目部署，也可以一键全部部署</p>
                                                     <p>2-项目可以选择节点部署，可以回滚到上个版本</p>
@@ -488,7 +495,7 @@
                                                     <thead>
                                                     <tr>
                                                         <th width="5%"><input type="checkbox"
-                                                                               title="projectId"></th>
+                                                                              title="projectId"></th>
                                                         <th width="5%">编号</th>
                                                         <th width="15%">项目</th>
                                                         <th width="8%">构建号</th>
@@ -508,10 +515,12 @@
                                                             <td id="project_plan_id">{{ project_plan.id }}</td>
                                                             <td>{{ project_plan.project.name }}</td>
                                                             <td>{{ project_plan.lastPackageId }}</td>
-                                                            {% if project_plan.proBuildStatus %}
+                                                            {% if project_plan.proBuildStatus == 1 %}
                                                                 <td id="proBuildStatus">已部署</td>
-                                                            {% else %}
+                                                            {% elif project_plan.proBuildStatus == 0 %}
                                                                 <td id="proBuildStatus">未部署</td>
+                                                            {% else %}
+                                                                <td id="proBuildStatus">部署失败</td>
                                                             {% endif %}
                                                             <td id="progress">未进行</td>
                                                             <td id="jenkinsConsole">无</td>
@@ -612,11 +621,11 @@
                                                         </div>
                                                     </div>
                                                 </div>
-{#                                                <div class="layui-btn-group">#}
-{#                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal">#}
-{#                                                        一键部署#}
-{#                                                    </button>#}
-{#                                                </div>#}
+                                                {#                                                <div class="layui-btn-group">#}
+                                                {#                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal">#}
+                                                {#                                                        一键部署#}
+                                                {#                                                    </button>#}
+                                                {#                                                </div>#}
                                                 {% if sequence.implemented == 0 %}
                                                     <div class="layui-btn-group" style="float: right">
                                                         {% if sequence.priority > 1 %}
@@ -662,7 +671,8 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane fade">
                                                 <h5 class="page-header"></h5>
                                                 <div class="alert alert-primary" role="alert">
-                                                    <h4 class="alert-heading"><i class="layui-icon layui-icon-speaker"></i>说明</h4>
+                                                    <h4 class="alert-heading"><i
+                                                            class="layui-icon layui-icon-speaker"></i>说明</h4>
                                                     <hr>
                                                     <p>1-在输入框中输入验收细节情况</p>
                                                     <p>2-点击“通过”按钮完成验收</p>
@@ -723,7 +733,8 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane fade">
                                                 <h5 class="page-header"></h5>
                                                 <div class="alert alert-primary" role="alert">
-                                                    <h4 class="alert-heading"><i class="layui-icon layui-icon-speaker"></i>说明</h4>
+                                                    <h4 class="alert-heading"><i
+                                                            class="layui-icon layui-icon-speaker"></i>说明</h4>
                                                     <hr>
                                                     <p>1-代码在项目验收后，由任务创建者（开发）进行代码合并</p>
                                                     <p>2-点击“合并代码”按钮，将代码合并入master</p>
@@ -805,7 +816,8 @@
                                             <div id="step{{ sequence.priority }}" class="tab-pane fade">
                                                 <h5 class="page-header"></h5>
                                                 <div class="alert alert-primary" role="alert">
-                                                    <h4 class="alert-heading"><i class="layui-icon layui-icon-speaker"></i>说明</h4>
+                                                    <h4 class="alert-heading"><i
+                                                            class="layui-icon layui-icon-speaker"></i>说明</h4>
                                                     <hr>
                                                     <p>1-在文本框中填写操作的相关备注</p>
                                                     <p>2-完成后点击“执行”，进入下一环节</p>

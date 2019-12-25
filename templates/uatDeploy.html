@@ -144,10 +144,12 @@
                                             {% else %}
                                                 <td id="uatPackageId">无</td>
                                             {% endif %}
-                                            {% if project_plan_obj.uatBuildStatus %}
+                                            {% if project_plan_obj.uatBuildStatus == 1 %}
                                                 <td id="uatBuildStatus">已部署</td>
-                                            {% else %}
+                                            {% elif project_plan_obj.uatBuildStatus == 0 %}
                                                 <td id="uatBuildStatus">未部署</td>
+                                            {% else %}
+                                                <td id="uatBuildStatus">部署失败</td>
                                             {% endif %}
                                             <td id="uatProgress">未进行</td>
                                             <td id="uatJenkinsConsole">无</td>

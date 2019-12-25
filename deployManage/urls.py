@@ -60,7 +60,7 @@ urlpatterns = [
     url(r'^uatDetail', views.uatDetail),
     url(r'^uatDeploy', views.uatDeploy),
     url(r'^ws_uatDeploy', views.ws_uatDeploy, name='uatDeploy'),
-    url(r'^ws_rollbackOne', views.ws_rollbackOne, name='rollbackOne'),
+    url(r'^ws_rollback', views.ws_rollback, name='rollback'),
     url(r'^ws_codeMerge', views.ws_codeMerge, name='codeMerge'),
     url(r'^ws_proConsoleOptRefresh', views.ws_proConsoleOptRefresh, name='proConsoleOptRefresh'),
     url(r'^ws_uatConsoleOptRefresh', views.ws_uatConsoleOptRefresh, name='uatConsoleOptRefresh'),

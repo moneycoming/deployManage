@@ -105,6 +105,15 @@ class pythonJenkins:
 
         return info
 
+    def get_build_url(self):
+        jenkinsJob = self.jenkinsJob
+        server = self.server
+        try:
+            url = server.build_job_url(jenkinsJob)
+            return url
+        except jenkins.NotFoundException:
+            logger.error("jenkins项目未找到，请检查项目是否存在")
+
 
 class projectBean:
     def __init__(self, project, gitCmd):
