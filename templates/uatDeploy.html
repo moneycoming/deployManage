@@ -155,13 +155,23 @@
                                             <td id="uatJenkinsConsole">无</td>
                                             <td>
                                                 <div class="layui-btn-group">
-                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
-                                                            id="uatDeploy">
-                                                        发布
-                                                    </button>
-                                                    <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
-                                                            id="uatStopDeploy" style="display: none">终止发布
-                                                    </button>
+                                                    {% if not project_plan_obj.uatOnBuilding %}
+                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                id="uatDeploy">
+                                                            发布
+                                                        </button>
+                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                id="uatStopDeploy" style="display: none">终止发布
+                                                        </button>
+                                                    {% else %}
+                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                id="uatDeploy" style="display: none">
+                                                            发布
+                                                        </button>
+                                                        <button class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal"
+                                                                id="uatStopDeploy">终止发布
+                                                        </button>
+                                                    {% endif %}
                                                 </div>
                                             </td>
                                             <td>
