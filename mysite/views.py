@@ -586,31 +586,41 @@ def ws_uatDeploy(request):
                                             request.websocket.send(json.dumps(buildMessage))
                                             info = pythonJenkins_obj.get_build_console(buildNumber)
                                             consoleOpt = info['consoleOpt']
+                                            isAbort = consoleOpt.find("Finished: ABORTED")
                                             isSuccess = consoleOpt.find("Finished: SUCCESS")
-                                            if isSuccess != -1:
-                                                result = True
-                                                project_plan_obj.uatBuildStatus = 1
-                                                project_plan_obj.lastPackageId = buildNumber
-                                                project_plan_obj.save()
-                                                res = "分支%s部署成功" % project_plan_obj.uatBranch
-                                                logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
-                                                buildMessage.append("success")
-                                                buildMessage.append(res)
-                                                buildMessage.append(buildNumber)
-                                                request.websocket.send(json.dumps(buildMessage))
-                                                request.websocket.close()
-                                                if project_plan_obj.proBuildStatus != 0:
-                                                    project_plan_obj.proBuildStatus = 0
+                                            if isAbort == -1:
+                                                if isSuccess != -1:
+                                                    result = True
+                                                    project_plan_obj.uatBuildStatus = 1
+                                                    project_plan_obj.lastPackageId = buildNumber
                                                     project_plan_obj.save()
+                                                    res = "分支%s部署成功" % project_plan_obj.uatBranch
+                                                    logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
+                                                    buildMessage.append("success")
+                                                    buildMessage.append(res)
+                                                    buildMessage.append(buildNumber)
+                                                    request.websocket.send(json.dumps(buildMessage))
+                                                    request.websocket.close()
+                                                    if project_plan_obj.proBuildStatus != 0:
+                                                        project_plan_obj.proBuildStatus = 0
+                                                        project_plan_obj.save()
+                                                else:
+                                                    result = False
+                                                    res = "分支%s部署失败" % project_plan_obj.uatBranch
+                                                    logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
+                                                    project_plan_obj.uatBuildStatus = 2
+                                                    project_plan_obj.save()
+                                                    buildMessage.append("fail")
+                                                    buildMessage.append(res)
+                                                    buildMessage.append(uniqueKey)
+                                                    request.websocket.send(json.dumps(buildMessage))
+                                                    request.websocket.close()
                                             else:
                                                 result = False
-                                                res = "分支%s部署失败" % project_plan_obj.uatBranch
-                                                logger.error("分支%s部署失败" % project_plan_obj.uatBranch)
-                                                project_plan_obj.uatBuildStatus = 2
-                                                project_plan_obj.save()
-                                                buildMessage.append("fail")
+                                                logger.info("项目%s已经终止部署！" % project_obj.name)
+                                                res = "项目%s已经终止部署！" % project_obj.name
+                                                buildMessage.append("aborted")
                                                 buildMessage.append(res)
-                                                buildMessage.append(uniqueKey)
                                                 request.websocket.send(json.dumps(buildMessage))
                                                 request.websocket.close()
                                             consoleOpt_obj = models.consoleOpt(type=0, plan=plan_obj,
@@ -677,6 +687,72 @@ def ws_uatDeploy(request):
                 buildMessage.append(res)
                 request.websocket.send(json.dumps(buildMessage))
                 request.websocket.close()
+
+
+# 预发终止部署
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def ajax_uatStopDeploy(request):
+    project_obj = models.project.objects.get(id=request.POST['projectId'])
+    plan_obj = models.plan.objects.get(id=request.POST['planId'])
+    project_plan_obj = models.project_plan.objects.get(plan=plan_obj, project=project_obj)
+    production_members = models.production_member.objects.filter(production=plan_obj.production)
+    member_obj = models.member.objects.get(user=request.user)
+    isMember = False
+    for m in range(len(production_members)):
+        if member_obj == production_members[m].member:
+            isMember = True
+    if isMember and member_obj.user.has_perm('mysite.can_check_project'):
+        if project_plan_obj.uatOnBuilding:
+            project_plan_obj.uatOnBuilding = False
+            project_plan_obj.save()
+            uatJenkins_obj = models.jenkinsUat.objects.get(project=project_obj)
+            pythonJenkins_obj = pythonJenkins(uatJenkins_obj.name, {})
+            buildNumber = pythonJenkins_obj.get_building_info()['number']
+            if buildNumber:
+                info = pythonJenkins_obj.stop_build(buildNumber)
+                consoleOpt = info['consoleOpt']
+                isAbort = consoleOpt.find("Finished: ABORTED")
+                isSuccess = consoleOpt.find("Finished: SUCCESS")
+                if isAbort == -1:
+                    if isSuccess == -1:
+                        ret = {
+                            'role': True,
+                            'stop': False,
+                            'build': False,
+                            'project': project_obj.name
+                        }
+                    else:
+                        ret = {
+                            'role': True,
+                            'stop': False,
+                            'build': True,
+                            'project': project_obj.name
+                        }
+                else:
+                    ret = {
+                        'role': True,
+                        'stop': True,
+                        'build': False,
+                        'project': project_obj.name
+                    }
+            else:
+                ret = {
+                    'role': True,
+                    'start': False,
+                }
+        else:
+            ret = {
+                'role': True,
+                'start': False
+            }
+    else:
+        ret = {
+            'role': False
+        }
+
+    return HttpResponse(json.dumps(ret), "application/json")
 
 
 # 预发验收
@@ -1102,6 +1178,15 @@ def ws_rollback(request):
                                             consoleOpt_obj.save()
                                     else:
                                         flag = False
+                                        consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                           project=project_obj,
+                                                                           content=consoleOpt,
+                                                                           packageId=relVersion,
+                                                                           buildStatus=False,
+                                                                           deployUser=member_obj,
+                                                                           uniqueKey=uniqueKey,
+                                                                           uniteKey=uniteKey)
+                                        consoleOpt_obj.save()
                                         logger.info("项目%s已终止！" % project_obj.name)
                                         break
                                 else:
@@ -1400,6 +1485,15 @@ def ws_proOneProjectDeploy(request):
                                         else:
                                             flag = False
                                             logger.info("项目%s已终止！" % project_obj.name)
+                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                               project=project_obj,
+                                                                               content=consoleOpt,
+                                                                               packageId=relVersion,
+                                                                               buildStatus=False,
+                                                                               deployUser=member_obj,
+                                                                               uniqueKey=uniqueKey,
+                                                                               uniteKey=uniteKey)
+                                            consoleOpt_obj.save()
                                             break
                                     else:
                                         logger.error("Jenkins JOB %s不存在" % jenkinsPro_obj.name)
@@ -1658,6 +1752,15 @@ def ws_selectNodesDeploy(request):
                                                 deployDetail_obj.save()
                                         else:
                                             flag = False
+                                            consoleOpt_obj = models.consoleOpt(type=1, plan=project_plan_obj.plan,
+                                                                               project=project_plan_obj.project,
+                                                                               content=consoleOpt,
+                                                                               packageId=relVersion,
+                                                                               buildStatus=False,
+                                                                               deployUser=member_obj,
+                                                                               uniqueKey=uniqueKey,
+                                                                               uniteKey=uniteKey)
+                                            consoleOpt_obj.save()
                                             logger.info("项目%s已终止发布！" % project_plan_obj.project.name)
                                             break
                                     else:

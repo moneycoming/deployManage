@@ -247,6 +247,7 @@ layui.use(['element', 'layer'], function () {
                     var html = "<div class=\"layui-progress layui-progress-\" lay-filter=\"uatDeploy\">\n" +
                         "  <div class=\"layui-progress-bar\" id='uatBuildProgress' lay-percent=\"0%\"></div>\n" +
                         "</div>";
+                    $(`#${tr_id} #uatDeploy`).hide();
                     $(`#${tr_id} #uatProgress`).html(html);
                     $(`#${tr_id} #uatJenkinsConsole`).html("准备中...");
                     for (var i = 0; i < received_msg.length; i++) {
@@ -260,6 +261,8 @@ layui.use(['element', 'layer'], function () {
                                 "<span aria-hidden=\"true\">&times;</span>\n" +
                                 "</button>\n" +
                                 "</div>";
+                            $(`#${tr_id} #uatDeploy`).show();
+                            $(`#${tr_id} #uatStopDeploy`).hide();
                             $('#uatBuildMessage').html(html4);
                             $('#uatBuildProgress').addClass("layui-bg-red");
                             $(`#${tr_id} #uatBuildStatus`).html("部署终止")
@@ -269,6 +272,7 @@ layui.use(['element', 'layer'], function () {
                             element.progress('uatDeploy', '40%');
                             var html2 = "<a href='" + received_msg[i] + "' target='_blank' class='btn btn-link btn-sm'>去Jenkins上看</a><br>";
                             $(`#${tr_id} #uatJenkinsConsole`).html(html2);
+                            $(`#${tr_id} #uatStopDeploy`).show();
                         } else if (received_msg[i] === 'success') {
                             i += 1;
                             html3 += "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
@@ -280,6 +284,8 @@ layui.use(['element', 'layer'], function () {
                                 "</button>\n" +
                                 "</div>";
                             $('#uatBuildMessage').html(html3);
+                            $(`#${tr_id} #uatDeploy`).show();
+                            $(`#${tr_id} #uatStopDeploy`).hide();
                             i += 1;
                             element.progress('uatDeploy', '100%');
                             $(`#${tr_id} #uatBuildStatus`).html("部署成功");
@@ -295,6 +301,8 @@ layui.use(['element', 'layer'], function () {
                                 "</button>\n" +
                                 "</div>";
                             $('#uatBuildMessage').html(html3);
+                            $(`#${tr_id} #uatDeploy`).show();
+                            $(`#${tr_id} #uatStopDeploy`).hide();
                             $('#uatBuildProgress').addClass("layui-bg-red");
                             $(`#${tr_id} #uatBuildStatus`).html("部署失败")
                         }
@@ -313,6 +321,111 @@ layui.use(['element', 'layer'], function () {
             console.alert("您的浏览器不支持 WebSocket!");
         }
     }
+});
+//预发终止部署
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+
+    $("body").on("click", "#uatStopDeploy", function () {
+        var tr_id = $(this).closest("tr").attr("id");
+        var projectId = getQueryVariable("prjId");
+        var planId = getQueryVariable("pid");
+        var postData = {};
+        postData['projectId'] = projectId;
+        postData['planId'] = planId;
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok(tr_id, postData);
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok(tr_id, postData) {
+            $.ajax({
+                url: '/ajax_uatStopDeploy',
+                type: 'POST',
+                data: postData,
+
+                success: function (data) {
+                    if (data.role === 0) {
+                        layer.open({
+                            type: 1
+                            , title: '警告'
+                            , content: '<div style="padding: 20px 100px;">' + "你没有终止发布的权限" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else if (data.start === false) {
+                        var html = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                            data.project + "未进行发布！" +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#uatBuildMessage').html(html);
+                        $(`#${tr_id} #uatProgress`).html("未进行");
+                        $(`#${tr_id} #uatJenkinsConsole`).html("无");
+                    }
+                    else if (data.stop === true) {
+                        var html2 = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                            data.project + "已经终止发布！" +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#uatBuildMessage').html(html2);
+                        $(`#${tr_id} #uatDeploy`).show();
+                        $(`#${tr_id} #uatStopDeploy`).hide();
+                        $(`#${tr_id} #uatBuildStatus`).html("部署终止");
+                        $(`#${tr_id} #uatProgress`).html("已结束");
+                    } else if (data.build === true) {
+                        var html3 = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
+                            data.project + "已经发布完成！" +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#uatBuildMessage').html(html3);
+                        $(`#${tr_id} #uatDeploy`).show();
+                        $(`#${tr_id} #uatStopDeploy`).hide();
+                        $(`#${tr_id} #uatBuildStatus`).html("部署完成");
+                        $(`#${tr_id} #uatProgress`).html("已结束");
+                    }
+                    else {
+                        var html4 = "<div class=\"sufee-alert alert with-close alert-warning alert-dismissible\">\n" +
+                            "<span class=\"badge badge-pill badge-primary\">Fail</span>\n" +
+                            data.project + "已经发布，并且发布失败！" +
+                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"\n" +
+                            "aria-label=\"Close\">\n" +
+                            "<span aria-hidden=\"true\">&times;</span>\n" +
+                            "</button>\n" +
+                            "</div>";
+                        $('#uatBuildMessage').html(html4);
+                        $(`#${tr_id} #uatDeploy`).show();
+                        $(`#${tr_id} #uatStopDeploy`).hide();
+                        $(`#${tr_id} #uatBuildStatus`).html("部署失败");
+                        $(`#${tr_id} #uatProgress`).html("已结束");
+                    }
+                },
+                error: function () {
+                    console.log("error");
+                }
+            })
+        }
+    });
 });
 //预发验收通过
 layui.use(['element', 'layer'], function () {
@@ -1245,6 +1358,7 @@ layui.use(['element', 'layer'], function () {
                                 $(`#${tr_id} #stopDeploy`).show();
                             } else if (received_msg[i].length === 10) {
                                 element.progress(`proOneDeploy${num[realPoints]}`, '100%');
+                                $(`#${tr_id} #stopDeploy`).hide();
                             } else if (received_msg[i] === 'deploy_failed') {
                                 i += 1;
                                 html2 += "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
@@ -1493,6 +1607,7 @@ layui.use(['element', 'layer'], function () {
                                     $(`#${tr_id} #stopDeploy`).show();
                                 } else if (received_msg[i].length === 10) {
                                     element.progress(`proOneDeploy${num[realPoints]}`, '100%');
+                                    $(`#${tr_id} #stopDeploy`).hide();
                                 } else if (received_msg[i] === 'deploy_failed') {
                                     i += 1;
                                     html2 += "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
@@ -1614,7 +1729,6 @@ layui.use(['element', 'layer'], function () {
                         $(`#${tr_id} #select-nodes-deploy`).show();
                         $(`#${tr_id} #stopDeploy`).hide();
                         tr.children("td#progress").html("已终止");
-                        tr.children("td#jenkinsConsole").html("无");
                     } else if (data.build === true) {
                         var html3 = "<div class=\"sufee-alert alert with-close alert-success alert-dismissible\">\n" +
                             "<span class=\"badge badge-pill badge-primary\">Success</span>\n" +
@@ -1629,7 +1743,6 @@ layui.use(['element', 'layer'], function () {
                         $(`#${tr_id} #select-nodes-deploy`).show();
                         $(`#${tr_id} #stopDeploy`).hide();
                         tr.children("td#progress").html("发布成功");
-                        tr.children("td#jenkinsConsole").html("无");
                     }
                     else {
                         var html4 = "<div class=\"sufee-alert alert with-close alert-warning alert-dismissible\">\n" +
@@ -1645,7 +1758,6 @@ layui.use(['element', 'layer'], function () {
                         $(`#${tr_id} #select-nodes-deploy`).show();
                         $(`#${tr_id} #stopDeploy`).hide();
                         tr.children("td#progress").html("发布失败");
-                        tr.children("td#jenkinsConsole").html("无");
                     }
                 },
                 error: function () {
@@ -1878,6 +1990,7 @@ layui.use(['element', 'layer'], function () {
                                 $(`#${tr_id} #stopDeploy`).show();
                             } else if (received_msg[i].length === 10) {
                                 element.progress(`proOneDeploy${num[realPoints]}`, '100%');
+                                $(`#${tr_id} #stopDeploy`).hide();
                             } else if (received_msg[i] === 'deploy_failed') {
                                 i += 1;
                                 html2 += "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
