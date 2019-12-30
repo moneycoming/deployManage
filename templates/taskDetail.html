@@ -379,6 +379,7 @@
                                                         <thead>
                                                         <tr>
                                                             <th scope="col">项目</th>
+                                                            <th scope="col">预发分支</th>
                                                             <th scope="col">结果</th>
                                                             <th scope="col">人员</th>
                                                             <th scope="col">日期</th>
@@ -388,6 +389,7 @@
                                                         {% for project_plan in project_plans %}
                                                             <tr>
                                                                 <td>{{ project_plan.project.name }}</td>
+                                                                <td>{{ project_plan.deployBranch }}</td>
                                                                 {% if project_plan.mergeStatus == 0 %}
                                                                     <td>未合并</td>
                                                                 {% elif project_plan.mergeStatus == 1 %}
@@ -779,6 +781,7 @@
                                                         <thead>
                                                         <tr>
                                                             <th scope="col">项目</th>
+                                                            <th scope="col">预发分支</th>
                                                             <th scope="col">结果</th>
                                                             <th scope="col">人员</th>
                                                             <th scope="col">日期</th>
@@ -788,6 +791,7 @@
                                                         {% for project_plan in project_plans %}
                                                             <tr>
                                                                 <td>{{ project_plan.project.name }}</td>
+                                                                <td>{{ project_plan.deployBranch }}</td>
                                                                 {% if project_plan.mergeStatus == 0 %}
                                                                     <td>未合并</td>
                                                                 {% elif project_plan.mergeStatus == 1 %}
