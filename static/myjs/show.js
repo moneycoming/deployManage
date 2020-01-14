@@ -686,62 +686,6 @@ layui.use(['element', 'layer'], function () {
 
     });
 });
-//任务验收通过
-layui.use(['element', 'layer'], function () {
-    var $ = layui.jquery, layer = layui.layer;
-
-    $("body").on("click", ".checkSuccess", function () {
-        var step = $(this).parent().parent().attr('id');
-        var remark = $(this).siblings("#remark").val();
-        var sequenceId = $(this).attr("id");
-        layer.confirm('确认执行？', {
-            btn: ['确认', '取消'] //按钮
-        }, function () {
-            ok(step, remark, sequenceId);
-            layer.closeAll();
-        }, function () {
-            console.log('已取消');
-        });
-
-        function ok(step, remark, sequenceId) {
-            var postData = {};
-            postData['remark'] = remark;
-            postData['sequenceId'] = sequenceId;
-            $('.checkSuccess').hide();
-
-            $.ajax({
-                url: '/ajax_checkSuccess',
-                type: 'POST',
-                data: postData,
-
-                success: function (data) {
-                    if (data.role === 0) {
-                        layer.open({
-                            type: 1
-                            , title: '警告'
-                            , content: '<div style="padding: 20px 100px;">' + "你没有验收任务的权限" + '</div>'
-                            , btn: '关闭'
-                            , btnAlign: 'c' //按钮居中
-                            , area: '500px;'
-                            , shade: 0.5 //不显示遮罩
-                            , yes: function () {
-                                layer.closeAll();
-                            }
-                        });
-                    } else {
-                        $(`#${step} .checkSuccess`).hide();
-                        $(`#${step} #remark`).hide();
-                        $(`#${step} #p1`).removeClass("fade").html(data.remark);
-                        $(`#${step} #nextBtn`).show();
-                    }
-                },
-                error: function () {
-                    console.log("error");
-                }
-            })
-        }
-    });
-});
 //合并代码
 layui.use(['element', 'layer'], function () {
     var $ = layui.jquery, layer = layui.layer;
@@ -800,7 +744,6 @@ layui.use(['element', 'layer'], function () {
                     } else {
                         var html = "";
                         var sumPoints = received_msg[0];
-                        console.log(sumPoints);
                         var realPoints = 0;
                         for (var i = 1; i < received_msg.length; i++) {
                             if (received_msg[i] === 'startMerge') {
@@ -1895,7 +1838,7 @@ layui.use(['element', 'layer'], function () {
                         $(`#${tr_id} #startOneDeploy`).show();
                         $(`#${tr_id} #select-nodes-deploy`).show();
                         $(`#${tr_id} #stopDeploy`).hide();
-                    }else if (received_msg[0] === 'no_deploy') {
+                    } else if (received_msg[0] === 'no_deploy') {
                         layer.open({
                             type: 1
                             , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
@@ -2025,6 +1968,95 @@ layui.use(['element', 'layer'], function () {
                             }
                         }
                         $(`#${step} #nextBtn`).hide();
+                    }
+                };
+
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    console.log("连接已关闭...");
+                };
+            }
+
+            else {
+                // 浏览器不支持 WebSocket
+                console.alert("您的浏览器不支持 WebSocket!");
+            }
+        }
+
+    }
+});
+//生产验收
+layui.use(['element', 'layer'], function () {
+    var $ = layui.jquery, layer = layui.layer;
+    $("body").on("click", ".checkSuccess", checkSuccess);
+
+    function checkSuccess() {
+        var step = $(this).parent().parent().attr('id');
+        var remark = $(this).siblings("#remark").val();
+        var sequenceId = $(this).attr("id");
+        var combination = remark + '-' + sequenceId;
+        layer.confirm('确认执行？', {
+            btn: ['确认', '取消'] //按钮
+        }, function () {
+            ok(step, combination);
+            layer.closeAll();
+        }, function () {
+            console.log('已取消');
+        });
+
+        function ok(step, combination) {
+
+            if ("WebSocket" in window) {
+                console.log("您的浏览器支持 WebSocket!");
+
+                // 打开一个 web socket
+                var ws = new WebSocket("ws:" + window.location.host + "/ws_checkSuccess");
+
+                ws.onopen = function () {
+                    ws.send(combination);
+                    console.log("数据已发送...");
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = JSON.parse(evt.data);
+                    console.log("数据已接收...");
+
+                    if (received_msg[0] === 'no_role') {
+                        layer.open({
+                            type: 1
+                            , offset: type //具体配置参考：http://www.layui.com/doc/modules/layer.html#offset
+                            , title: '发布结果'
+                            , id: 'layerDemo' + type//防止重复弹出
+                            , content: '<div style="padding: 20px 100px;">' + "你没有生产验收的权限！" + '</div>'
+                            , btn: '关闭'
+                            , btnAlign: 'c' //按钮居中
+                            , area: '500px;'
+                            , shade: 0.5 //不显示遮罩
+                            , yes: function () {
+                                layer.closeAll();
+                            }
+                        });
+                    } else {
+                        $(`#${step} .checkSuccess`).hide();
+                        $(`#${step} #remark`).hide();
+                        $(`#${step} .createTag`).show();
+                        $(`#${step} #createTagText`).text("tag创建中，请等待...");
+                        $(`#${step} #createTagProgressLine`).width(5 + '%').text('5%');
+                        $(`#${step} #p1`).removeClass("fade").html(received_msg[0]);
+                        var html = "";
+                        var sumPoints = received_msg[1];
+                        var realPoints = 0;
+                        for (var i = 2; i < received_msg.length; i++) {
+                            realPoints++;
+                            $('#createTagText').text("正在创建tag，共" + sumPoints + "个，完成第" + realPoints + "个");
+                            var widthTemp = (realPoints / sumPoints) * 100;
+                            $('#createTagProgressLine').width(widthTemp + '%').text(widthTemp + '%');
+                            html += "<br>" + received_msg[i];
+                        }
+                        $(`.createTagResult`).html(html);
+                        if (realPoints === sumPoints) {
+                            $(`#${step} #nextBtn`).show();
+                        }
                     }
                 };
 

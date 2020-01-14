@@ -927,55 +927,6 @@ def ajax_taskImplement(request):
         return HttpResponse(json.dumps(ret), "application/json")
 
 
-# 生产验收通过
-@login_required
-@csrf_exempt
-def ajax_checkSuccess(request):
-    sequenceId = request.POST.get('sequenceId')
-    if sequenceId:
-        sequence_obj = models.sequence.objects.get(id=sequenceId)
-        production_members = models.production_member.objects.filter(production=sequence_obj.task.plan.production)
-        member_obj = models.member.objects.get(user=request.user)
-        isMember = False
-        for m in range(len(production_members)):
-            if member_obj == production_members[m].member:
-                isMember = True
-        if isMember and member_obj.user.has_perm('mysite.can_check_project'):
-            sequence_obj.implemented = True
-            sequence_obj.remarks = request.POST['remark']
-            sequence_obj.executor = member_obj
-            sequence_obj.executeDate = datetime.datetime.now()
-            sequence_obj.executeCursor = False
-            sequence_obj.save()
-            project_plans = models.project_plan.objects.filter(plan=sequence_obj.task.plan)
-            for i in range(len(project_plans)):
-                branch_obj = branch(project_plans[i].project.project_dir, gitCmd_obj.param)
-                status = branch_obj.create_tag(project_plans[i].deployBranch)
-                if status:
-                    logger.info("项目%s，预发分支%s,tag创建成功！" % (project_plans[i].project.name, project_plans[i].uatBranch))
-            try:
-                nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task).filter(
-                    priority__gt=sequence_obj.priority).order_by('priority')[0]
-                nextSequence_obj.executeCursor = True
-                nextSequence_obj.save()
-            except IndexError:
-                print("已是最后一个环节")
-            ret = {
-                'role': 1,
-                'remark': sequence_obj.remarks
-            }
-
-            mail_to = []
-            for k in range(len(production_members)):
-                mail_to.append(production_members[k].member.user.email)
-            email_proCheck(sequence_obj, mail_from, mail_to, mail_cc, email_url_obj)
-        else:
-            ret = {
-                'role': 0
-            }
-        return HttpResponse(json.dumps(ret), "application/json")
-
-
 # 获取项目的所有分支
 @login_required
 @require_http_methods(["GET"])
@@ -1928,3 +1879,65 @@ def ajax_releaseExclusiveKey(request):
                 'role': False
             }
         return HttpResponse(json.dumps(ret), "application/json")
+
+
+# 生产验收
+@login_required
+@accept_websocket
+def ws_checkSuccess(request):
+    if request.is_websocket():
+        for combination in request.websocket:
+            if combination:
+                remark = str(combination, encoding="utf-8").split('-')[0]
+                sequenceId = str(combination, encoding="utf-8").split('-')[1]
+                if sequenceId:
+                    sequence_obj = models.sequence.objects.get(id=sequenceId)
+                    production_members = models.production_member.objects.filter(
+                        production=sequence_obj.task.plan.production)
+                    member_obj = models.member.objects.get(user=request.user)
+                    isMember = False
+                    buildMessages = []
+                    for m in range(len(production_members)):
+                        if member_obj == production_members[m].member:
+                            isMember = True
+                    if isMember and member_obj.user.has_perm('mysite.can_check_project'):
+                        sequence_obj.implemented = True
+                        sequence_obj.remarks = remark
+                        sequence_obj.executor = member_obj
+                        sequence_obj.executeDate = datetime.datetime.now()
+                        sequence_obj.executeCursor = False
+                        sequence_obj.save()
+                        project_plans = models.project_plan.objects.filter(plan=sequence_obj.task.plan)
+                        total = len(project_plans)
+                        buildMessages.append(remark)
+                        buildMessages.append(total)
+                        request.websocket.send(json.dumps(buildMessages))
+                        mail_to = []
+                        for k in range(len(production_members)):
+                            mail_to.append(production_members[k].member.user.email)
+                        email_proCheck(sequence_obj, mail_from, mail_to, mail_cc, email_url_obj)
+
+                        for i in range(len(project_plans)):
+                            branch_obj = branch(project_plans[i].project.project_dir, gitCmd_obj.param)
+                            status = branch_obj.create_tag(project_plans[i].deployBranch)
+                            if status:
+                                res = "项目%s，预发分支%s,tag创建成功！" % (
+                                    project_plans[i].project.name, project_plans[i].uatBranch)
+                            else:
+                                res = "项目%s，预发分支%s,tag创建失败！" % (
+                                    project_plans[i].project.name, project_plans[i].uatBranch)
+                            logger.info(res)
+                            buildMessages.append(res)
+                            request.websocket.send(json.dumps(buildMessages))
+                        request.websocket.close()
+                        try:
+                            nextSequence_obj = models.sequence.objects.filter(task=sequence_obj.task).filter(
+                                priority__gt=sequence_obj.priority).order_by('priority')[0]
+                            nextSequence_obj.executeCursor = True
+                            nextSequence_obj.save()
+                        except IndexError:
+                            print("已是最后一个环节")
+                    else:
+                        buildMessages.append('no_role')
+                        request.websocket.send(json.dumps(buildMessages))
+                        request.websocket.close()
