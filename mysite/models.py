@@ -269,6 +269,7 @@ class project_plan(models.Model):
         verbose_name_plural = verbose_name
 
 
+# 生产服务器部署情况
 class deployDetail(models.Model):
     project_plan = models.ForeignKey(project_plan, on_delete=models.CASCADE, verbose_name="计划-项目")
     server = models.ForeignKey(server, on_delete=models.CASCADE, verbose_name="服务器")

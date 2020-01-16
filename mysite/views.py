@@ -593,6 +593,7 @@ def ws_uatDeploy(request):
                                                     result = True
                                                     project_plan_obj.uatBuildStatus = 1
                                                     project_plan_obj.lastPackageId = buildNumber
+                                                    project_plan_obj.deployBranch = project_plan_obj.uatBranch
                                                     project_plan_obj.save()
                                                     res = "分支%s部署成功" % project_plan_obj.uatBranch
                                                     logger.info("分支%s部署成功" % project_plan_obj.uatBranch)
@@ -633,9 +634,6 @@ def ws_uatDeploy(request):
                                                                                uniqueKey=uniqueKey,
                                                                                uniteKey=uniteKey)
                                             consoleOpt_obj.save()
-                                            project_plan_obj.deployBranch = project_plan_obj.uatBranch
-                                            project_plan_obj.deployBranchDeployDate = datetime.datetime.now()
-                                            project_plan_obj.save()
                                         else:
                                             logger.info("jenkins Job %s不存在！" % jenkinsUat_obj.name)
                                             res = "jenkins Job %s不存在！" % jenkinsUat_obj.name
@@ -859,6 +857,7 @@ def ajax_createUatBranch(request):
                         else:
                             logger.info("原预发分支%s删除成功！" % project_plan_obj.uatBranch)
                     project_plan_obj.uatBranch = uatBranch
+                    project_plan_obj.uatBuildStatus = 0
                     project_plan_obj.uatBranchCreateDate = datetime.datetime.now()
                     project_plan_obj.save()
                     res = "预发分支：%s创建成功！" % uatBranch

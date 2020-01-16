@@ -74,6 +74,8 @@ layui.use(['element', 'layer'], function () {
                             $('#create-uatBranch-message').html(html);
                             $('#createUatBranchText').html("分支创建完成");
                             $(`#uatBranch`).html(data.uatBranch);
+                            $('#uatBuild').children().eq(1).html(data.uatBranch);
+                            $('#uatBuild').children().eq(2).html("未部署");
                         } else {
                             var html2 = "<div class=\"sufee-alert alert with-close alert-danger alert-dismissible\">\n" +
                                 "<span class=\"badge badge-pill badge-primary\">Failure</span>\n" +

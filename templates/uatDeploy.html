@@ -128,7 +128,8 @@
                                         <thead>
                                         <tr>
                                             <th>项目</th>
-                                            <th>构建号</th>
+                                            <th>预发分支</th>
+{#                                            <th>构建号</th>#}
                                             <th>部署状态</th>
                                             <th>部署进度</th>
                                             <th>当前信息</th>
@@ -139,11 +140,16 @@
                                         <tbody>
                                         <tr id="uatBuild">
                                             <td>{{ project_plan_obj.project.name }}</td>
-                                            {% if project_plan_obj.lastPackageId %}
-                                                <td id="uatPackageId">{{ project_plan_obj.lastPackageId }}</td>
+                                            {% if project_plan_obj.uatBranch %}
+                                                <td>{{ project_plan_obj.uatBranch }}</td>
                                             {% else %}
-                                                <td id="uatPackageId">无</td>
+                                                <td>无</td>
                                             {% endif %}
+{#                                            {% if project_plan_obj.lastPackageId %}#}
+{#                                                <td id="uatPackageId">{{ project_plan_obj.lastPackageId }}</td>#}
+{#                                            {% else %}#}
+{#                                                <td id="uatPackageId">无</td>#}
+{#                                            {% endif %}#}
                                             {% if project_plan_obj.uatBuildStatus == 1 %}
                                                 <td id="uatBuildStatus">已部署</td>
                                             {% elif project_plan_obj.uatBuildStatus == 0 %}
